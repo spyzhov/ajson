@@ -23,6 +23,12 @@ const (
 	bracesR   byte = '}'
 )
 
+var (
+	_null  = []byte("null")
+	_true  = []byte("true")
+	_false = []byte("false")
+)
+
 func newBuffer(body []byte, clone bool) (b *buffer) {
 	b = &buffer{
 		length: len(body),
@@ -141,6 +147,38 @@ func (b *buffer) string() error {
 		return errorEOF(b.index)
 	}
 	if !b.skip(quotes) {
+		return errorEOF(b.index)
+	}
+	return nil
+}
+
+func (b *buffer) null() error {
+	return b.word(_null)
+}
+
+func (b *buffer) true() error {
+	return b.word(_true)
+}
+
+func (b *buffer) false() error {
+	return b.word(_false)
+}
+
+func (b *buffer) word(word []byte) error {
+	var c byte
+	max := len(word)
+	index := 0
+	for ; b.index < b.length; b.index++ {
+		c = b.data[b.index]
+		if c != word[index] && c != (word[index]-32) {
+			return errorSymbol(c, b.index)
+		}
+		index++
+		if index >= max {
+			break
+		}
+	}
+	if index != max {
 		return errorEOF(b.index)
 	}
 	return nil
