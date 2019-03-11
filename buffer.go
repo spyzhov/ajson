@@ -15,6 +15,7 @@ const (
 	backslash byte = '\\'
 	skipS     byte = ' '
 	skipN     byte = '\n'
+	skipR     byte = '\r'
 	skipT     byte = '\t'
 	bracketL  byte = '['
 	bracketR  byte = ']'
@@ -37,7 +38,7 @@ func newBuffer(body []byte, clone bool) (b *buffer) {
 func (b *buffer) first() (c byte, err error) {
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
-		if !(c == skipS || c == skipN || c == skipT) {
+		if !(c == skipS || c == skipR || c == skipN || c == skipT) {
 			return c, nil
 		}
 	}
@@ -45,11 +46,13 @@ func (b *buffer) first() (c byte, err error) {
 }
 
 func (b *buffer) next() (c byte, err error) {
-	b.index++
+	if err := b.step(); err != nil {
+		return 0, err
+	}
 	return b.first()
 }
 
-func (b *buffer) scan(s byte, skip bool) (from, to int) {
+func (b *buffer) scan(s byte, skip bool) (from, to int, err error) {
 	var c byte
 	find := false
 	from = b.index
@@ -57,10 +60,10 @@ func (b *buffer) scan(s byte, skip bool) (from, to int) {
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		if c == s && !b.backslash() {
-			b.index++
-			return from, to
+			err = b.step()
+			return
 		}
-		if skip && (c == skipS || c == skipN || c == skipT) {
+		if skip && (c == skipS || c == skipR || c == skipN || c == skipT) {
 			if !find {
 				from++
 				to++
@@ -70,7 +73,7 @@ func (b *buffer) scan(s byte, skip bool) (from, to int) {
 			to++
 		}
 	}
-	return -1, -1
+	return -1, -1, io.EOF
 }
 
 func (b *buffer) backslash() (result bool) {
@@ -87,7 +90,6 @@ func (b *buffer) backslash() (result bool) {
 func (b *buffer) skip(s byte) bool {
 	for ; b.index < b.length; b.index++ {
 		if b.data[b.index] == s && !b.backslash() {
-			b.index++
 			return true
 		}
 	}
@@ -127,12 +129,27 @@ func (b *buffer) numeric() error {
 			return errorSymbol(c, b.index)
 		}
 	}
-	return io.EOF
+	if find&4 != 0 {
+		return io.EOF
+	}
+	return errorEOF(b.index)
 }
 
 func (b *buffer) string() error {
+	err := b.step()
+	if err != nil {
+		return errorEOF(b.index)
+	}
 	if !b.skip(quotes) {
-		return io.EOF
+		return errorEOF(b.index)
 	}
 	return nil
+}
+
+func (b *buffer) step() error {
+	if b.index+1 < b.length {
+		b.index++
+		return nil
+	}
+	return io.EOF
 }

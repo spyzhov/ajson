@@ -25,13 +25,20 @@ base:
 			// Detected: Array
 		case b == quotes:
 			// Detected: String
+			current = newNode(current, buf, String, key, index)
+			err = buf.string()
+			current.borders[1] = buf.index + 1
+			if err == nil {
+				err = buf.step()
+			}
+			if err != nil {
+				break base
+			}
 		case b >= '0' || b <= '9' || b == '+' || b == '-' || b == 'e' || b == 'E':
 			// Detected: Numeric
 			current = newNode(current, buf, Numeric, key, index)
 			err = buf.numeric()
-			if err == io.EOF {
-				current.borders[1] = buf.index
-			}
+			current.borders[1] = buf.index
 			if err != nil {
 				break base
 			}
@@ -43,6 +50,7 @@ base:
 			return nil, errorSymbol(b, buf.index)
 		}
 	}
+
 	// outer
 	if err == io.EOF {
 		err = nil
