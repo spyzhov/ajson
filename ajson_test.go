@@ -34,7 +34,7 @@ func simpleInvalid(test *testCase, t *testing.T) {
 	}
 }
 
-func TestNumericSimpleSuccess(t *testing.T) {
+func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "1", input: []byte("1"), _type: Numeric, value: []byte("1")},
 		{name: "+1", input: []byte("+1"), _type: Numeric, value: []byte("+1")},
@@ -101,7 +101,7 @@ func TestNumericSimpleSuccess(t *testing.T) {
 	}
 }
 
-func TestNumericSimpleCorrupted(t *testing.T) {
+func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "x1", input: []byte("x1")},
 		{name: "1+1", input: []byte("1+1")},
@@ -122,7 +122,7 @@ func TestNumericSimpleCorrupted(t *testing.T) {
 	}
 }
 
-func TestStringSimpleSuccess(t *testing.T) {
+func TestUnmarshal_StringSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "blank", input: []byte("\"\""), _type: String, value: []byte("\"\"")},
 		{name: "char", input: []byte("\"c\""), _type: String, value: []byte("\"c\"")},
@@ -138,7 +138,7 @@ func TestStringSimpleSuccess(t *testing.T) {
 	}
 }
 
-func TestStringSimpleCorrupted(t *testing.T) {
+func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "one quote", input: []byte("\"")},
 		{name: "one quote char", input: []byte("\"c")},
@@ -152,7 +152,7 @@ func TestStringSimpleCorrupted(t *testing.T) {
 	}
 }
 
-func TestNullSimpleSuccess(t *testing.T) {
+func TestUnmarshal_NullSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "lower", input: []byte("null"), _type: Null, value: []byte("null")},
 		{name: "upper", input: []byte("NULL"), _type: Null, value: []byte("NULL")},
@@ -166,7 +166,7 @@ func TestNullSimpleSuccess(t *testing.T) {
 	}
 }
 
-func TestNullSimpleCorrupted(t *testing.T) {
+func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "nul", input: []byte("nul")},
 		{name: "NILL", input: []byte("NILL")},
@@ -179,7 +179,7 @@ func TestNullSimpleCorrupted(t *testing.T) {
 	}
 }
 
-func TestBoolSimpleSuccess(t *testing.T) {
+func TestUnmarshal_BoolSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "lower true", input: []byte("true"), _type: Bool, value: []byte("true")},
 		{name: "lower false", input: []byte("false"), _type: Bool, value: []byte("false")},
@@ -197,7 +197,7 @@ func TestBoolSimpleSuccess(t *testing.T) {
 	}
 }
 
-func TestBoolSimpleCorrupted(t *testing.T) {
+func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "tru", input: []byte("tru")},
 		{name: "fals", input: []byte("fals")},

@@ -11,8 +11,8 @@ type Error struct {
 type ErrorType int
 
 const (
-	WrongSymbol   ErrorType = iota
-	UnexpectedEOF ErrorType = iota
+	WrongSymbol ErrorType = iota
+	UnexpectedEOF
 )
 
 func errorSymbol(b byte, index int) error {
