@@ -114,40 +114,40 @@ func (b *buffer) numeric() error {
 			if find&2 == 0 {
 				find &= 2
 			} else {
-				return errorSymbol(c, b.index)
+				return errorSymbol(b)
 			}
 		case c == '+' || c == '-':
 			if find == 0 || find == 8 {
 				find |= 1
 			} else {
-				return errorSymbol(c, b.index)
+				return errorSymbol(b)
 			}
 		case c == 'e' || c == 'E':
 			if find&8 == 0 {
 				find = 8
 			} else {
-				return errorSymbol(c, b.index)
+				return errorSymbol(b)
 			}
 		default:
 			if find&4 != 0 {
 				return nil
 			}
-			return errorSymbol(c, b.index)
+			return errorSymbol(b)
 		}
 	}
 	if find&4 != 0 {
 		return io.EOF
 	}
-	return errorEOF(b.index)
+	return errorEOF(b)
 }
 
 func (b *buffer) string() error {
 	err := b.step()
 	if err != nil {
-		return errorEOF(b.index)
+		return errorEOF(b)
 	}
 	if !b.skip(quotes) {
-		return errorEOF(b.index)
+		return errorEOF(b)
 	}
 	return nil
 }
@@ -171,7 +171,7 @@ func (b *buffer) word(word []byte) error {
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		if c != word[index] && c != (word[index]-32) {
-			return errorSymbol(c, b.index)
+			return errorSymbol(b)
 		}
 		index++
 		if index >= max {
@@ -179,7 +179,7 @@ func (b *buffer) word(word []byte) error {
 		}
 	}
 	if index != max {
-		return errorEOF(b.index)
+		return errorEOF(b)
 	}
 	return nil
 }

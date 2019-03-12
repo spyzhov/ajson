@@ -15,12 +15,12 @@ const (
 	UnexpectedEOF
 )
 
-func errorSymbol(b byte, index int) error {
-	return &Error{Type: WrongSymbol, Index: index, Char: b}
+func errorSymbol(b *buffer) error {
+	return &Error{Type: WrongSymbol, Index: b.index, Char: b.data[b.index]}
 }
 
-func errorEOF(index int) error {
-	return &Error{Type: UnexpectedEOF, Index: index}
+func errorEOF(b *buffer) error {
+	return &Error{Type: UnexpectedEOF, Index: b.index}
 }
 
 func (err *Error) Error() string {

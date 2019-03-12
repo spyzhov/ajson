@@ -56,7 +56,7 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 				err = buf.step()
 			}
 		default:
-			return nil, errorSymbol(b, buf.index)
+			return nil, errorSymbol(buf)
 		}
 		if err != nil {
 			break
