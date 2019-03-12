@@ -5,13 +5,37 @@ import (
 	"testing"
 )
 
+type testCase struct {
+	name  string
+	input []byte
+	_type NodeType
+	value []byte
+}
+
+func simpleValid(test *testCase, t *testing.T) {
+	root, err := Unmarshal(test.input, false)
+	if err != nil {
+		t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
+	} else if root == nil {
+		t.Errorf("Error on Unmarshal(%s): root is nil", test.name)
+	} else if root.Type() != test._type {
+		t.Errorf("Error on Unmarshal(%s): wrong type", test.name)
+	} else if !bytes.Equal(root.Source(), test.value) {
+		t.Errorf("Error on Unmarshal(%s): %s != %s", test.name, root.Source(), test.value)
+	}
+}
+
+func simpleInvalid(test *testCase, t *testing.T) {
+	root, err := Unmarshal(test.input, false)
+	if err == nil {
+		t.Errorf("Error on Unmarshal(%s): error expected", test.name)
+	} else if root != nil {
+		t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
+	}
+}
+
 func TestNumericSimpleSuccess(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "1", input: []byte("1"), _type: Numeric, value: []byte("1")},
 		{name: "+1", input: []byte("+1"), _type: Numeric, value: []byte("+1")},
 		{name: "-1", input: []byte("-1"), _type: Numeric, value: []byte("-1")},
@@ -72,25 +96,13 @@ func TestNumericSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err != nil {
-				t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
-			} else if root == nil {
-				t.Errorf("Error on Unmarshal(%s): root is nil", test.name)
-			} else if root.Type() != test._type {
-				t.Errorf("Error on Unmarshal(%s): wrong type", test.name)
-			} else if !bytes.Equal(root.Value(), test.value) {
-				t.Errorf("Error on Unmarshal(%s): %s != %s", test.name, root.Value(), test.value)
-			}
+			simpleValid(&test, t)
 		})
 	}
 }
 
 func TestNumericSimpleCorrupted(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-	}{
+	tests := []testCase{
 		{name: "x1", input: []byte("x1")},
 		{name: "1+1", input: []byte("1+1")},
 		{name: "-1+", input: []byte("-1+")},
@@ -105,23 +117,13 @@ func TestNumericSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err == nil {
-				t.Errorf("Error on Unmarshal(%s): error expected", test.name)
-			} else if root != nil {
-				t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
-			}
+			simpleInvalid(&test, t)
 		})
 	}
 }
 
 func TestStringSimpleSuccess(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "blank", input: []byte("\"\""), _type: String, value: []byte("\"\"")},
 		{name: "char", input: []byte("\"c\""), _type: String, value: []byte("\"c\"")},
 		{name: "word", input: []byte("\"cat\""), _type: String, value: []byte("\"cat\"")},
@@ -131,25 +133,13 @@ func TestStringSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err != nil {
-				t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
-			} else if root == nil {
-				t.Errorf("Error on Unmarshal(%s): root is nil", test.name)
-			} else if root.Type() != test._type {
-				t.Errorf("Error on Unmarshal(%s): wrong type", test.name)
-			} else if !bytes.Equal(root.Value(), test.value) {
-				t.Errorf("Error on Unmarshal(%s): %s != %s", test.name, root.Value(), test.value)
-			}
+			simpleValid(&test, t)
 		})
 	}
 }
 
 func TestStringSimpleCorrupted(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-	}{
+	tests := []testCase{
 		{name: "one quote", input: []byte("\"")},
 		{name: "one quote char", input: []byte("\"c")},
 		{name: "wrong quotes", input: []byte("'cat'")},
@@ -157,23 +147,13 @@ func TestStringSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err == nil {
-				t.Errorf("Error on Unmarshal(%s): error expected", test.name)
-			} else if root != nil {
-				t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
-			}
+			simpleInvalid(&test, t)
 		})
 	}
 }
 
 func TestNullSimpleSuccess(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "lower", input: []byte("null"), _type: Null, value: []byte("null")},
 		{name: "upper", input: []byte("NULL"), _type: Null, value: []byte("NULL")},
 		{name: "CamelCase", input: []byte("NuLl"), _type: Null, value: []byte("NuLl")},
@@ -181,50 +161,26 @@ func TestNullSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err != nil {
-				t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
-			} else if root == nil {
-				t.Errorf("Error on Unmarshal(%s): root is nil", test.name)
-			} else if root.Type() != test._type {
-				t.Errorf("Error on Unmarshal(%s): wrong type", test.name)
-			} else if !bytes.Equal(root.Value(), test.value) {
-				t.Errorf("Error on Unmarshal(%s): %s != %s", test.name, root.Value(), test.value)
-			}
+			simpleValid(&test, t)
 		})
 	}
 }
 
 func TestNullSimpleCorrupted(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "nul", input: []byte("nul")},
 		{name: "NILL", input: []byte("NILL")},
 		{name: "spaces", input: []byte("Nu ll")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err == nil {
-				t.Errorf("Error on Unmarshal(%s): error expected", test.name)
-			} else if root != nil {
-				t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
-			}
+			simpleInvalid(&test, t)
 		})
 	}
 }
 
 func TestBoolSimpleSuccess(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "lower true", input: []byte("true"), _type: Bool, value: []byte("true")},
 		{name: "lower false", input: []byte("false"), _type: Bool, value: []byte("false")},
 		{name: "upper true", input: []byte("TRUE"), _type: Bool, value: []byte("TRUE")},
@@ -236,27 +192,13 @@ func TestBoolSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err != nil {
-				t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
-			} else if root == nil {
-				t.Errorf("Error on Unmarshal(%s): root is nil", test.name)
-			} else if root.Type() != test._type {
-				t.Errorf("Error on Unmarshal(%s): wrong type", test.name)
-			} else if !bytes.Equal(root.Value(), test.value) {
-				t.Errorf("Error on Unmarshal(%s): %s != %s", test.name, root.Value(), test.value)
-			}
+			simpleValid(&test, t)
 		})
 	}
 }
 
 func TestBoolSimpleCorrupted(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []byte
-		_type NodeType
-		value []byte
-	}{
+	tests := []testCase{
 		{name: "tru", input: []byte("tru")},
 		{name: "fals", input: []byte("fals")},
 		{name: "tre", input: []byte("tre")},
@@ -264,12 +206,7 @@ func TestBoolSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			root, err := Unmarshal(test.input, false)
-			if err == nil {
-				t.Errorf("Error on Unmarshal(%s): error expected", test.name)
-			} else if root != nil {
-				t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
-			}
+			simpleInvalid(&test, t)
 		})
 	}
 }

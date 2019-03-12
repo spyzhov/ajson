@@ -4,7 +4,7 @@ package ajson
 type Node struct {
 	parent   *Node
 	children []*Node
-	key      []byte
+	key      *string
 	index    *int
 	_type    NodeType
 	data     *[]byte
@@ -22,7 +22,7 @@ const (
 	Object
 )
 
-func newNode(parent *Node, dec *buffer, _type NodeType, key []byte, index *int) *Node {
+func newNode(parent *Node, dec *buffer, _type NodeType, key *string, index *int) *Node {
 	return &Node{
 		parent:  parent,
 		data:    &dec.data,
@@ -33,7 +33,7 @@ func newNode(parent *Node, dec *buffer, _type NodeType, key []byte, index *int) 
 	}
 }
 
-func (n *Node) Value() []byte {
+func (n *Node) Source() []byte {
 	return (*n.data)[n.borders[0]:n.borders[1]]
 }
 
