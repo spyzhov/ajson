@@ -259,23 +259,23 @@ func TestUnmarshal_Array(t *testing.T) {
 	} else if root.Type() != Array {
 		t.Errorf("Error on Unmarshal: wrong type")
 	} else {
-		array, err := root.Array()
+		array, err := root.GetArray()
 		if err != nil {
-			t.Errorf("Error on root.Array(): %s", err.Error())
+			t.Errorf("Error on root.GetArray(): %s", err.Error())
 		} else if len(array) != 2 {
-			t.Errorf("Error on root.Array(): expected 2 elements")
-		} else if val, err := array[0].Numeric(); err != nil {
-			t.Errorf("Error on array[0].Numeric(): %s", err.Error())
+			t.Errorf("Error on root.GetArray(): expected 2 elements")
+		} else if val, err := array[0].GetNumeric(); err != nil {
+			t.Errorf("Error on array[0].GetNumeric(): %s", err.Error())
 		} else if val != 1 {
-			t.Errorf("Error on array[0].Numeric(): expected to be '1'")
-		} else if val, err := array[1].Array(); err != nil {
-			t.Errorf("Error on array[1].Array(): %s", err.Error())
+			t.Errorf("Error on array[0].GetNumeric(): expected to be '1'")
+		} else if val, err := array[1].GetArray(); err != nil {
+			t.Errorf("Error on array[1].GetArray(): %s", err.Error())
 		} else if len(val) != 2 {
-			t.Errorf("Error on array[1].Array(): expected 2 elements")
-		} else if el, err := val[0].String(); err != nil {
-			t.Errorf("Error on val[0].String(): %s", err.Error())
+			t.Errorf("Error on array[1].GetArray(): expected 2 elements")
+		} else if el, err := val[0].GetString(); err != nil {
+			t.Errorf("Error on val[0].GetString(): %s", err.Error())
 		} else if el != "1" {
-			t.Errorf("Error on val[0].String(): expected to be '\"1\"'")
+			t.Errorf("Error on val[0].GetString(): expected to be '\"1\"'")
 		}
 	}
 }

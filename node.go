@@ -48,6 +48,10 @@ func (n *Node) Source() []byte {
 	return (*n.data)[n.borders[0]:n.borders[1]]
 }
 
+func (n *Node) String() string {
+	return string(n.Source())
+}
+
 func (n *Node) Type() NodeType {
 	return n._type
 }
@@ -119,7 +123,7 @@ func (n *Node) Value() (value interface{}, err error) {
 	return
 }
 
-func (n *Node) Numeric() (value float64, err error) {
+func (n *Node) GetNumeric() (value float64, err error) {
 	iValue, err := n.Value()
 	if err != nil {
 		return 0, err
@@ -128,7 +132,7 @@ func (n *Node) Numeric() (value float64, err error) {
 	return
 }
 
-func (n *Node) String() (value string, err error) {
+func (n *Node) GetString() (value string, err error) {
 	iValue, err := n.Value()
 	if err != nil {
 		return "", err
@@ -137,7 +141,7 @@ func (n *Node) String() (value string, err error) {
 	return
 }
 
-func (n *Node) Bool() (value bool, err error) {
+func (n *Node) GetBool() (value bool, err error) {
 	iValue, err := n.Value()
 	if err != nil {
 		return false, err
@@ -146,7 +150,7 @@ func (n *Node) Bool() (value bool, err error) {
 	return
 }
 
-func (n *Node) Array() (value []*Node, err error) {
+func (n *Node) GetArray() (value []*Node, err error) {
 	iValue, err := n.Value()
 	if err != nil {
 		return nil, err
@@ -155,7 +159,7 @@ func (n *Node) Array() (value []*Node, err error) {
 	return
 }
 
-func (n *Node) Object() (value map[string]*Node, err error) {
+func (n *Node) GetObject() (value map[string]*Node, err error) {
 	iValue, err := n.Value()
 	if err != nil {
 		return nil, err
