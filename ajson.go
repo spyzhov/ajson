@@ -96,22 +96,6 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 			break
 		}
 		last = b
-
-		//if current.IsArray() {
-		//	b, err = buf.first()
-		//	if err != nil {
-		//		if current.ready() {
-		//			break
-		//		}
-		//		return nil, errorEOF(buf)
-		//	}
-		//	if b == coma {
-		//		err = buf.step()
-		//		if err != nil {
-		//			return nil, errorEOF(buf)
-		//		}
-		//	}
-		//}
 	}
 
 	// outer
