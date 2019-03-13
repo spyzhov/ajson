@@ -13,6 +13,7 @@ type buffer struct {
 const (
 	quotes    byte = '"'
 	coma      byte = ','
+	colon     byte = ':'
 	backslash byte = '\\'
 	skipS     byte = ' '
 	skipN     byte = '\n'

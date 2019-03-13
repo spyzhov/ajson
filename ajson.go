@@ -19,18 +19,32 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 			break
 		}
 
-		if !isCreatable(b, current, last) {
+		if !isCreatable(b, current, last, key) {
 			return nil, errorSymbol(buf)
 		}
 		switch true {
 		case b == bracesL:
 			// Detected: Object [begin]
+			current, err = newNode(current, buf, Object, &key)
+			if err == nil {
+				err = buf.step()
+			}
+			found = false
 		case b == bracesR:
 			// Detected: Object [end]
+			if last == coma || key != nil || current == nil || !current.IsObject() || current.ready() {
+				return nil, errorSymbol(buf)
+			}
+			current.borders[1] = buf.index + 1
+			err = buf.step()
+			found = true
+			current = previous(current)
 		case b == bracketL:
 			// Detected: Array [begin]
-			current = newNode(current, buf, Array, key)
-			err = buf.step()
+			current, err = newNode(current, buf, Array, &key)
+			if err == nil {
+				err = buf.step()
+			}
 			found = false
 		case b == bracketR:
 			// Detected: Array [end]
@@ -42,25 +56,42 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 			found = true
 			current = previous(current)
 		case b == quotes:
-			// Detected: String
-			current = newNode(current, buf, String, key)
-			err = buf.string()
-			current.borders[1] = buf.index + 1
-			if err == nil {
-				err = buf.step()
+			// Detected: String OR Key
+			if current != nil && current.IsObject() && key == nil { // Detected: Key
+				key, err = getString(buf)
+				if err == nil {
+					err = buf.step()
+				}
+				found = false
+			} else { // Detected: String
+				current, err = newNode(current, buf, String, &key)
+				if err != nil {
+					break
+				}
+				err = buf.string()
+				current.borders[1] = buf.index + 1
+				if err == nil {
+					err = buf.step()
+				}
+				found = true
+				current = previous(current)
 			}
-			found = true
-			current = previous(current)
 		case (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-' || b == 'e' || b == 'E':
 			// Detected: Numeric
-			current = newNode(current, buf, Numeric, key)
+			current, err = newNode(current, buf, Numeric, &key)
+			if err != nil {
+				break
+			}
 			err = buf.numeric()
 			current.borders[1] = buf.index
 			found = true
 			current = previous(current)
 		case b == 'n' || b == 'N':
-			// mb: Null
-			current = newNode(current, buf, Null, key)
+			// Detected: Null
+			current, err = newNode(current, buf, Null, &key)
+			if err != nil {
+				break
+			}
 			err = buf.null()
 			current.borders[1] = buf.index + 1
 			if err == nil {
@@ -69,8 +100,11 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 			found = true
 			current = previous(current)
 		case b == 't' || b == 'T' || b == 'f' || b == 'F':
-			// mb: Bool
-			current = newNode(current, buf, Bool, key)
+			// Detected: Bool
+			current, err = newNode(current, buf, Bool, &key)
+			if err != nil {
+				break
+			}
 			if b == 't' || b == 'T' {
 				err = buf.true()
 			} else {
@@ -83,7 +117,14 @@ func Unmarshal(body []byte, clone bool) (root *Node, err error) {
 			found = true
 			current = previous(current)
 		case b == coma:
-			if last == coma || last == bracesL || last == bracketL || !found {
+			if last == coma || current == nil || len(current.children) == 0 || !found {
+				return nil, errorSymbol(buf)
+			} else {
+				found = false
+				err = buf.step()
+			}
+		case b == colon:
+			if last != quotes || key == nil || found {
 				return nil, errorSymbol(buf)
 			} else {
 				found = false
@@ -117,9 +158,33 @@ func previous(current *Node) *Node {
 	return current
 }
 
-func isCreatable(b byte, current *Node, last byte) bool {
+func isCreatable(b byte, current *Node, last byte, key *string) bool {
 	if b == bracketL || b == bracesL || b == quotes || (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-' || b == 'e' || b == 'E' || b == 't' || b == 'T' || b == 'f' || b == 'F' || b == 'n' || b == 'N' {
-		return current == nil || (current.isContainer() && !current.ready() && (len(current.children) == 0 || last == coma))
+		if current == nil {
+			return key == nil
+		}
+		if key != nil && !current.IsObject() {
+			return false
+		}
+		if current.isContainer() && current.ready() {
+			return false
+		}
+		if current.IsArray() {
+			if len(current.children) == 0 {
+				return last != coma
+			}
+			return last == coma
+		}
 	}
 	return true
+}
+
+func getString(b *buffer) (*string, error) {
+	start := b.index
+	err := b.string()
+	if err != nil {
+		return nil, err
+	}
+	value := string(b.data[start+1 : b.index])
+	return &value, nil
 }

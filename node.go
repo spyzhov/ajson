@@ -28,20 +28,31 @@ const (
 	Object
 )
 
-func newNode(parent *Node, dec *buffer, _type NodeType, key *string) *Node {
-	node := &Node{
+func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (node *Node, err error) {
+	node = &Node{
 		parent:  parent,
-		data:    &dec.data,
-		borders: [2]int{dec.index, 0},
+		data:    &buf.data,
+		borders: [2]int{buf.index, 0},
 		_type:   _type,
-		key:     key,
+		key:     *key,
 	}
-	if parent != nil && parent.IsArray() {
-		size := len(parent.children)
-		node.index = &size
-		parent.children = append(parent.children, node)
+	if parent != nil {
+		if parent.IsArray() {
+			size := len(parent.children)
+			node.index = &size
+			parent.children = append(parent.children, node)
+		} else if parent.IsObject() {
+			parent.children = append(parent.children, node)
+			if *key == nil {
+				err = errorSymbol(buf)
+			} else {
+				*key = nil
+			}
+		} else {
+			err = errorSymbol(buf)
+		}
 	}
-	return node
+	return
 }
 
 func (n *Node) Source() []byte {

@@ -12,6 +12,10 @@ type testCase struct {
 	value []byte
 }
 
+func simpleCorrupted(name string) testCase {
+	return testCase{name: name, input: []byte(name)}
+}
+
 func simpleValid(test *testCase, t *testing.T) {
 	root, err := Unmarshal(test.input, false)
 	if err != nil {
@@ -103,18 +107,18 @@ func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 
 func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
-		{name: "x1", input: []byte("x1")},
-		{name: "1+1", input: []byte("1+1")},
-		{name: "-1+", input: []byte("-1+")},
-		{name: ".", input: []byte(".")},
-		{name: "-", input: []byte("-")},
-		{name: "+", input: []byte("+")},
-		{name: "-.", input: []byte("-")},
-		{name: "+.", input: []byte("+")},
-		{name: "e", input: []byte("e")},
-		{name: "e+", input: []byte("e+")},
-		{name: "e+1-", input: []byte("e+1-")},
-		{name: "1null", input: []byte("1null")},
+		simpleCorrupted("x1"),
+		simpleCorrupted("1+1"),
+		simpleCorrupted("-1+"),
+		simpleCorrupted("."),
+		simpleCorrupted("-"),
+		simpleCorrupted("+"),
+		simpleCorrupted("-."),
+		simpleCorrupted("+."),
+		simpleCorrupted("e"),
+		simpleCorrupted("e+"),
+		simpleCorrupted("e+1-"),
+		simpleCorrupted("1null"),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -201,10 +205,10 @@ func TestUnmarshal_BoolSimpleSuccess(t *testing.T) {
 
 func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
-		{name: "tru", input: []byte("tru")},
-		{name: "fals", input: []byte("fals")},
-		{name: "tre", input: []byte("tre")},
-		{name: "spaces", input: []byte("fal se")},
+		simpleCorrupted("tru"),
+		simpleCorrupted("fals"),
+		simpleCorrupted("tre"),
+		simpleCorrupted("fal se"),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -234,14 +238,58 @@ func TestUnmarshal_ArraySimpleSuccess(t *testing.T) {
 
 func TestUnmarshal_ArraySimpleCorrupted(t *testing.T) {
 	tests := []testCase{
-		{name: "[,]", input: []byte("[,]")},
-		{name: "[]\\", input: []byte("[]\\")},
-		{name: "[1,]", input: []byte("[1,]")},
-		{name: "[[]", input: []byte("[[]")},
-		{name: "[]]", input: []byte("[]]")},
-		{name: "1[]", input: []byte("1[]")},
-		{name: "[]1", input: []byte("[]1")},
-		{name: "[[]1]", input: []byte("[[]1]")},
+		simpleCorrupted("[,]"),
+		simpleCorrupted("[]\\"),
+		simpleCorrupted("[1,]"),
+		simpleCorrupted("[[]"),
+		simpleCorrupted("[]]"),
+		simpleCorrupted("1[]"),
+		simpleCorrupted("[]1"),
+		simpleCorrupted("[[]1]"),
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			simpleInvalid(&test, t)
+		})
+	}
+}
+
+func TestUnmarshal_ObjectSimpleSuccess(t *testing.T) {
+	tests := []testCase{
+		{name: "{}", input: []byte("{}"), _type: Object, value: []byte("{}")},
+		{name: `{ \r\n }`, input: []byte("{ \r\n }"), _type: Object, value: []byte("{ \r\n }")},
+		{name: `{"key":1}`, input: []byte(`{"key":1}`), _type: Object, value: []byte(`{"key":1}`)},
+		{name: `{"key":true}`, input: []byte(`{"key":true}`), _type: Object, value: []byte(`{"key":true}`)},
+		{name: `{"key":"value"}`, input: []byte(`{"key":"value"}`), _type: Object, value: []byte(`{"key":"value"}`)},
+		{name: `{"foo":"bar","baz":"foo"}`, input: []byte(`{"foo":"bar", "baz":"foo"}`), _type: Object, value: []byte(`{"foo":"bar", "baz":"foo"}`)},
+		{name: "spaces", input: []byte(`  {  "foo"  :  "bar"  , "baz"   :   "foo"   }    `), _type: Object, value: []byte(`{  "foo"  :  "bar"  , "baz"   :   "foo"   }`)},
+		{name: "nested", input: []byte(`{"foo":{"bar":{"baz":{}}}}`), _type: Object, value: []byte(`{"foo":{"bar":{"baz":{}}}}`)},
+		{name: "array", input: []byte(`{"array":[{},{},{"foo":[{"bar":["baz"]}]}]}`), _type: Object, value: []byte(`{"array":[{},{},{"foo":[{"bar":["baz"]}]}]}`)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			simpleValid(&test, t)
+		})
+	}
+}
+
+func TestUnmarshal_ObjectSimpleCorrupted(t *testing.T) {
+	tests := []testCase{
+		simpleCorrupted("{,}"),
+		simpleCorrupted("{:}"),
+		simpleCorrupted(`{"foo"}`),
+		simpleCorrupted(`{"foo":}`),
+		simpleCorrupted(`{:"foo"}`),
+		simpleCorrupted(`{"foo":bar}`),
+		simpleCorrupted(`{"foo":"bar",}`),
+		simpleCorrupted(`{}{}`),
+		simpleCorrupted(`{},{}`),
+		simpleCorrupted(`{[},{]}`),
+		simpleCorrupted(`{[,]}`),
+		simpleCorrupted(`{[]}`),
+		simpleCorrupted(`{}1`),
+		simpleCorrupted(`1{}`),
+		simpleCorrupted(`{"x"::1}`),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -276,6 +324,32 @@ func TestUnmarshal_Array(t *testing.T) {
 			t.Errorf("Error on val[0].GetString(): %s", err.Error())
 		} else if el != "1" {
 			t.Errorf("Error on val[0].GetString(): expected to be '\"1\"'")
+		}
+	}
+}
+
+func TestUnmarshal_Object(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":{"bar":[null]}, "baz":true}`), false)
+	if err != nil {
+		t.Errorf("Error on Unmarshal: %s", err.Error())
+	} else if root == nil {
+		t.Errorf("Error on Unmarshal: root is nil")
+	} else if !root.IsObject() {
+		t.Errorf("Error on Unmarshal: wrong type")
+	} else {
+		object, err := root.GetObject()
+		if err != nil {
+			t.Errorf("Error on root.GetObject(): %s", err.Error())
+		} else if foo, ok := object["foo"]; !ok {
+			t.Errorf("Error on getting foo from map")
+		} else if !foo.IsObject() {
+			t.Errorf("Child element type error [foo]")
+		} else if obj, err := foo.GetObject(); err != nil {
+			t.Errorf("Error on foo.GetObject(): %s", err.Error())
+		} else if bar, ok := obj["bar"]; !ok {
+			t.Errorf("Error on getting bar from map")
+		} else if !bar.IsArray() {
+			t.Errorf("Child element type error [bar]")
 		}
 	}
 }
