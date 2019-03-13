@@ -4,7 +4,7 @@
 # TODO
 
 - Global
-- [ ] array support
+- [x] array support
 - [ ] object support
 - Node
 - [x] key => *string
@@ -15,9 +15,10 @@
 - [ ] func JsonPath(data [] byte, path string, clone bool) ([]*Node, error) 
 - [ ] func (n *Node) JsonPath(path string) ([]*Node, error)
 - Shugar
-- [ ] ‌Node: IsArray, Is Numeric,...
+- [x] ‌Node: Type -> IsArray, IsNumeric,...
+- [x] ‌Node: Value -> Array, Numeric,...
 - buffer
-- [ ] ‌const: coma
+- [x] ‌const: coma
 - [ ] add tests
 - [ ] func scan(b byte, skip bool) error
 - [ ] func skip(...) error

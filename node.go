@@ -1,7 +1,6 @@
 package ajson
 
 import (
-	"fmt"
 	"strconv"
 	"sync/atomic"
 )
@@ -29,15 +28,20 @@ const (
 	Object
 )
 
-func newNode(parent *Node, dec *buffer, _type NodeType, key *string, index *int) *Node {
-	return &Node{
+func newNode(parent *Node, dec *buffer, _type NodeType, key *string) *Node {
+	node := &Node{
 		parent:  parent,
 		data:    &dec.data,
 		borders: [2]int{dec.index, 0},
 		_type:   _type,
 		key:     key,
-		index:   index,
 	}
+	if parent != nil && parent.IsArray() {
+		size := len(parent.children)
+		node.index = &size
+		parent.children = append(parent.children, node)
+	}
+	return node
 }
 
 func (n *Node) Source() []byte {
@@ -46,6 +50,38 @@ func (n *Node) Source() []byte {
 
 func (n *Node) Type() NodeType {
 	return n._type
+}
+
+func (n *Node) Key() string {
+	return *n.key
+}
+
+func (n *Node) Index() int {
+	return *n.index
+}
+
+func (n *Node) IsArray() bool {
+	return n._type == Array
+}
+
+func (n *Node) IsObject() bool {
+	return n._type == Object
+}
+
+func (n *Node) IsNull() bool {
+	return n._type == Null
+}
+
+func (n *Node) IsNumeric() bool {
+	return n._type == Numeric
+}
+
+func (n *Node) IsString() bool {
+	return n._type == String
+}
+
+func (n *Node) IsBool() bool {
+	return n._type == Bool
 }
 
 func (n *Node) Value() (value interface{}, err error) {
@@ -69,14 +105,73 @@ func (n *Node) Value() (value interface{}, err error) {
 			value = b == 't' || b == 'T'
 			n.set(value)
 		case Array:
-			return nil, fmt.Errorf("not implemented")
+			value = n.children
+			n.set(value)
 		case Object:
-			return nil, fmt.Errorf("not implemented")
+			result := make(map[string]*Node)
+			for _, child := range n.children {
+				result[child.Key()] = child
+			}
+			value = result
+			n.set(value)
 		}
 	}
 	return
 }
 
+func (n *Node) Numeric() (value float64, err error) {
+	iValue, err := n.Value()
+	if err != nil {
+		return 0, err
+	}
+	value = iValue.(float64)
+	return
+}
+
+func (n *Node) String() (value string, err error) {
+	iValue, err := n.Value()
+	if err != nil {
+		return "", err
+	}
+	value = iValue.(string)
+	return
+}
+
+func (n *Node) Bool() (value bool, err error) {
+	iValue, err := n.Value()
+	if err != nil {
+		return false, err
+	}
+	value = iValue.(bool)
+	return
+}
+
+func (n *Node) Array() (value []*Node, err error) {
+	iValue, err := n.Value()
+	if err != nil {
+		return nil, err
+	}
+	value = iValue.([]*Node)
+	return
+}
+
+func (n *Node) Object() (value map[string]*Node, err error) {
+	iValue, err := n.Value()
+	if err != nil {
+		return nil, err
+	}
+	value = iValue.(map[string]*Node)
+	return
+}
+
 func (n *Node) set(value interface{}) {
 	n.value.Store(value)
+}
+
+func (n *Node) ready() bool {
+	return n.borders[1] != 0
+}
+
+func (n *Node) isContainer() bool {
+	return n._type == Array || n._type == Object
 }

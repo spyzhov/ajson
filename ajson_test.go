@@ -28,7 +28,7 @@ func simpleValid(test *testCase, t *testing.T) {
 func simpleInvalid(test *testCase, t *testing.T) {
 	root, err := Unmarshal(test.input, false)
 	if err == nil {
-		t.Errorf("Error on Unmarshal(%s): error expected", test.name)
+		t.Errorf("Error on Unmarshal(%s): error expected, got '%s'", test.name, root.Source())
 	} else if root != nil {
 		t.Errorf("Error on Unmarshal(%s): root is not nil", test.name)
 	}
@@ -114,6 +114,7 @@ func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 		{name: "e", input: []byte("e")},
 		{name: "e+", input: []byte("e+")},
 		{name: "e+1-", input: []byte("e+1-")},
+		{name: "1null", input: []byte("1null")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -171,6 +172,7 @@ func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
 		{name: "nul", input: []byte("nul")},
 		{name: "NILL", input: []byte("NILL")},
 		{name: "spaces", input: []byte("Nu ll")},
+		{name: "null1", input: []byte("null1")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -208,5 +210,72 @@ func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			simpleInvalid(&test, t)
 		})
+	}
+}
+
+func TestUnmarshal_ArraySimpleSuccess(t *testing.T) {
+	tests := []testCase{
+		{name: "[]", input: []byte("[]"), _type: Array, value: []byte("[]")},
+		{name: "[1]", input: []byte("[1]"), _type: Array, value: []byte("[1]")},
+		{name: "[1,2,3]", input: []byte("[1,2,3]"), _type: Array, value: []byte("[1,2,3]")},
+		{name: "[1, 2, 3]", input: []byte("[1, 2, 3]"), _type: Array, value: []byte("[1, 2, 3]")},
+		{name: "[1,[2],3]", input: []byte("[1,[2],3]"), _type: Array, value: []byte("[1,[2],3]")},
+		{name: "[[],[],[]]", input: []byte("[[],[],[]]"), _type: Array, value: []byte("[[],[],[]]")},
+		{name: "[[[[[]]]]]", input: []byte("[[[[[]]]]]"), _type: Array, value: []byte("[[[[[]]]]]")},
+		{name: "[true,null,1,\"foo\",[]]", input: []byte("[true,null,1,\"foo\",[]]"), _type: Array, value: []byte("[true,null,1,\"foo\",[]]")},
+		{name: "spaces", input: []byte("\n\r [\n1\n ]\r\n"), _type: Array, value: []byte("[\n1\n ]")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			simpleValid(&test, t)
+		})
+	}
+}
+
+func TestUnmarshal_ArraySimpleCorrupted(t *testing.T) {
+	tests := []testCase{
+		{name: "[,]", input: []byte("[,]")},
+		{name: "[]\\", input: []byte("[]\\")},
+		{name: "[1,]", input: []byte("[1,]")},
+		{name: "[[]", input: []byte("[[]")},
+		{name: "[]]", input: []byte("[]]")},
+		{name: "1[]", input: []byte("1[]")},
+		{name: "[]1", input: []byte("[]1")},
+		{name: "[[]1]", input: []byte("[[]1]")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			simpleInvalid(&test, t)
+		})
+	}
+}
+
+func TestUnmarshal_Array(t *testing.T) {
+	root, err := Unmarshal([]byte(" [1,[\"1\",[1,[1,2,3]]]]\r\n"), false)
+	if err != nil {
+		t.Errorf("Error on Unmarshal: %s", err.Error())
+	} else if root == nil {
+		t.Errorf("Error on Unmarshal: root is nil")
+	} else if root.Type() != Array {
+		t.Errorf("Error on Unmarshal: wrong type")
+	} else {
+		array, err := root.Array()
+		if err != nil {
+			t.Errorf("Error on root.Array(): %s", err.Error())
+		} else if len(array) != 2 {
+			t.Errorf("Error on root.Array(): expected 2 elements")
+		} else if val, err := array[0].Numeric(); err != nil {
+			t.Errorf("Error on array[0].Numeric(): %s", err.Error())
+		} else if val != 1 {
+			t.Errorf("Error on array[0].Numeric(): expected to be '1'")
+		} else if val, err := array[1].Array(); err != nil {
+			t.Errorf("Error on array[1].Array(): %s", err.Error())
+		} else if len(val) != 2 {
+			t.Errorf("Error on array[1].Array(): expected 2 elements")
+		} else if el, err := val[0].String(); err != nil {
+			t.Errorf("Error on val[0].String(): %s", err.Error())
+		} else if el != "1" {
+			t.Errorf("Error on val[0].String(): expected to be '\"1\"'")
+		}
 	}
 }
