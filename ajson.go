@@ -2,14 +2,14 @@ package ajson
 
 import "io"
 
-func Unmarshal(body []byte, safe bool) (root *Node, err error) {
+func Unmarshal(body []byte, safe bool) (root Node, err error) {
 	buf := newBuffer(body, safe)
 	var (
 		last    byte
 		b       byte
 		found   bool
 		key     *string
-		current *Node
+		current *node
 	)
 	// main loop: detect all parts of json struct
 	for {
@@ -151,14 +151,14 @@ func Unmarshal(body []byte, safe bool) (root *Node, err error) {
 	return
 }
 
-func previous(current *Node) *Node {
+func previous(current *node) *node {
 	if current.parent != nil {
 		return current.parent
 	}
 	return current
 }
 
-func isCreatable(b byte, current *Node, last byte, key *string) bool {
+func isCreatable(b byte, current *node, last byte, key *string) bool {
 	if b == bracketL || b == bracesL || b == quotes || (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-' || b == 'e' || b == 'E' || b == 't' || b == 'T' || b == 'f' || b == 'F' || b == 'n' || b == 'N' {
 		if current == nil {
 			return key == nil

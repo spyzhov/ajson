@@ -5,10 +5,44 @@ import (
 	"sync/atomic"
 )
 
+type Node interface {
+	Source() []byte
+	Type() NodeType
+	Key() string
+	Index() int
+	Size() int
+	Keys() []string
+
+	String() string
+
+	IsArray() bool
+	IsObject() bool
+	IsNull() bool
+	IsNumeric() bool
+	IsString() bool
+	IsBool() bool
+
+	Value() (interface{}, error)
+
+	GetNull() (interface{}, error)
+	GetNumeric() (float64, error)
+	GetString() (string, error)
+	GetBool() (bool, error)
+	GetArray() ([]Node, error)
+	GetObject() (map[string]Node, error)
+
+	MustNull() interface{}
+	MustNumeric() float64
+	MustString() string
+	MustBool() bool
+	MustArray() []Node
+	MustObject() map[string]Node
+}
+
 // Main struct, presents any json node
-type Node struct {
-	parent   *Node
-	children []*Node
+type node struct {
+	parent   *node
+	children []*node
 	key      *string
 	index    *int
 	_type    NodeType
@@ -28,8 +62,8 @@ const (
 	Object
 )
 
-func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (node *Node, err error) {
-	node = &Node{
+func newNode(parent *node, buf *buffer, _type NodeType, key **string) (current *node, err error) {
+	current = &node{
 		parent:  parent,
 		data:    &buf.data,
 		borders: [2]int{buf.index, 0},
@@ -39,10 +73,10 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (node *Nod
 	if parent != nil {
 		if parent.IsArray() {
 			size := len(parent.children)
-			node.index = &size
-			parent.children = append(parent.children, node)
+			current.index = &size
+			parent.children = append(parent.children, current)
 		} else if parent.IsObject() {
-			parent.children = append(parent.children, node)
+			parent.children = append(parent.children, current)
 			if *key == nil {
 				err = errorSymbol(buf)
 			} else {
@@ -55,31 +89,31 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (node *Nod
 	return
 }
 
-func (n *Node) Source() []byte {
+func (n *node) Source() []byte {
 	return (*n.data)[n.borders[0]:n.borders[1]]
 }
 
-func (n *Node) String() string {
+func (n *node) String() string {
 	return string(n.Source())
 }
 
-func (n *Node) Type() NodeType {
+func (n *node) Type() NodeType {
 	return n._type
 }
 
-func (n *Node) Key() string {
+func (n *node) Key() string {
 	return *n.key
 }
 
-func (n *Node) Index() int {
+func (n *node) Index() int {
 	return *n.index
 }
 
-func (n *Node) Size() int {
+func (n *node) Size() int {
 	return len(n.children)
 }
 
-func (n *Node) Keys() (result []string) {
+func (n *node) Keys() (result []string) {
 	result = make([]string, 0, len(n.children))
 	for _, child := range n.children {
 		if child.key != nil {
@@ -89,31 +123,31 @@ func (n *Node) Keys() (result []string) {
 	return
 }
 
-func (n *Node) IsArray() bool {
+func (n *node) IsArray() bool {
 	return n._type == Array
 }
 
-func (n *Node) IsObject() bool {
+func (n *node) IsObject() bool {
 	return n._type == Object
 }
 
-func (n *Node) IsNull() bool {
+func (n *node) IsNull() bool {
 	return n._type == Null
 }
 
-func (n *Node) IsNumeric() bool {
+func (n *node) IsNumeric() bool {
 	return n._type == Numeric
 }
 
-func (n *Node) IsString() bool {
+func (n *node) IsString() bool {
 	return n._type == String
 }
 
-func (n *Node) IsBool() bool {
+func (n *node) IsBool() bool {
 	return n._type == Bool
 }
 
-func (n *Node) Value() (value interface{}, err error) {
+func (n *node) Value() (value interface{}, err error) {
 	value = n.value.Load()
 	if value == nil {
 		switch n._type {
@@ -134,12 +168,12 @@ func (n *Node) Value() (value interface{}, err error) {
 			value = b == 't' || b == 'T'
 			n.value.Store(value)
 		case Array:
-			children := make([]*Node, 0, len(n.children))
+			children := make([]*node, 0, len(n.children))
 			children = append(children, n.children...)
 			value = children
 			n.value.Store(value)
 		case Object:
-			result := make(map[string]*Node)
+			result := make(map[string]*node)
 			for _, child := range n.children {
 				result[child.Key()] = child
 			}
@@ -150,14 +184,14 @@ func (n *Node) Value() (value interface{}, err error) {
 	return
 }
 
-func (n *Node) GetNull() (value interface{}, err error) {
+func (n *node) GetNull() (value interface{}, err error) {
 	if n._type != Null {
 		return value, errorType()
 	}
 	return
 }
 
-func (n *Node) GetNumeric() (value float64, err error) {
+func (n *node) GetNumeric() (value float64, err error) {
 	if n._type != Numeric {
 		return value, errorType()
 	}
@@ -169,7 +203,7 @@ func (n *Node) GetNumeric() (value float64, err error) {
 	return
 }
 
-func (n *Node) GetString() (value string, err error) {
+func (n *node) GetString() (value string, err error) {
 	if n._type != String {
 		return value, errorType()
 	}
@@ -181,7 +215,7 @@ func (n *Node) GetString() (value string, err error) {
 	return
 }
 
-func (n *Node) GetBool() (value bool, err error) {
+func (n *node) GetBool() (value bool, err error) {
 	if n._type != Bool {
 		return value, errorType()
 	}
@@ -193,7 +227,7 @@ func (n *Node) GetBool() (value bool, err error) {
 	return
 }
 
-func (n *Node) GetArray() (value []*Node, err error) {
+func (n *node) GetArray() (value []Node, err error) {
 	if n._type != Array {
 		return value, errorType()
 	}
@@ -201,11 +235,11 @@ func (n *Node) GetArray() (value []*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	value = iValue.([]*Node)
+	value = iValue.([]Node)
 	return
 }
 
-func (n *Node) GetObject() (value map[string]*Node, err error) {
+func (n *node) GetObject() (value map[string]Node, err error) {
 	if n._type != Object {
 		return value, errorType()
 	}
@@ -213,11 +247,11 @@ func (n *Node) GetObject() (value map[string]*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	value = iValue.(map[string]*Node)
+	value = iValue.(map[string]Node)
 	return
 }
 
-func (n *Node) MustNull() (value interface{}) {
+func (n *node) MustNull() (value interface{}) {
 	value, err := n.GetNull()
 	if err != nil {
 		panic(err)
@@ -225,7 +259,7 @@ func (n *Node) MustNull() (value interface{}) {
 	return
 }
 
-func (n *Node) MustNumeric() (value float64) {
+func (n *node) MustNumeric() (value float64) {
 	value, err := n.GetNumeric()
 	if err != nil {
 		panic(err)
@@ -233,7 +267,7 @@ func (n *Node) MustNumeric() (value float64) {
 	return
 }
 
-func (n *Node) MustString() (value string) {
+func (n *node) MustString() (value string) {
 	value, err := n.GetString()
 	if err != nil {
 		panic(err)
@@ -241,7 +275,7 @@ func (n *Node) MustString() (value string) {
 	return
 }
 
-func (n *Node) MustBool() (value bool) {
+func (n *node) MustBool() (value bool) {
 	value, err := n.GetBool()
 	if err != nil {
 		panic(err)
@@ -249,7 +283,7 @@ func (n *Node) MustBool() (value bool) {
 	return
 }
 
-func (n *Node) MustArray() (value []*Node) {
+func (n *node) MustArray() (value []Node) {
 	value, err := n.GetArray()
 	if err != nil {
 		panic(err)
@@ -257,7 +291,7 @@ func (n *Node) MustArray() (value []*Node) {
 	return
 }
 
-func (n *Node) MustObject() (value map[string]*Node) {
+func (n *node) MustObject() (value map[string]Node) {
 	value, err := n.GetObject()
 	if err != nil {
 		panic(err)
@@ -265,10 +299,10 @@ func (n *Node) MustObject() (value map[string]*Node) {
 	return
 }
 
-func (n *Node) ready() bool {
+func (n *node) ready() bool {
 	return n.borders[1] != 0
 }
 
-func (n *Node) isContainer() bool {
+func (n *node) isContainer() bool {
 	return n._type == Array || n._type == Object
 }

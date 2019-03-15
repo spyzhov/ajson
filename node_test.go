@@ -22,12 +22,12 @@ func TestNode_ValueSimple(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			node := &Node{
+			current := &node{
 				_type:   test._type,
 				borders: [2]int{0, len(test.bytes)},
 				data:    &test.bytes,
 			}
-			value, err := node.Value()
+			value, err := current.Value()
 			if err != nil {
 				t.Errorf("Error on get value: %s", err.Error())
 			} else if value != test.expected {
