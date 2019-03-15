@@ -43,6 +43,7 @@
 # Benchmark
 
 ```
+packages                       encoding/json spyzhov/ajson
 benchmark                      old ns/op     new ns/op     delta
-BenchmarkUnmarshal_AJSON-12     10898         7303          -32.99%
+BenchmarkUnmarshal_JSON-12     10898         7303          -32.99%
 ```
