@@ -35,7 +35,7 @@ func (err *Error) Error() string {
 	case UnexpectedEOF:
 		return fmt.Sprintf("unexpected end of file")
 	case WrongType:
-		return fmt.Sprintf("wrong type of node")
+		return fmt.Sprintf("wrong type of Node")
 	}
 	return fmt.Sprintf("unknown error: '%s' at %d", []byte{err.Char}, err.Index)
 }

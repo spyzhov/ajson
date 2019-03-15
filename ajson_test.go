@@ -3,6 +3,7 @@ package ajson
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 )
 
@@ -462,5 +463,67 @@ func BenchmarkUnmarshal_JSON(b *testing.B) {
 		if err != nil || root == nil {
 			b.Errorf("Error on Unmarshal")
 		}
+	}
+}
+
+// Calculate AVG price from any type of objects
+func ExampleUnmarshal() {
+	data := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": [
+      { "color": "red",
+        "price": 19.95
+      }
+    ]
+  }
+}`)
+
+	root, err := Unmarshal(data)
+	if err != nil {
+		panic(err)
+	}
+	store, err := root.MustObject()["store"].GetObject()
+	if err != nil {
+		panic(err)
+	}
+
+	var prices float64 = 0
+	size := 0
+	for _, objects := range store {
+		if objects.IsArray() && objects.Size() > 0 {
+			size += objects.Size()
+			for _, object := range objects.MustArray() {
+				prices += object.MustObject()["price"].MustNumeric()
+			}
+		}
+	}
+
+	if size > 0 {
+		fmt.Println("AVG price: ", prices/float64(size))
+	} else {
+		fmt.Println("AVG price: ", 0)
 	}
 }

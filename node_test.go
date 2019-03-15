@@ -22,7 +22,7 @@ func TestNode_ValueSimple(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			current := &node{
+			current := &Node{
 				_type:   test._type,
 				borders: [2]int{0, len(test.bytes)},
 				data:    &test.bytes,

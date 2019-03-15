@@ -6,7 +6,6 @@
 - Global
 - [x] array support
 - [x] object support
-- [x] make Node to be interface
 - [x] add benchmarks
 - [ ] add trevis.ci
 - [ ] add README

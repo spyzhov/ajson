@@ -2,20 +2,20 @@ package ajson
 
 import "io"
 
-func UnmarshalSafe(body []byte) (root Node, err error) {
+func UnmarshalSafe(body []byte) (root *Node, err error) {
 	var safe []byte
 	safe = append(safe, body...)
 	return Unmarshal(safe)
 }
 
-func Unmarshal(body []byte) (root Node, err error) {
+func Unmarshal(body []byte) (root *Node, err error) {
 	buf := newBuffer(body)
 	var (
 		last    byte
 		b       byte
 		found   bool
 		key     *string
-		current *node
+		current *Node
 	)
 	// main loop: detect all parts of json struct
 	for {
@@ -157,14 +157,14 @@ func Unmarshal(body []byte) (root Node, err error) {
 	return
 }
 
-func previous(current *node) *node {
+func previous(current *Node) *Node {
 	if current.parent != nil {
 		return current.parent
 	}
 	return current
 }
 
-func isCreatable(b byte, current *node, last byte, key *string) bool {
+func isCreatable(b byte, current *Node, last byte, key *string) bool {
 	if b == bracketL || b == bracesL || b == quotes || (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-' || b == 'e' || b == 'E' || b == 't' || b == 'T' || b == 'f' || b == 'F' || b == 'n' || b == 'N' {
 		if current == nil {
 			return key == nil
