@@ -135,7 +135,7 @@ func (n *Node) Value() (value interface{}, err error) {
 			n.value.Store(value)
 		case Array:
 			children := make([]*Node, 0, len(n.children))
-			copy(n.children, children)
+			children = append(children, n.children...)
 			value = children
 			n.value.Store(value)
 		case Object:
