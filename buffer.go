@@ -31,14 +31,10 @@ var (
 	_false = []byte("false")
 )
 
-func newBuffer(body []byte, safe bool) (b *buffer) {
+func newBuffer(body []byte) (b *buffer) {
 	b = &buffer{
 		length: len(body),
-	}
-	if safe {
-		copy(body, b.data)
-	} else {
-		b.data = body
+		data:   body,
 	}
 	return
 }

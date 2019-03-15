@@ -68,7 +68,7 @@ func simpleCorrupted(name string) testCase {
 }
 
 func simpleValid(test *testCase, t *testing.T) {
-	root, err := Unmarshal(test.input, false)
+	root, err := Unmarshal(test.input)
 	if err != nil {
 		t.Errorf("Error on Unmarshal(%s): %s", test.name, err.Error())
 	} else if root == nil {
@@ -81,7 +81,7 @@ func simpleValid(test *testCase, t *testing.T) {
 }
 
 func simpleInvalid(test *testCase, t *testing.T) {
-	root, err := Unmarshal(test.input, false)
+	root, err := Unmarshal(test.input)
 	if err == nil {
 		t.Errorf("Error on Unmarshal(%s): error expected, got '%s'", test.name, root.Source())
 	} else if root != nil {
@@ -351,7 +351,7 @@ func TestUnmarshal_ObjectSimpleCorrupted(t *testing.T) {
 }
 
 func TestUnmarshal_Array(t *testing.T) {
-	root, err := Unmarshal([]byte(" [1,[\"1\",[1,[1,2,3]]]]\r\n"), false)
+	root, err := Unmarshal([]byte(" [1,[\"1\",[1,[1,2,3]]]]\r\n"))
 	if err != nil {
 		t.Errorf("Error on Unmarshal: %s", err.Error())
 	} else if root == nil {
@@ -381,7 +381,7 @@ func TestUnmarshal_Array(t *testing.T) {
 }
 
 func TestUnmarshal_Object(t *testing.T) {
-	root, err := Unmarshal([]byte(`{"foo":{"bar":[null]}, "baz":true}`), false)
+	root, err := Unmarshal([]byte(`{"foo":{"bar":[null]}, "baz":true}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal: %s", err.Error())
 	} else if root == nil {
@@ -414,9 +414,41 @@ func TestUnmarshal_Object(t *testing.T) {
 	}
 }
 
+func TestUnmarshalSafe(t *testing.T) {
+	safe, err := UnmarshalSafe(jsonExample)
+	if err != nil {
+		t.Errorf("Error on Unmarshal: %s", err.Error())
+	} else if safe == nil {
+		t.Errorf("Error on Unmarshal: safe is nil")
+	} else {
+		root, err := Unmarshal(jsonExample)
+		if err != nil {
+			t.Errorf("Error on Unmarshal: %s", err.Error())
+		} else if root == nil {
+			t.Errorf("Error on Unmarshal: root is nil")
+		} else if !bytes.Equal(root.Source(), safe.Source()) {
+			t.Errorf("Error on UnmarshalSafe: values not same")
+		}
+	}
+}
+
+func TestUnmarshal_Must(t *testing.T) {
+	root, err := Unmarshal(jsonExample)
+	if err != nil {
+		t.Errorf("Error on Unmarshal: %s", err.Error())
+	} else if root == nil {
+		t.Errorf("Error on Unmarshal: root is nil")
+	} else {
+		category := root.MustObject()["store"].MustObject()["book"].MustArray()[2].MustObject()["category"].MustString()
+		if category != "fiction" {
+			t.Errorf("Error on Unmarshal: data corrupted")
+		}
+	}
+}
+
 func BenchmarkUnmarshal_AJSON(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		root, err := Unmarshal(jsonExample, false)
+		root, err := Unmarshal(jsonExample)
 		if err != nil || root == nil {
 			b.Errorf("Error on Unmarshal")
 		}

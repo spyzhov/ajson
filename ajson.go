@@ -2,8 +2,14 @@ package ajson
 
 import "io"
 
-func Unmarshal(body []byte, safe bool) (root Node, err error) {
-	buf := newBuffer(body, safe)
+func UnmarshalSafe(body []byte) (root Node, err error) {
+	var safe []byte
+	safe = append(safe, body...)
+	return Unmarshal(safe)
+}
+
+func Unmarshal(body []byte) (root Node, err error) {
+	buf := newBuffer(body)
 	var (
 		last    byte
 		b       byte

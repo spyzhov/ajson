@@ -168,12 +168,14 @@ func (n *node) Value() (value interface{}, err error) {
 			value = b == 't' || b == 'T'
 			n.value.Store(value)
 		case Array:
-			children := make([]*node, 0, len(n.children))
-			children = append(children, n.children...)
+			children := make([]Node, 0, len(n.children))
+			for _, child := range n.children {
+				children = append(children, child)
+			}
 			value = children
 			n.value.Store(value)
 		case Object:
-			result := make(map[string]*node)
+			result := make(map[string]Node)
 			for _, child := range n.children {
 				result[child.Key()] = child
 			}
