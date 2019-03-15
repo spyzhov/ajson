@@ -7,7 +7,7 @@
 - [x] array support
 - [x] object support
 - [ ] make Node to be interface
-- [ ] add benchmarks
+- [x] add benchmarks
 - [ ] add trevis.ci
 - [ ] add README
 - [ ] add documentation (go doc)
@@ -39,3 +39,10 @@
 - [x] fix iota use
 - future
 - [ ] use io.Reader instead of []byte
+
+# Benchmark
+
+```
+benchmark                      old ns/op     new ns/op     delta
+BenchmarkUnmarshal_AJSON-12     10898         7303          -32.99%
+```

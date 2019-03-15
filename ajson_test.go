@@ -2,8 +2,59 @@ package ajson
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 )
+
+var (
+	jsonExample = []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`)
+)
+
+type storeExample struct {
+	Store struct {
+		Book []struct {
+			Category string  `json:"category"`
+			Author   string  `json:"author"`
+			Title    string  `json:"title"`
+			Price    float64 `json:"price"`
+			Isbn     string  `json:"isbn,omitempty"`
+		} `json:"book"`
+		Bicycle struct {
+			Color string  `json:"color"`
+			Price float64 `json:"price"`
+		} `json:"bicycle"`
+	} `json:"store"`
+}
 
 type testCase struct {
 	name  string
@@ -359,6 +410,25 @@ func TestUnmarshal_Object(t *testing.T) {
 			t.Errorf("Error on baz.GetBool(): %s", err.Error())
 		} else if !val {
 			t.Errorf("Error on getting boolean")
+		}
+	}
+}
+
+func BenchmarkUnmarshal_AJSON(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		root, err := Unmarshal(jsonExample, false)
+		if err != nil || root == nil {
+			b.Errorf("Error on Unmarshal")
+		}
+	}
+}
+
+func BenchmarkUnmarshal_JSON(b *testing.B) {
+	root := new(storeExample)
+	for i := 0; i < b.N; i++ {
+		err := json.Unmarshal(jsonExample, &root)
+		if err != nil || root == nil {
+			b.Errorf("Error on Unmarshal")
 		}
 	}
 }
