@@ -16,16 +16,15 @@
 - [x] ‌Value() => Source()
 - [x] add func Value() interface{}
 - [x] add tests
-- [ ] add method Unpack() interface {}
-- Functions 
-- [ ] func JsonPath(data [] byte, path string, clone bool) ([]*Node, error) 
-- [ ] func (n *Node) JsonPath(path string) ([]*Node, error)
-- Sugar
+- [x] add method Unpack() interface {}
 - [x] ‌Node: Type -> IsArray, IsNumeric,...
 - [x] ‌Node: Value -> GetArray, GetNumeric,...
 - [x] ‌Node: Must -> MustArray, MustNumeric...
 - [x] add ‌node.Keys() []string
 - [x] add ‌node.Size() int
+- Functions 
+- [ ] func JsonPath(data [] byte, path string, clone bool) ([]*Node, error) 
+- [ ] func (n *Node) JsonPath(path string) ([]*Node, error)
 - buffer
 - [x] ‌const: coma
 - [ ] add tests

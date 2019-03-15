@@ -267,6 +267,45 @@ func (n *Node) MustObject() (value map[string]*Node) {
 	return
 }
 
+// Recursive: Unpack value to interface
+func (n *Node) Unpack() (value interface{}, err error) {
+	switch n._type {
+	case Null:
+		return nil, nil
+	case Numeric:
+		value, err = strconv.ParseFloat(string(n.Source()), 64)
+		if err != nil {
+			return
+		}
+	case String:
+		size := len(n.Source())
+		value = string(n.Source()[1 : size-1])
+	case Bool:
+		b := n.Source()[0]
+		value = b == 't' || b == 'T'
+	case Array:
+		children := make([]interface{}, 0, len(n.children))
+		for _, child := range n.children {
+			val, err := child.Unpack()
+			if err != nil {
+				return nil, err
+			}
+			children = append(children, val)
+		}
+		value = children
+	case Object:
+		result := make(map[string]interface{})
+		for _, child := range n.children {
+			result[child.Key()], err = child.Unpack()
+			if err != nil {
+				return nil, err
+			}
+		}
+		value = result
+	}
+	return
+}
+
 func (n *Node) ready() bool {
 	return n.borders[1] != 0
 }

@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -32,6 +33,40 @@ func TestNode_ValueSimple(t *testing.T) {
 				t.Errorf("Error on get value: %s", err.Error())
 			} else if value != test.expected {
 				t.Errorf("Error on get value: '%v' != '%v'", value, test.expected)
+			}
+		})
+	}
+}
+
+func TestNode_Unpack(t *testing.T) {
+	tests := []struct {
+		value string
+	}{
+		{value: `1`},
+		{value: `true`},
+		{value: `null`},
+		{value: `{}`},
+		{value: `[]`},
+		{value: `[1,2,3]`},
+		{value: `[1,{},null]`},
+		{value: `{"foo":["bar",null]}`},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			root, err := Unmarshal([]byte(test.value))
+			if err != nil {
+				t.Errorf("Error on Unmarshal(): %s", err.Error())
+			}
+			unpacked, err := root.Unpack()
+			if err != nil {
+				t.Errorf("Error on root.Unpack(): %s", err.Error())
+			}
+			marshalled, err := json.Marshal(unpacked)
+			if err != nil {
+				t.Errorf("Error on json.Marshal(): %s", err.Error())
+			}
+			if string(marshalled) != test.value {
+				t.Errorf("Wrong structure: '%s' != '%s'", string(marshalled), test.value)
 			}
 		})
 	}
