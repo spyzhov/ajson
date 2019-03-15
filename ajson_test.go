@@ -246,6 +246,7 @@ func TestUnmarshal_ArraySimpleCorrupted(t *testing.T) {
 		simpleCorrupted("1[]"),
 		simpleCorrupted("[]1"),
 		simpleCorrupted("[[]1]"),
+		simpleCorrupted("‌[],[]"),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -350,6 +351,14 @@ func TestUnmarshal_Object(t *testing.T) {
 			t.Errorf("Error on getting bar from map")
 		} else if !bar.IsArray() {
 			t.Errorf("Child element type error [bar]")
+		} else if baz, ok := object["baz"]; !ok {
+			t.Errorf("Error on getting baz from map")
+		} else if !baz.IsBool() {
+			t.Errorf("Child element type error [baz]")
+		} else if val, err := baz.GetBool(); err != nil {
+			t.Errorf("Error on baz.GetBool(): %s", err.Error())
+		} else if !val {
+			t.Errorf("Error on getting boolean")
 		}
 	}
 }

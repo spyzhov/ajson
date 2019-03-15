@@ -31,11 +31,11 @@ var (
 	_false = []byte("false")
 )
 
-func newBuffer(body []byte, clone bool) (b *buffer) {
+func newBuffer(body []byte, safe bool) (b *buffer) {
 	b = &buffer{
 		length: len(body),
 	}
-	if clone {
+	if safe {
 		copy(body, b.data)
 	} else {
 		b.data = body
@@ -95,13 +95,13 @@ func (b *buffer) backslash() (result bool) {
 	return
 }
 
-func (b *buffer) skip(s byte) bool {
+func (b *buffer) skip(s byte) error {
 	for ; b.index < b.length; b.index++ {
 		if b.data[b.index] == s && !b.backslash() {
-			return true
+			return nil
 		}
 	}
-	return false
+	return io.EOF
 }
 
 func (b *buffer) numeric() error {
@@ -148,7 +148,7 @@ func (b *buffer) string() error {
 	if err != nil {
 		return errorEOF(b)
 	}
-	if !b.skip(quotes) {
+	if b.skip(quotes) != nil {
 		return errorEOF(b)
 	}
 	return nil
