@@ -33,6 +33,10 @@ func TestNode_ValueSimple(t *testing.T) {
 				t.Errorf("Error on get value: %s", err.Error())
 			} else if value != test.expected {
 				t.Errorf("Error on get value: '%v' != '%v'", value, test.expected)
+			} else if value2, err := current.Value(); err != nil {
+				t.Errorf("Error on get value 2: %s", err.Error())
+			} else if value != value2 {
+				t.Errorf("Error on get value 2: '%v' != '%v'", value, value2)
 			}
 		})
 	}

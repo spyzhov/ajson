@@ -1,15 +1,21 @@
+//Package ajson implements decoding of JSON as defined in RFC 7159 without predefined mapping to a struct of golang.
+//All JSON structs reflects to a custom struct of Node, witch can be presented by it type and value.
 package ajson
 
 import "io"
 
-func UnmarshalSafe(body []byte) (root *Node, err error) {
+//Do the same thing as Unmarshal, but copy data to the local variable, to make it editable.
+func UnmarshalSafe(data []byte) (root *Node, err error) {
 	var safe []byte
-	safe = append(safe, body...)
+	safe = append(safe, data...)
 	return Unmarshal(safe)
 }
 
-func Unmarshal(body []byte) (root *Node, err error) {
-	buf := newBuffer(body)
+//Unmarshal parses the JSON-encoded data and return the root node of struct.
+//
+//Doesn't calculate values, just type of stored value. It will store link to the data, on all life long.
+func Unmarshal(data []byte) (root *Node, err error) {
+	buf := newBuffer(data)
 	var (
 		last    byte
 		b       byte

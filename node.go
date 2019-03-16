@@ -5,7 +5,20 @@ import (
 	"sync/atomic"
 )
 
-// Main struct, presents any json Node
+//Main struct, presents any type of JSON node.
+//Available types are:
+//
+//	const (
+//		Null NodeType = iota
+//		Numeric
+//		String
+//		Bool
+//		Array
+//		Object
+//	)
+//
+//Every type has its own methods to be called.
+//Every Node contains link to a byte data, parent and children, also calculated type of value, atomic value and internal information.
 type Node struct {
 	parent   *Node
 	children []*Node
@@ -20,6 +33,15 @@ type Node struct {
 
 type NodeType int
 
+//Every NodeType is a kind of reflection of JSON type to a type of golang.
+//
+//	Null    = interface{}
+//	Numeric = float64
+//	String  = string
+//	Bool    = bool
+//	Array   = []*Node
+//	Object  = map[string]*Node
+//
 const (
 	Null NodeType = iota
 	Numeric
@@ -59,6 +81,10 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 	return
 }
 
+func (n *Node) Parent() *Node {
+	return n.parent
+}
+
 func (n *Node) Source() []byte {
 	return (*n.data)[n.borders[0]:n.borders[1]]
 }
@@ -85,7 +111,7 @@ func (n *Node) Size() int {
 
 func (n *Node) Keys() (result []string) {
 	result = make([]string, 0, len(n.children))
-	for key, _ := range n.keys {
+	for key := range n.keys {
 		result = append(result, key)
 	}
 	return

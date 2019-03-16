@@ -39,3 +39,5 @@
 - [x] fix iota use
 - future
 - [ ] use io.Reader instead of []byte
+- refactoring
+- [ ] try to remove node.borders

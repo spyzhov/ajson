@@ -672,7 +672,7 @@ func BenchmarkUnmarshal_JSON(b *testing.B) {
 	}
 }
 
-// Calculate AVG price from any type of objects, JSON from: https://goessner.net/articles/JsonPath/index.html#e3
+// Calculate AVG price from different types of objects, JSON from: https://goessner.net/articles/JsonPath/index.html#e3
 func ExampleUnmarshal() {
 	data := []byte(`{ "store": {
     "book": [ 
@@ -735,7 +735,7 @@ func ExampleUnmarshal() {
 }
 
 // Unpack object interface and render html link. JSON from: https://tools.ietf.org/html/rfc7159#section-13
-func ExampleUnmarshal_2() {
+func ExampleUnmarshal_unpack() {
 	data := []byte(`{
         "Image": {
             "Width":  800,
