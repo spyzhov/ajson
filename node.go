@@ -306,6 +306,44 @@ func (n *Node) Unpack() (value interface{}, err error) {
 	return
 }
 
+func (n *Node) GetIndex(index int) (*Node, error) {
+	if n._type != Array {
+		return nil, errorType()
+	}
+	if index < 0 || index >= len(n.children) {
+		return nil, errorRequest()
+	}
+	return n.children[index], nil
+}
+
+func (n *Node) MustIndex(index int) (value *Node) {
+	value, err := n.GetIndex(index)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+func (n *Node) GetKey(key string) (*Node, error) { // TODO: refactor
+	if n._type != Object {
+		return nil, errorType()
+	}
+	for _, value := range n.children {
+		if value.key != nil && *value.key == key {
+			return value, nil
+		}
+	}
+	return nil, errorRequest()
+}
+
+func (n *Node) MustKey(key string) (value *Node) {
+	value, err := n.GetKey(key)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
 func (n *Node) ready() bool {
 	return n.borders[1] != 0
 }

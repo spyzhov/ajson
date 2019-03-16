@@ -22,6 +22,7 @@
 - [x] ‌Node: Must -> MustArray, MustNumeric...
 - [x] add ‌node.Keys() []string
 - [x] add ‌node.Size() int
+- [x] add ‌node.GetKey(string) & ‌node.GetIndex(int) + Must*
 - Functions 
 - [ ] func JsonPath(data [] byte, path string, clone bool) ([]*Node, error) 
 - [ ] func (n *Node) JsonPath(path string) ([]*Node, error)

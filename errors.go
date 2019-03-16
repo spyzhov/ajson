@@ -14,6 +14,7 @@ const (
 	WrongSymbol ErrorType = iota
 	UnexpectedEOF
 	WrongType
+	WrongRequest
 )
 
 func errorSymbol(b *buffer) error {
@@ -28,6 +29,10 @@ func errorType() error {
 	return &Error{Type: WrongType}
 }
 
+func errorRequest() error {
+	return &Error{Type: WrongRequest}
+}
+
 func (err *Error) Error() string {
 	switch err.Type {
 	case WrongSymbol:
@@ -36,6 +41,8 @@ func (err *Error) Error() string {
 		return fmt.Sprintf("unexpected end of file")
 	case WrongType:
 		return fmt.Sprintf("wrong type of Node")
+	case WrongRequest:
+		return fmt.Sprintf("wrong request")
 	}
 	return fmt.Sprintf("unknown error: '%s' at %d", []byte{err.Char}, err.Index)
 }
