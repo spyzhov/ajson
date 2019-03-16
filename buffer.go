@@ -49,37 +49,6 @@ func (b *buffer) first() (c byte, err error) {
 	return 0, io.EOF
 }
 
-func (b *buffer) next() (c byte, err error) {
-	if err := b.step(); err != nil {
-		return 0, err
-	}
-	return b.first()
-}
-
-func (b *buffer) scan(s byte, skip bool) (from, to int, err error) {
-	var c byte
-	find := false
-	from = b.index
-	to = b.index
-	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
-		if c == s && !b.backslash() {
-			err = b.step()
-			return
-		}
-		if skip && (c == skipS || c == skipR || c == skipN || c == skipT) {
-			if !find {
-				from++
-				to++
-			}
-		} else {
-			find = true
-			to++
-		}
-	}
-	return -1, -1, io.EOF
-}
-
 func (b *buffer) backslash() (result bool) {
 	for i := b.index - 1; i >= 0; i-- {
 		if b.data[i] == backslash {

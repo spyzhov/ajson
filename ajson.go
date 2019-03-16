@@ -123,7 +123,7 @@ func Unmarshal(body []byte) (root *Node, err error) {
 			found = true
 			current = previous(current)
 		case b == coma:
-			if last == coma || current == nil || len(current.children) == 0 || !found {
+			if last == coma || current == nil || current.Empty() || !found {
 				return nil, errorSymbol(buf)
 			} else {
 				found = false

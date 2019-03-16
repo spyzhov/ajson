@@ -9,6 +9,7 @@ import (
 type Node struct {
 	parent   *Node
 	children []*Node
+	keys     map[string]*Node
 	key      *string
 	index    *int
 	_type    NodeType
@@ -36,16 +37,19 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 		_type:   _type,
 		key:     *key,
 	}
+	if _type == Object {
+		current.keys = make(map[string]*Node)
+	}
 	if parent != nil {
 		if parent.IsArray() {
 			size := len(parent.children)
 			current.index = &size
 			parent.children = append(parent.children, current)
 		} else if parent.IsObject() {
-			parent.children = append(parent.children, current)
 			if *key == nil {
 				err = errorSymbol(buf)
 			} else {
+				parent.keys[**key] = current
 				*key = nil
 			}
 		} else {
@@ -81,10 +85,8 @@ func (n *Node) Size() int {
 
 func (n *Node) Keys() (result []string) {
 	result = make([]string, 0, len(n.children))
-	for _, child := range n.children {
-		if child.key != nil {
-			result = append(result, *child.key)
-		}
+	for key, _ := range n.keys {
+		result = append(result, key)
 	}
 	return
 }
@@ -142,8 +144,8 @@ func (n *Node) Value() (value interface{}, err error) {
 			n.value.Store(value)
 		case Object:
 			result := make(map[string]*Node)
-			for _, child := range n.children {
-				result[child.Key()] = child
+			for key, child := range n.keys {
+				result[key] = child
 			}
 			value = result
 			n.value.Store(value)
@@ -295,8 +297,8 @@ func (n *Node) Unpack() (value interface{}, err error) {
 		value = children
 	case Object:
 		result := make(map[string]interface{})
-		for _, child := range n.children {
-			result[child.Key()], err = child.Unpack()
+		for key, child := range n.keys {
+			result[key], err = child.Unpack()
 			if err != nil {
 				return nil, err
 			}
@@ -324,16 +326,15 @@ func (n *Node) MustIndex(index int) (value *Node) {
 	return
 }
 
-func (n *Node) GetKey(key string) (*Node, error) { // TODO: refactor
+func (n *Node) GetKey(key string) (*Node, error) {
 	if n._type != Object {
 		return nil, errorType()
 	}
-	for _, value := range n.children {
-		if value.key != nil && *value.key == key {
-			return value, nil
-		}
+	value, ok := n.keys[key]
+	if !ok {
+		return nil, errorRequest()
 	}
-	return nil, errorRequest()
+	return value, nil
 }
 
 func (n *Node) MustKey(key string) (value *Node) {
@@ -342,6 +343,10 @@ func (n *Node) MustKey(key string) (value *Node) {
 		panic(err)
 	}
 	return
+}
+
+func (n *Node) Empty() bool {
+	return len(n.children) == 0 && len(n.keys) == 0
 }
 
 func (n *Node) ready() bool {

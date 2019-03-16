@@ -24,8 +24,9 @@
 - [x] add ‌node.Size() int
 - [x] add ‌node.GetKey(string) & ‌node.GetIndex(int) + Must*
 - Functions 
-- [ ] func JsonPath(data [] byte, path string, clone bool) ([]*Node, error) 
+- [ ] func JsonPath(data [] byte, path string) ([]*Node, error) 
 - [ ] func (n *Node) JsonPath(path string) ([]*Node, error)
+- [ ] func Validate(data [] byte, path string) error
 - buffer
 - [x] ‌const: coma
 - [ ] add tests
@@ -38,11 +39,3 @@
 - [x] fix iota use
 - future
 - [ ] use io.Reader instead of []byte
-
-# Benchmark
-
-```
-packages                       encoding/json spyzhov/ajson
-benchmark                      old ns/op     new ns/op     delta
-BenchmarkUnmarshal_JSON-12     10898         7303          -32.99%
-```
