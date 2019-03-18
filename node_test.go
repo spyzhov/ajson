@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 )
@@ -379,5 +380,248 @@ func TestNode_Key(t *testing.T) {
 		if key != node.Key() {
 			t.Errorf("Wrong node.Index(): '%s' != '%s'", key, node.Key())
 		}
+	}
+}
+
+func TestNode_IsArray(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if !root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_IsObject(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if !root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_IsString(t *testing.T) {
+	root, err := Unmarshal([]byte(`"123"`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if !root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_IsNumeric(t *testing.T) {
+	root, err := Unmarshal([]byte(`+1.23e-1.01`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if !root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_IsBool(t *testing.T) {
+	root, err := Unmarshal([]byte(`true`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if !root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_IsNull(t *testing.T) {
+	root, err := Unmarshal([]byte(`null`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if root.IsArray() {
+		t.Errorf("Wrong root.IsArray()")
+	}
+	if root.IsObject() {
+		t.Errorf("Wrong root.IsObject()")
+	}
+	if root.IsString() {
+		t.Errorf("Wrong root.IsString()")
+	}
+	if root.IsNumeric() {
+		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if root.IsBool() {
+		t.Errorf("Wrong root.IsBool()")
+	}
+	if !root.IsNull() {
+		t.Errorf("Wrong root.IsNull()")
+	}
+}
+
+func TestNode_Keys(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.Keys()
+	if len(value) != 2 {
+		t.Errorf("Wrong root.Keys()")
+	}
+	if value[0] != "foo" && value[0] != "bar" {
+		t.Errorf("Wrong value in 0")
+	}
+	if value[1] != "foo" && value[1] != "bar" {
+		t.Errorf("Wrong value in 1")
+	}
+}
+
+func TestNode_Size(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1,2,3,4]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.Size()
+	if value != 4 {
+		t.Errorf("Wrong root.Size()")
+	}
+}
+
+func TestNode_Parent(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.Parent()
+	if value != nil {
+		t.Errorf("Wrong root.Parent()")
+	}
+	value = root.MustKey("foo")
+	if value.Parent().String() != root.String() {
+		t.Errorf("Wrong value.Parent()")
+	}
+}
+
+func TestNode_Source(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.Source()
+	if !bytes.Equal(value, []byte(`{"foo":true,"bar":null}`)) {
+		t.Errorf("Wrong root.Source()")
+	}
+}
+
+func TestNode_String(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.String()
+	if value != `{"foo":true,"bar":null}` {
+		t.Errorf("Wrong root.String()")
+	}
+}
+
+func TestNode_Type(t *testing.T) {
+	tests := []struct {
+		_type NodeType
+		value string
+	}{
+		{value: "null", _type: Null},
+		{value: "123", _type: Numeric},
+		{value: "1.23e+3", _type: Numeric},
+		{value: `"1.23e+3"`, _type: String},
+		{value: `["1.23e+3"]`, _type: Array},
+		{value: `[]`, _type: Array},
+		{value: `{}`, _type: Object},
+		{value: `{"foo":1.23e+3}`, _type: Object},
+		{value: `true`, _type: Bool},
+		{value: `false`, _type: Bool},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			root, err := Unmarshal([]byte(test.value))
+			if err != nil {
+				t.Errorf("Error on Unmarshal('%s'): %s", test.value, err.Error())
+			} else if root.Type() != test._type {
+				t.Errorf("Wrong type on Unmarshal('%s')", test.value)
+			}
+		})
 	}
 }
