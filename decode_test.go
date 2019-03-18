@@ -716,7 +716,7 @@ func ExampleUnmarshal() {
 		panic(err)
 	}
 
-	var prices float64 = 0
+	var prices float64
 	size := 0
 	for _, objects := range store {
 		if objects.IsArray() && objects.Size() > 0 {

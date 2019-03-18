@@ -4,7 +4,7 @@ package ajson
 
 import "io"
 
-//Do the same thing as Unmarshal, but copy data to the local variable, to make it editable.
+//UnmarshalSafe do the same thing as Unmarshal, but copy data to the local variable, to make it editable.
 func UnmarshalSafe(data []byte) (root *Node, err error) {
 	var safe []byte
 	safe = append(safe, data...)
@@ -131,17 +131,15 @@ func Unmarshal(data []byte) (root *Node, err error) {
 		case b == coma:
 			if last == coma || current == nil || current.Empty() || !found {
 				return nil, errorSymbol(buf)
-			} else {
-				found = false
-				err = buf.step()
 			}
+			found = false
+			err = buf.step()
 		case b == colon:
 			if last != quotes || key == nil || found {
 				return nil, errorSymbol(buf)
-			} else {
-				found = false
-				err = buf.step()
 			}
+			found = false
+			err = buf.step()
 		default:
 			return nil, errorSymbol(buf)
 		}
