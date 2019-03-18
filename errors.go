@@ -2,18 +2,24 @@ package ajson
 
 import "fmt"
 
+//Error is common struct to provide internal errors
 type Error struct {
 	Type  ErrorType
 	Index int
 	Char  byte
 }
 
+//ErrorType is container for reflection type of error
 type ErrorType int
 
 const (
+	//WrongSymbol means that system found symbol than not allowed to be
 	WrongSymbol ErrorType = iota
+	//UnexpectedEOF means that data ended, leaving the node undone
 	UnexpectedEOF
+	//WrongType means that wrong type requested
 	WrongType
+	//WrongRequest means that wrong range requested
 	WrongRequest
 )
 
@@ -33,6 +39,7 @@ func errorRequest() error {
 	return &Error{Type: WrongRequest}
 }
 
+//Error interface implementation
 func (err *Error) Error() string {
 	switch err.Type {
 	case WrongSymbol:
