@@ -75,3 +75,309 @@ func TestNode_Unpack(t *testing.T) {
 		})
 	}
 }
+
+func TestNode_Value(t *testing.T) {
+	root, err := Unmarshal([]byte(`{ "category": null,
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99,
+        "ordered": true,
+        "tags": [],
+        "sub": {}
+      }`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	iValue, err := root.Value()
+	if err != nil {
+		t.Errorf("Error on root.Value(): %s", err.Error())
+	}
+	value, ok := iValue.(map[string]*Node)
+	if !ok {
+		t.Errorf("Value is not an Object map")
+	}
+	keys := []string{"category", "author", "title", "price", "ordered", "tags", "sub"}
+	for _, key := range keys {
+		if _, ok := value[key]; !ok {
+			t.Errorf("Object map has no field: " + key)
+		}
+	}
+}
+
+func TestNode_Empty(t *testing.T) {
+	root, err := Unmarshal([]byte(`{
+        "tag1": [1, 2, 3],
+        "tag2": [],
+        "sub1": {},
+        "sub2": {"foo":null}
+      }`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	iValue, err := root.Value()
+	if err != nil {
+		t.Errorf("Error on root.Value(): %s", err.Error())
+	}
+	value, ok := iValue.(map[string]*Node)
+	if !ok {
+		t.Errorf("Value is not an Object map")
+	}
+	if value["tag1"].Empty() {
+		t.Errorf("Node `tag1` is not empty")
+	}
+	if !value["tag2"].Empty() {
+		t.Errorf("Node `tag2` is empty")
+	}
+	if value["sub2"].Empty() {
+		t.Errorf("Node `sub2` is not empty")
+	}
+	if !value["sub1"].Empty() {
+		t.Errorf("Node `sub1` is empty")
+	}
+}
+
+func TestNode_GetArray(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	array, err := root.GetArray()
+	if err != nil {
+		t.Errorf("Error on root.GetArray(): %s", err.Error())
+	}
+	if len(array) != 3 {
+		t.Errorf("root.GetArray() is corrupted")
+	}
+}
+
+func TestNode_MustArray(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	array := root.MustArray()
+	if len(array) != 3 {
+		t.Errorf("root.GetArray() is corrupted")
+	}
+}
+
+func TestNode_GetBool(t *testing.T) {
+	root, err := Unmarshal([]byte(`true`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetBool()
+	if err != nil {
+		t.Errorf("Error on root.GetBool(): %s", err.Error())
+	}
+	if !value {
+		t.Errorf("root.GetBool() is corrupted")
+	}
+}
+
+func TestNode_MustBool(t *testing.T) {
+	root, err := Unmarshal([]byte(`true`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustBool()
+	if !value {
+		t.Errorf("root.MustBool() is corrupted")
+	}
+}
+
+func TestNode_GetIndex(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetIndex(1)
+	if err != nil {
+		t.Errorf("Error on root.GetIndex(): %s", err.Error())
+	}
+	if value.MustNumeric() != 2 {
+		t.Errorf("root.GetIndex() is corrupted")
+	}
+	value, err = root.GetIndex(10)
+	if err == nil {
+		t.Errorf("Error on root.GetIndex() - out of range")
+	}
+	if value != nil {
+		t.Errorf("Error on root.GetIndex() - wrong value")
+	}
+}
+
+func TestNode_MustIndex(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustIndex(1)
+	if value.MustNumeric() != 2 {
+		t.Errorf("root.GetIndex() is corrupted")
+	}
+}
+
+func TestNode_GetKey(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":2,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetKey("foo")
+	if err != nil {
+		t.Errorf("Error on root.GetKey(): %s", err.Error())
+	}
+	if value.MustNumeric() != 2 {
+		t.Errorf("root.GetKey() is corrupted")
+	}
+	value, err = root.GetKey("baz")
+	if err == nil {
+		t.Errorf("Error on root.GetKey() - wrong element")
+	}
+	if value != nil {
+		t.Errorf("Error on root.GetKey() - wrong value")
+	}
+}
+
+func TestNode_MustKey(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":2,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustKey("foo")
+	if value.MustNumeric() != 2 {
+		t.Errorf("root.GetKey() is corrupted")
+	}
+}
+
+func TestNode_GetNull(t *testing.T) {
+	root, err := Unmarshal([]byte(`null`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetNull()
+	if err != nil {
+		t.Errorf("Error on root.GetNull(): %s", err.Error())
+	}
+	if value != nil {
+		t.Errorf("root.GetNull() is corrupted")
+	}
+}
+
+func TestNode_MustNull(t *testing.T) {
+	root, err := Unmarshal([]byte(`null`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustNull()
+	if value != nil {
+		t.Errorf("root.MustNull() is corrupted")
+	}
+}
+
+func TestNode_GetNumeric(t *testing.T) {
+	root, err := Unmarshal([]byte(`123`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetNumeric()
+	if err != nil {
+		t.Errorf("Error on root.GetNumeric(): %s", err.Error())
+	}
+	if value != float64(123) {
+		t.Errorf("root.GetNumeric() is corrupted")
+	}
+}
+
+func TestNode_MustNumeric(t *testing.T) {
+	root, err := Unmarshal([]byte(`123`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustNumeric()
+	if value != float64(123) {
+		t.Errorf("root.GetNumeric() is corrupted")
+	}
+}
+
+func TestNode_GetObject(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetObject()
+	if err != nil {
+		t.Errorf("Error on root.GetObject(): %s", err.Error())
+	}
+	if _, ok := value["foo"]; !ok {
+		t.Errorf("root.GetObject() is corrupted: foo")
+	}
+	if _, ok := value["bar"]; !ok {
+		t.Errorf("root.GetObject() is corrupted: bar")
+	}
+}
+
+func TestNode_MustObject(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustObject()
+	if _, ok := value["foo"]; !ok {
+		t.Errorf("root.GetObject() is corrupted: foo")
+	}
+	if _, ok := value["bar"]; !ok {
+		t.Errorf("root.GetObject() is corrupted: bar")
+	}
+}
+
+func TestNode_GetString(t *testing.T) {
+	root, err := Unmarshal([]byte(`"123"`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value, err := root.GetString()
+	if err != nil {
+		t.Errorf("Error on root.GetString(): %s", err.Error())
+	}
+	if value != "123" {
+		t.Errorf("root.GetString() is corrupted")
+	}
+}
+
+func TestNode_MustString(t *testing.T) {
+	root, err := Unmarshal([]byte(`"123"`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	value := root.MustString()
+	if value != "123" {
+		t.Errorf("root.GetString() is corrupted")
+	}
+}
+
+func TestNode_Index(t *testing.T) {
+	root, err := Unmarshal([]byte(`[1, 2, 3]`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	array := root.MustArray()
+	for i, node := range array {
+		if i != node.Index() {
+			t.Errorf("Wrong node.Index(): %d != %d", i, node.Index())
+		}
+	}
+}
+
+func TestNode_Key(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":"bar", "baz":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	object := root.MustObject()
+	for key, node := range object {
+		if key != node.Key() {
+			t.Errorf("Wrong node.Index(): '%s' != '%s'", key, node.Key())
+		}
+	}
+}
