@@ -1,4 +1,8 @@
-# Abstract JSON
+# Abstract JSON 
+
+[![Build Status](https://travis-ci.com/spyzhov/ajson.svg?token=swf7VyTzTWuHyiC9QzT4&branch=master)](https://travis-ci.com/spyzhov/ajson)
+[![Go Report Card](https://goreportcard.com/badge/github.com/spyzhov/ajson)](https://goreportcard.com/report/github.com/spyzhov/ajson)
+
 
 
 # TODO
@@ -7,7 +11,7 @@
 - [x] array support
 - [x] object support
 - [x] add benchmarks
-- [ ] add trevis.ci
+- [x] add trevis.ci
 - [ ] add README
 - [ ] add documentation (go doc)
 - [ ] add examples

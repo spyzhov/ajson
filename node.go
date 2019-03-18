@@ -43,11 +43,17 @@ type NodeType int
 //	Object  = map[string]*Node
 //
 const (
+	//Null is reflection of `nil.(interface{})`
 	Null NodeType = iota
+	//Numeric is reflection of `float64`
 	Numeric
+	//String is reflection of `string`
 	String
+	//Bool is reflection of `bool`
 	Bool
+	//Array is reflection of `[]*Node`
 	Array
+	//Object is reflection of `map[string]*Node`
 	Object
 )
 
