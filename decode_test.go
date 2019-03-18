@@ -699,11 +699,10 @@ func ExampleUnmarshal() {
         "price": 22.99
       }
     ],
-    "bicycle": [
-      { "color": "red",
-        "price": 19.95
-      }
-    ]
+    "bicycle": { "color": "red",
+      "price": 19.95
+    },
+    "tools": null
   }
 }`)
 
@@ -711,10 +710,8 @@ func ExampleUnmarshal() {
 	if err != nil {
 		panic(err)
 	}
-	store, err := root.MustObject()["store"].GetObject()
-	if err != nil {
-		panic(err)
-	}
+
+	store := root.MustKey("store").MustObject()
 
 	var prices float64
 	size := 0
@@ -722,15 +719,18 @@ func ExampleUnmarshal() {
 		if objects.IsArray() && objects.Size() > 0 {
 			size += objects.Size()
 			for _, object := range objects.MustArray() {
-				prices += object.MustObject()["price"].MustNumeric()
+				prices += object.MustKey("price").MustNumeric()
 			}
+		} else if objects.IsObject() && objects.HasKey("price") {
+			size++
+			prices += objects.MustKey("price").MustNumeric()
 		}
 	}
 
 	if size > 0 {
-		fmt.Println("AVG price: ", prices/float64(size))
+		fmt.Println("AVG price:", prices/float64(size))
 	} else {
-		fmt.Println("AVG price: ", 0)
+		fmt.Println("AVG price:", 0)
 	}
 }
 

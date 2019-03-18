@@ -625,3 +625,19 @@ func TestNode_Type(t *testing.T) {
 		})
 	}
 }
+
+func TestNode_HasKey(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
+	if err != nil {
+		t.Errorf("Error on Unmarshal(): %s", err.Error())
+	}
+	if !root.HasKey("foo") {
+		t.Errorf("Wrong root.HasKey('foo')")
+	}
+	if !root.HasKey("bar") {
+		t.Errorf("Wrong root.HasKey('bar')")
+	}
+	if root.HasKey("baz") {
+		t.Errorf("Wrong root.HasKey('bar')")
+	}
+}

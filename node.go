@@ -425,6 +425,12 @@ func (n *Node) MustKey(key string) (value *Node) {
 	return
 }
 
+//HasKey will return boolean value, if current object node has custom key
+func (n *Node) HasKey(key string) bool {
+	_, ok := n.keys[key]
+	return ok
+}
+
 //Empty method check if current container node has no children
 func (n *Node) Empty() bool {
 	return len(n.children) == 0 && len(n.keys) == 0
