@@ -5,8 +5,8 @@ import (
 	"sync/atomic"
 )
 
-//Main struct, presents any type of JSON node.
-//Available types are:
+// Node is a main struct, presents any type of JSON node.
+// Available types are:
 //
 //	const (
 //		Null NodeType = iota
@@ -17,8 +17,8 @@ import (
 //		Object
 //	)
 //
-//Every type has its own methods to be called.
-//Every Node contains link to a byte data, parent and children, also calculated type of value, atomic value and internal information.
+// Every type has its own methods to be called.
+// Every Node contains link to a byte data, parent and children, also calculated type of value, atomic value and internal information.
 type Node struct {
 	parent   *Node
 	children []*Node
@@ -31,11 +31,12 @@ type Node struct {
 	value    atomic.Value
 }
 
+// NodeType is a kind of reflection of JSON type to a type of golang
 type NodeType int
 
-//Every NodeType is a kind of reflection of JSON type to a type of golang.
+// Reflections:
 //
-//	Null    = interface{}
+//	Null    = nil.(interface{})
 //	Numeric = float64
 //	String  = string
 //	Bool    = bool
@@ -43,17 +44,17 @@ type NodeType int
 //	Object  = map[string]*Node
 //
 const (
-	//Null is reflection of `nil.(interface{})`
+	//Null is reflection of nil.(interface{})
 	Null NodeType = iota
-	//Numeric is reflection of `float64`
+	//Numeric is reflection of float64
 	Numeric
-	//String is reflection of `string`
+	//String is reflection of string
 	String
-	//Bool is reflection of `bool`
+	//Bool is reflection of bool
 	Bool
-	//Array is reflection of `[]*Node`
+	//Array is reflection of []*Node
 	Array
-	//Object is reflection of `map[string]*Node`
+	//Object is reflection of map[string]*Node
 	Object
 )
 
@@ -87,66 +88,97 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 	return
 }
 
+//Parent returns link to the parent of current node, nil for root
 func (n *Node) Parent() *Node {
 	return n.parent
 }
 
+//Source returns slice of bytes, which was identified to be current node
 func (n *Node) Source() []byte {
 	return (*n.data)[n.borders[0]:n.borders[1]]
 }
 
+//String is implementation of Stringer interface, returns string based on source part
 func (n *Node) String() string {
 	return string(n.Source())
 }
 
+//Type will return type of current node
 func (n *Node) Type() NodeType {
 	return n._type
 }
 
+//Key will return key of current node, please check, that parent of this node has an Object type
 func (n *Node) Key() string {
 	return *n.key
 }
 
+//Index will return index of current node, please check, that parent of this node has an Array type
 func (n *Node) Index() int {
 	return *n.index
 }
 
+//Size will return count of children of current node, please check, that parent of this node has an Array type
 func (n *Node) Size() int {
 	return len(n.children)
 }
 
+//Keys will return count all keys of children of current node, please check, that parent of this node has an Object type
 func (n *Node) Keys() (result []string) {
-	result = make([]string, 0, len(n.children))
+	result = make([]string, 0, len(n.keys))
 	for key := range n.keys {
 		result = append(result, key)
 	}
 	return
 }
 
+//IsArray returns true if current node is Array
 func (n *Node) IsArray() bool {
 	return n._type == Array
 }
 
+//IsObject returns true if current node is Object
 func (n *Node) IsObject() bool {
 	return n._type == Object
 }
 
+//IsNull returns true if current node is Null
 func (n *Node) IsNull() bool {
 	return n._type == Null
 }
 
+//IsNumeric returns true if current node is Numeric
 func (n *Node) IsNumeric() bool {
 	return n._type == Numeric
 }
 
+//IsString returns true if current node is String
 func (n *Node) IsString() bool {
 	return n._type == String
 }
 
+//IsBool returns true if current node is Bool
 func (n *Node) IsBool() bool {
 	return n._type == Bool
 }
 
+//Value is calculating and returns a value of current node.
+//
+// It returns nil, if current node type is Null.
+//
+// It returns float64, if current node type is Numeric.
+//
+// It returns string, if current node type is String.
+//
+// It returns bool, if current node type is Bool.
+//
+// It returns []*Node, if current node type is Array.
+//
+// It returns map[string]*Node, if current node type is Object.
+//
+// BUT! Current method doesn't calculate underlying nodes (use method Node.Unpack for that).
+//
+// Value will be calculated only once and saved into atomic.Value.
 func (n *Node) Value() (value interface{}, err error) {
 	value = n.value.Load()
 	if value == nil {
@@ -186,6 +218,7 @@ func (n *Node) Value() (value interface{}, err error) {
 	return
 }
 
+//GetNull returns nil, if current type is Null, else: WrongType error
 func (n *Node) GetNull() (value interface{}, err error) {
 	if n._type != Null {
 		return value, errorType()
@@ -193,6 +226,7 @@ func (n *Node) GetNull() (value interface{}, err error) {
 	return
 }
 
+//GetNumeric returns float64, if current type is Numeric, else: WrongType error
 func (n *Node) GetNumeric() (value float64, err error) {
 	if n._type != Numeric {
 		return value, errorType()
@@ -205,6 +239,7 @@ func (n *Node) GetNumeric() (value float64, err error) {
 	return
 }
 
+//GetString returns string, if current type is String, else: WrongType error
 func (n *Node) GetString() (value string, err error) {
 	if n._type != String {
 		return value, errorType()
@@ -217,6 +252,7 @@ func (n *Node) GetString() (value string, err error) {
 	return
 }
 
+//GetBool returns bool, if current type is Bool, else: WrongType error
 func (n *Node) GetBool() (value bool, err error) {
 	if n._type != Bool {
 		return value, errorType()
@@ -229,6 +265,7 @@ func (n *Node) GetBool() (value bool, err error) {
 	return
 }
 
+//GetArray returns []*Node, if current type is Array, else: WrongType error
 func (n *Node) GetArray() (value []*Node, err error) {
 	if n._type != Array {
 		return value, errorType()
@@ -241,6 +278,7 @@ func (n *Node) GetArray() (value []*Node, err error) {
 	return
 }
 
+//GetObject returns map[string]*Node, if current type is Object, else: WrongType error
 func (n *Node) GetObject() (value map[string]*Node, err error) {
 	if n._type != Object {
 		return value, errorType()
@@ -253,6 +291,7 @@ func (n *Node) GetObject() (value map[string]*Node, err error) {
 	return
 }
 
+//MustNull returns nil, if current type is Null, else: panic if error happened
 func (n *Node) MustNull() (value interface{}) {
 	value, err := n.GetNull()
 	if err != nil {
@@ -261,6 +300,7 @@ func (n *Node) MustNull() (value interface{}) {
 	return
 }
 
+//MustNumeric returns float64, if current type is Numeric, else: panic if error happened
 func (n *Node) MustNumeric() (value float64) {
 	value, err := n.GetNumeric()
 	if err != nil {
@@ -269,6 +309,7 @@ func (n *Node) MustNumeric() (value float64) {
 	return
 }
 
+//MustString returns string, if current type is String, else: panic if error happened
 func (n *Node) MustString() (value string) {
 	value, err := n.GetString()
 	if err != nil {
@@ -277,6 +318,7 @@ func (n *Node) MustString() (value string) {
 	return
 }
 
+//MustBool returns bool, if current type is Bool, else: panic if error happened
 func (n *Node) MustBool() (value bool) {
 	value, err := n.GetBool()
 	if err != nil {
@@ -285,6 +327,7 @@ func (n *Node) MustBool() (value bool) {
 	return
 }
 
+//MustArray returns []*Node, if current type is Array, else: panic if error happened
 func (n *Node) MustArray() (value []*Node) {
 	value, err := n.GetArray()
 	if err != nil {
@@ -293,6 +336,7 @@ func (n *Node) MustArray() (value []*Node) {
 	return
 }
 
+//MustObject returns map[string]*Node, if current type is Object, else: panic if error happened
 func (n *Node) MustObject() (value map[string]*Node) {
 	value, err := n.GetObject()
 	if err != nil {
@@ -301,7 +345,7 @@ func (n *Node) MustObject() (value map[string]*Node) {
 	return
 }
 
-// Recursive: Unpack value to interface
+//Unpack will produce current node to it's interface, recursively with all underlying nodes (in contrast to Node.Value).
 func (n *Node) Unpack() (value interface{}, err error) {
 	switch n._type {
 	case Null:
@@ -340,6 +384,7 @@ func (n *Node) Unpack() (value interface{}, err error) {
 	return
 }
 
+//GetIndex will return child node of current array node. If current node is not Array, or index is unavailable, will return error
 func (n *Node) GetIndex(index int) (*Node, error) {
 	if n._type != Array {
 		return nil, errorType()
@@ -350,6 +395,7 @@ func (n *Node) GetIndex(index int) (*Node, error) {
 	return n.children[index], nil
 }
 
+//MustIndex will return child node of current array node. If current node is not Array, or index is unavailable, raise a panic
 func (n *Node) MustIndex(index int) (value *Node) {
 	value, err := n.GetIndex(index)
 	if err != nil {
@@ -358,6 +404,7 @@ func (n *Node) MustIndex(index int) (value *Node) {
 	return
 }
 
+//GetKey will return child node of current object node. If current node is not Object, or key is unavailable, will return error
 func (n *Node) GetKey(key string) (*Node, error) {
 	if n._type != Object {
 		return nil, errorType()
@@ -369,6 +416,7 @@ func (n *Node) GetKey(key string) (*Node, error) {
 	return value, nil
 }
 
+//MustKey will return child node of current object node. If current node is not Object, or key is unavailable, raise a panic
 func (n *Node) MustKey(key string) (value *Node) {
 	value, err := n.GetKey(key)
 	if err != nil {
@@ -377,6 +425,7 @@ func (n *Node) MustKey(key string) (value *Node) {
 	return
 }
 
+//Empty method check if current container node has no children
 func (n *Node) Empty() bool {
 	return len(n.children) == 0 && len(n.keys) == 0
 }
