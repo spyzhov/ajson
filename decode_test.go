@@ -663,8 +663,8 @@ func BenchmarkUnmarshal_AJSON(b *testing.B) {
 }
 
 func BenchmarkUnmarshal_JSON(b *testing.B) {
-	root := new(storeExample)
 	for i := 0; i < b.N; i++ {
+		root := new(storeExample)
 		err := json.Unmarshal(jsonExample, &root)
 		if err != nil || root == nil {
 			b.Errorf("Error on Unmarshal")
