@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestNode_ValueSimple(t *testing.T) {
+func TestNode_Value_Simple(t *testing.T) {
 	tests := []struct {
 		name     string
 		bytes    []byte
