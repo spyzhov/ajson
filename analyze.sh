@@ -31,5 +31,14 @@ if [[ "$ANALYZE_CMD" != "" ]]; then
 	EXIT_CODE=1
 fi
 
+#go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+ANALYZE_CMD=`golangci-lint run`
+if [[ "$ANALYZE_CMD" != "" ]]; then
+	echo "Error lint:"
+	echo "${ANALYZE_CMD}"
+	EXIT_CODE=1
+fi
+
+
 #gocyclo -top 10  .
 exit ${EXIT_CODE}
