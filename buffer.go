@@ -78,7 +78,7 @@ func (b *buffer) numeric() error {
 		case c >= '0' && c <= '9':
 			find |= 4
 		case c == '.':
-			if find&2 == 0 {
+			if find&2 == 0 && find&8 == 0 { // exp part of numeric MUST contains only digits
 				find &= 2
 			} else {
 				return errorSymbol(b)

@@ -459,7 +459,7 @@ func TestNode_IsString(t *testing.T) {
 }
 
 func TestNode_IsNumeric(t *testing.T) {
-	root, err := Unmarshal([]byte(`+1.23e-1.01`))
+	root, err := Unmarshal([]byte(`+1.23e-2`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
 	}

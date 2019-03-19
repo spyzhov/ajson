@@ -118,15 +118,15 @@ func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 		{name: "-1e+3", input: []byte("-1e+3"), _type: Numeric, value: []byte("-1e+3")},
 		{name: "-1e-3", input: []byte("-1e-3"), _type: Numeric, value: []byte("-1e-3")},
 
-		{name: "1.123e3.456", input: []byte("1.123e3.456"), _type: Numeric, value: []byte("1.123e3.456")},
-		{name: "1.123e+3.456", input: []byte("1.123e+3.456"), _type: Numeric, value: []byte("1.123e+3.456")},
-		{name: "1.123e-3.456", input: []byte("1.123e-3.456"), _type: Numeric, value: []byte("1.123e-3.456")},
-		{name: "+1.123e3.456", input: []byte("+1.123e3.456"), _type: Numeric, value: []byte("+1.123e3.456")},
-		{name: "+1.123e+3.456", input: []byte("+1.123e+3.456"), _type: Numeric, value: []byte("+1.123e+3.456")},
-		{name: "+1.123e-3.456", input: []byte("+1.123e-3.456"), _type: Numeric, value: []byte("+1.123e-3.456")},
-		{name: "-1.123e3.456", input: []byte("-1.123e3.456"), _type: Numeric, value: []byte("-1.123e3.456")},
-		{name: "-1.123e+3.456", input: []byte("-1.123e+3.456"), _type: Numeric, value: []byte("-1.123e+3.456")},
-		{name: "-1.123e-3.456", input: []byte("-1.123e-3.456"), _type: Numeric, value: []byte("-1.123e-3.456")},
+		{name: "1.123e3456", input: []byte("1.123e3456"), _type: Numeric, value: []byte("1.123e3456")},
+		{name: "1.123e+3456", input: []byte("1.123e+3456"), _type: Numeric, value: []byte("1.123e+3456")},
+		{name: "1.123e-3456", input: []byte("1.123e-3456"), _type: Numeric, value: []byte("1.123e-3456")},
+		{name: "+1.123e3456", input: []byte("+1.123e3456"), _type: Numeric, value: []byte("+1.123e3456")},
+		{name: "+1.123e+3456", input: []byte("+1.123e+3456"), _type: Numeric, value: []byte("+1.123e+3456")},
+		{name: "+1.123e-3456", input: []byte("+1.123e-3456"), _type: Numeric, value: []byte("+1.123e-3456")},
+		{name: "-1.123e3456", input: []byte("-1.123e3456"), _type: Numeric, value: []byte("-1.123e3456")},
+		{name: "-1.123e+3456", input: []byte("-1.123e+3456"), _type: Numeric, value: []byte("-1.123e+3456")},
+		{name: "-1.123e-3456", input: []byte("-1.123e-3456"), _type: Numeric, value: []byte("-1.123e-3456")},
 
 		{name: "1E3", input: []byte("1E3"), _type: Numeric, value: []byte("1E3")},
 		{name: "1E+3", input: []byte("1E+3"), _type: Numeric, value: []byte("1E+3")},
@@ -138,17 +138,17 @@ func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 		{name: "-1E+3", input: []byte("-1E+3"), _type: Numeric, value: []byte("-1E+3")},
 		{name: "-1E-3", input: []byte("-1E-3"), _type: Numeric, value: []byte("-1E-3")},
 
-		{name: "1.123E3.456", input: []byte("1.123E3.456"), _type: Numeric, value: []byte("1.123E3.456")},
-		{name: "1.123E+3.456", input: []byte("1.123E+3.456"), _type: Numeric, value: []byte("1.123E+3.456")},
-		{name: "1.123E-3.456", input: []byte("1.123E-3.456"), _type: Numeric, value: []byte("1.123E-3.456")},
-		{name: "+1.123E3.456", input: []byte("+1.123E3.456"), _type: Numeric, value: []byte("+1.123E3.456")},
-		{name: "+1.123E+3.456", input: []byte("+1.123E+3.456"), _type: Numeric, value: []byte("+1.123E+3.456")},
-		{name: "+1.123E-3.456", input: []byte("+1.123E-3.456"), _type: Numeric, value: []byte("+1.123E-3.456")},
-		{name: "-1.123E3.456", input: []byte("-1.123E3.456"), _type: Numeric, value: []byte("-1.123E3.456")},
-		{name: "-1.123E+3.456", input: []byte("-1.123E+3.456"), _type: Numeric, value: []byte("-1.123E+3.456")},
-		{name: "-1.123E-3.456", input: []byte("-1.123E-3.456"), _type: Numeric, value: []byte("-1.123E-3.456")},
+		{name: "1.123E3456", input: []byte("1.123E3456"), _type: Numeric, value: []byte("1.123E3456")},
+		{name: "1.123E+3456", input: []byte("1.123E+3456"), _type: Numeric, value: []byte("1.123E+3456")},
+		{name: "1.123E-3456", input: []byte("1.123E-3456"), _type: Numeric, value: []byte("1.123E-3456")},
+		{name: "+1.123E3456", input: []byte("+1.123E3456"), _type: Numeric, value: []byte("+1.123E3456")},
+		{name: "+1.123E+3456", input: []byte("+1.123E+3456"), _type: Numeric, value: []byte("+1.123E+3456")},
+		{name: "+1.123E-3456", input: []byte("+1.123E-3456"), _type: Numeric, value: []byte("+1.123E-3456")},
+		{name: "-1.123E3456", input: []byte("-1.123E3456"), _type: Numeric, value: []byte("-1.123E3456")},
+		{name: "-1.123E+3456", input: []byte("-1.123E+3456"), _type: Numeric, value: []byte("-1.123E+3456")},
+		{name: "-1.123E-3456", input: []byte("-1.123E-3456"), _type: Numeric, value: []byte("-1.123E-3456")},
 
-		{name: "-1.123E-3.456 with spaces", input: []byte(" \r -1.123E-3.456 \t\n"), _type: Numeric, value: []byte("-1.123E-3.456")},
+		{name: "-1.123E-3456 with spaces", input: []byte(" \r -1.123E-3456 \t\n"), _type: Numeric, value: []byte("-1.123E-3456")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -171,6 +171,7 @@ func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 		simpleCorrupted("e+"),
 		simpleCorrupted("e+1-"),
 		simpleCorrupted("1null"),
+		simpleCorrupted("1.123e3.456"), // exp part must be integer type
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
