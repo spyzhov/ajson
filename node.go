@@ -434,10 +434,34 @@ func (n *Node) Empty() bool {
 	return len(n.children) == 0 && len(n.keys) == 0
 }
 
+// Path returns full JsonPath of current Node
+func (n *Node) Path() string {
+	if n.parent == nil {
+		return "$"
+	}
+	if n.parent.IsObject() {
+		return n.parent.Path() + "['" + n.Key() + "']"
+	}
+	return n.parent.Path() + "[" + strconv.Itoa(n.Index()) + "]"
+}
+
 func (n *Node) ready() bool {
 	return n.borders[1] != 0
 }
 
 func (n *Node) isContainer() bool {
 	return n._type == Array || n._type == Object
+}
+
+func (n *Node) inheritors() (result []*Node) {
+	if n.IsArray() {
+		for _, element := range n.children {
+			result = append(result, element)
+		}
+	} else if n.IsObject() {
+		for _, element := range n.keys {
+			result = append(result, element)
+		}
+	}
+	return
 }

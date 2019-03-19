@@ -137,9 +137,12 @@ BenchmarkUnmarshal_JSON           200000             10264 ns/op             840
 # TODO
 
 - Functions 
-- [ ] func JsonPath(data [] byte, path string) ([]*Node, error) 
-- [ ] func (n *Node) JsonPath(path string) ([]*Node, error)
-- [ ] func Validate(data [] byte, path string) error
+- [ ] `func JsonPath(data [] byte, path string) ([]*Node, error)` 
+- [ ] `func (n *Node) JsonPath(path string) ([]*Node, error)`
+- [ ] `func Validate(data [] byte, path string) error`
+- node
+- [ ] add `atomic.Value` for `Path()`
+- [ ] add `atomic.Value` for `Key()`, remove preparse key value
 - buffer
 - [ ] add tests
 - errors

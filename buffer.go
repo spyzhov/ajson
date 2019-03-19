@@ -23,6 +23,9 @@ const (
 	bracketR  byte = ']'
 	bracesL   byte = '{'
 	bracesR   byte = '}'
+	dollar    byte = '$'
+	dot       byte = '.'
+	asterisk  byte = '*'
 )
 
 var (
@@ -37,6 +40,13 @@ func newBuffer(body []byte) (b *buffer) {
 		data:   body,
 	}
 	return
+}
+
+func (b *buffer) current() (c byte, err error) {
+	if b.index < b.length {
+		return b.data[b.index], nil
+	}
+	return 0, io.EOF
 }
 
 func (b *buffer) first() (c byte, err error) {
@@ -63,6 +73,15 @@ func (b *buffer) backslash() (result bool) {
 func (b *buffer) skip(s byte) error {
 	for ; b.index < b.length; b.index++ {
 		if b.data[b.index] == s && !b.backslash() {
+			return nil
+		}
+	}
+	return io.EOF
+}
+
+func (b *buffer) skipAny(s map[byte]bool) error {
+	for ; b.index < b.length; b.index++ {
+		if s[b.data[b.index]] && !b.backslash() {
 			return nil
 		}
 	}
