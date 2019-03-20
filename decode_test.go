@@ -169,6 +169,7 @@ func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 		simpleCorrupted("+."),
 		simpleCorrupted("e"),
 		simpleCorrupted("e+"),
+		simpleCorrupted("e1"), // exp without base part
 		simpleCorrupted("e+1-"),
 		simpleCorrupted("1null"),
 		simpleCorrupted("1.123e3.456"), // exp part must be integer type

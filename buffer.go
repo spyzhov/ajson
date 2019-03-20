@@ -90,7 +90,7 @@ func (b *buffer) numeric() error {
 				return errorSymbol(b)
 			}
 		case c == 'e' || c == 'E':
-			if find&8 == 0 {
+			if find&8 == 0 && find&4 != 0 { // exp without base part
 				find = 8
 			} else {
 				return errorSymbol(b)
