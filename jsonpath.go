@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"strings"
 )
 
 // JSONPath returns slice of founded elements in current JSON data, by it's JSONPath.
@@ -31,6 +32,7 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 
 	var (
 		temporary []*Node
+		keys      []string
 	)
 	for i, cmd := range commands {
 		switch {
@@ -50,13 +52,16 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 				temporary = append(temporary, element.inheritors()...)
 			}
 			result = temporary
-		default: // try to get by key
+		default: // try to get by key & Union
+			keys = strings.Split(cmd, ",")
 			temporary = make([]*Node, 0)
-			for _, element := range result {
-				if element.isContainer() {
-					value, ok := element.children[cmd]
-					if ok {
-						temporary = append(temporary, value)
+			for _, key := range keys {
+				for _, element := range result {
+					if element.isContainer() {
+						value, ok := element.children[key]
+						if ok {
+							temporary = append(temporary, value)
+						}
 					}
 				}
 			}

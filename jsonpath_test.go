@@ -78,6 +78,9 @@ func TestJsonPath(t *testing.T) {
 		{name: "all key 2", path: "$..price", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
 		{name: "all key bracket", path: "$..['price']", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
 		{name: "all fields", path: "$['store']['book'][1].*", expected: "[$['store']['book'][1]['author'], $['store']['book'][1]['category'], $['store']['book'][1]['price'], $['store']['book'][1]['title']]"},
+
+		{name: "union fields", path: "$['store']['book'][2]['author,price,title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
+		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
