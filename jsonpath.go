@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -31,8 +32,9 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 	result = make([]*Node, 0)
 
 	var (
-		temporary []*Node
-		keys      []string
+		temporary      []*Node
+		keys           []string
+		from, to, step int
 	)
 	for i, cmd := range commands {
 		switch {
@@ -52,6 +54,42 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 				temporary = append(temporary, element.inheritors()...)
 			}
 			result = temporary
+		case strings.Contains(cmd, ":"): // array slice operator
+			keys = strings.Split(cmd, ":")
+			if len(keys) > 3 {
+				return nil, errorRequest()
+			}
+			from, err = strconv.Atoi(keys[0])
+			if err != nil {
+				return nil, errorRequest()
+			}
+			to, err = strconv.Atoi(keys[1])
+			if err != nil {
+				return nil, errorRequest()
+			}
+			step = 1
+			if len(keys) == 3 {
+				step, err = strconv.Atoi(keys[2])
+				if err != nil {
+					return nil, errorRequest()
+				}
+			}
+
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				if element.IsArray() {
+					for i := from; i < to; i += step {
+						value, ok := element.children[strconv.Itoa(i)]
+						if ok {
+							temporary = append(temporary, value)
+						} else {
+							break
+						}
+					}
+				}
+			}
+			result = temporary
+
 		default: // try to get by key & Union
 			keys = strings.Split(cmd, ",")
 			temporary = make([]*Node, 0)
