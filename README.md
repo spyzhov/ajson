@@ -152,4 +152,4 @@ BenchmarkUnmarshal_JSON           200000             10264 ns/op             840
 - [ ] use io.Reader instead of []byte
 - refactoring
 - [ ] try to remove node.borders
-- [ ] try to remove node.keys & node.children
+- [ ] remove reflection in node.inheritors

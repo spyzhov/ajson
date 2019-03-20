@@ -12,6 +12,7 @@ type buffer struct {
 
 const (
 	quotes    byte = '"'
+	quote     byte = '\''
 	coma      byte = ','
 	colon     byte = ':'
 	backslash byte = '\\'
@@ -25,7 +26,7 @@ const (
 	bracesR   byte = '}'
 	dollar    byte = '$'
 	dot       byte = '.'
-	asterisk  byte = '*'
+	//asterisk  byte = '*'
 )
 
 var (
@@ -47,6 +48,14 @@ func (b *buffer) current() (c byte, err error) {
 		return b.data[b.index], nil
 	}
 	return 0, io.EOF
+}
+
+func (b *buffer) next() (c byte, err error) {
+	err = b.step()
+	if err != nil {
+		return 0, err
+	}
+	return b.data[b.index], nil
 }
 
 func (b *buffer) first() (c byte, err error) {
@@ -127,12 +136,12 @@ func (b *buffer) numeric() error {
 	return errorEOF(b)
 }
 
-func (b *buffer) string() error {
+func (b *buffer) string(search byte) error {
 	err := b.step()
 	if err != nil {
 		return errorEOF(b)
 	}
-	if b.skip(quotes) != nil {
+	if b.skip(search) != nil {
 		return errorEOF(b)
 	}
 	return nil
@@ -176,4 +185,12 @@ func (b *buffer) step() error {
 		return nil
 	}
 	return io.EOF
+}
+
+func (b *buffer) errorEOF() error {
+	return errorEOF(b)
+}
+
+func (b *buffer) errorSymbol() error {
+	return errorSymbol(b)
 }

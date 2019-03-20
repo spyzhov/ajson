@@ -80,7 +80,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				if err != nil {
 					break
 				}
-				err = buf.string()
+				err = buf.string(quotes)
 				current.borders[1] = buf.index + 1
 				if err == nil {
 					err = buf.step()
@@ -191,7 +191,7 @@ func isCreatable(b byte, current *Node, last byte, key *string) bool {
 
 func getString(b *buffer) (*string, error) {
 	start := b.index
-	err := b.string()
+	err := b.string(quotes)
 	if err != nil {
 		return nil, err
 	}

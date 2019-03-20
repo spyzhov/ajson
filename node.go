@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"sort"
 	"strconv"
 	"sync/atomic"
 )
@@ -21,8 +22,7 @@ import (
 // Every Node contains link to a byte data, parent and children, also calculated type of value, atomic value and internal information.
 type Node struct {
 	parent   *Node
-	children []*Node
-	keys     map[string]*Node
+	children map[string]*Node
 	key      *string
 	index    *int
 	_type    NodeType
@@ -66,19 +66,19 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 		_type:   _type,
 		key:     *key,
 	}
-	if _type == Object {
-		current.keys = make(map[string]*Node)
+	if _type == Object || _type == Array {
+		current.children = make(map[string]*Node)
 	}
 	if parent != nil {
 		if parent.IsArray() {
 			size := len(parent.children)
 			current.index = &size
-			parent.children = append(parent.children, current)
+			parent.children[strconv.Itoa(size)] = current
 		} else if parent.IsObject() {
 			if *key == nil {
 				err = errorSymbol(buf)
 			} else {
-				parent.keys[**key] = current
+				parent.children[**key] = current
 				*key = nil
 			}
 		} else {
@@ -125,8 +125,8 @@ func (n *Node) Size() int {
 
 //Keys will return count all keys of children of current node, please check, that parent of this node has an Object type
 func (n *Node) Keys() (result []string) {
-	result = make([]string, 0, len(n.keys))
-	for key := range n.keys {
+	result = make([]string, 0, len(n.children))
+	for key := range n.children {
 		result = append(result, key)
 	}
 	return
@@ -200,13 +200,15 @@ func (n *Node) Value() (value interface{}, err error) {
 			value = b == 't' || b == 'T'
 			n.value.Store(value)
 		case Array:
-			children := make([]*Node, 0, len(n.children))
-			children = append(children, n.children...)
+			children := make([]*Node, len(n.children))
+			for _, child := range n.children {
+				children[*child.index] = child
+			}
 			value = children
 			n.value.Store(value)
 		case Object:
 			result := make(map[string]*Node)
-			for key, child := range n.keys {
+			for key, child := range n.children {
 				result[key] = child
 			}
 			value = result
@@ -360,18 +362,18 @@ func (n *Node) Unpack() (value interface{}, err error) {
 		b := n.Source()[0]
 		value = b == 't' || b == 'T'
 	case Array:
-		children := make([]interface{}, 0, len(n.children))
+		children := make([]interface{}, len(n.children))
 		for _, child := range n.children {
 			val, err := child.Unpack()
 			if err != nil {
 				return nil, err
 			}
-			children = append(children, val)
+			children[*child.index] = val
 		}
 		value = children
 	case Object:
 		result := make(map[string]interface{})
-		for key, child := range n.keys {
+		for key, child := range n.children {
 			result[key], err = child.Unpack()
 			if err != nil {
 				return nil, err
@@ -387,10 +389,11 @@ func (n *Node) GetIndex(index int) (*Node, error) {
 	if n._type != Array {
 		return nil, errorType()
 	}
-	if index < 0 || index >= len(n.children) {
+	child, ok := n.children[strconv.Itoa(index)]
+	if !ok {
 		return nil, errorRequest()
 	}
-	return n.children[index], nil
+	return child, nil
 }
 
 //MustIndex will return child node of current array node. If current node is not Array, or index is unavailable, raise a panic
@@ -407,7 +410,7 @@ func (n *Node) GetKey(key string) (*Node, error) {
 	if n._type != Object {
 		return nil, errorType()
 	}
-	value, ok := n.keys[key]
+	value, ok := n.children[key]
 	if !ok {
 		return nil, errorRequest()
 	}
@@ -425,13 +428,13 @@ func (n *Node) MustKey(key string) (value *Node) {
 
 //HasKey will return boolean value, if current object node has custom key
 func (n *Node) HasKey(key string) bool {
-	_, ok := n.keys[key]
+	_, ok := n.children[key]
 	return ok
 }
 
 //Empty method check if current container node has no children
 func (n *Node) Empty() bool {
-	return len(n.children) == 0 && len(n.keys) == 0
+	return len(n.children) == 0
 }
 
 // Path returns full JsonPath of current Node
@@ -453,14 +456,22 @@ func (n *Node) isContainer() bool {
 	return n._type == Array || n._type == Object
 }
 
+// Return sorted by keys/index slice of children
 func (n *Node) inheritors() (result []*Node) {
-	if n.IsArray() {
-		for _, element := range n.children {
-			result = append(result, element)
+	size := len(n.children)
+	if n.IsObject() {
+		result = make([]*Node, size)
+		keys := n.Keys()
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i] < keys[j]
+		})
+		for i, key := range keys {
+			result[i] = n.children[key]
 		}
-	} else if n.IsObject() {
-		for _, element := range n.keys {
-			result = append(result, element)
+	} else if n.IsArray() {
+		result = make([]*Node, size)
+		for _, element := range n.children {
+			result[*element.index] = element
 		}
 	}
 	return
