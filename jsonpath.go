@@ -58,14 +58,14 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 		case strings.Contains(cmd, ":"): // array slice operator
 			keys = strings.Split(cmd, ":")
 			if len(keys) > 3 {
-				return nil, errorRequest()
+				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
 			}
 			if keys[0] == "" {
 				from = 0
 			} else {
 				from, err = strconv.Atoi(keys[0])
 				if err != nil {
-					return nil, errorRequest()
+					return nil, errorRequest("start of slice must be number, got '%s'", keys[0])
 				}
 			}
 			if keys[1] == "" {
@@ -73,7 +73,7 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 			} else {
 				to, err = strconv.Atoi(keys[1])
 				if err != nil {
-					return nil, errorRequest()
+					return nil, errorRequest("stop of slice must be number, got '%s'", keys[1])
 				}
 			}
 			step = 1
@@ -81,7 +81,7 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 				if keys[2] != "" {
 					step, err = strconv.Atoi(keys[2])
 					if err != nil {
-						return nil, errorRequest()
+						return nil, errorRequest("step of slice must be number, got '%s'", keys[2])
 					}
 				}
 			}

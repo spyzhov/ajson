@@ -88,7 +88,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				found = true
 				current = previous(current)
 			}
-		case (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-' || b == 'e' || b == 'E':
+		case (b >= '0' && b <= '9') || b == '.' || b == '+' || b == '-':
 			// Detected: Numeric
 			current, err = newNode(current, buf, Numeric, &key)
 			if err != nil {

@@ -4,9 +4,10 @@ import "fmt"
 
 //Error is common struct to provide internal errors
 type Error struct {
-	Type  ErrorType
-	Index int
-	Char  byte
+	Type    ErrorType
+	Index   int
+	Char    byte
+	Message string
 }
 
 //ErrorType is container for reflection type of error
@@ -24,7 +25,11 @@ const (
 )
 
 func errorSymbol(b *buffer) error {
-	return &Error{Type: WrongSymbol, Index: b.index, Char: b.data[b.index]}
+	c, err := b.current()
+	if err != nil {
+		c = 0
+	}
+	return &Error{Type: WrongSymbol, Index: b.index, Char: c}
 }
 
 func errorEOF(b *buffer) error {
@@ -35,8 +40,8 @@ func errorType() error {
 	return &Error{Type: WrongType}
 }
 
-func errorRequest() error {
-	return &Error{Type: WrongRequest}
+func errorRequest(format string, args ...interface{}) error {
+	return &Error{Type: WrongRequest, Message: fmt.Sprintf(format, args...)}
 }
 
 //Error interface implementation
@@ -49,7 +54,7 @@ func (err *Error) Error() string {
 	case WrongType:
 		return fmt.Sprintf("wrong type of Node")
 	case WrongRequest:
-		return fmt.Sprintf("wrong request")
+		return fmt.Sprintf("wrong request: %s", err.Message)
 	}
 	return fmt.Sprintf("unknown error: '%s' at %d", []byte{err.Char}, err.Index)
 }

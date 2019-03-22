@@ -391,7 +391,7 @@ func (n *Node) GetIndex(index int) (*Node, error) {
 	}
 	child, ok := n.children[strconv.Itoa(index)]
 	if !ok {
-		return nil, errorRequest()
+		return nil, errorRequest("out of index %d", index)
 	}
 	return child, nil
 }
@@ -412,7 +412,7 @@ func (n *Node) GetKey(key string) (*Node, error) {
 	}
 	value, ok := n.children[key]
 	if !ok {
-		return nil, errorRequest()
+		return nil, errorRequest("wrong key '%s'", key)
 	}
 	return value, nil
 }
