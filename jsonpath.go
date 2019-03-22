@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -59,19 +60,29 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 			if len(keys) > 3 {
 				return nil, errorRequest()
 			}
-			from, err = strconv.Atoi(keys[0])
-			if err != nil {
-				return nil, errorRequest()
+			if keys[0] == "" {
+				from = 0
+			} else {
+				from, err = strconv.Atoi(keys[0])
+				if err != nil {
+					return nil, errorRequest()
+				}
 			}
-			to, err = strconv.Atoi(keys[1])
-			if err != nil {
-				return nil, errorRequest()
+			if keys[1] == "" {
+				to = math.MaxInt64
+			} else {
+				to, err = strconv.Atoi(keys[1])
+				if err != nil {
+					return nil, errorRequest()
+				}
 			}
 			step = 1
 			if len(keys) == 3 {
-				step, err = strconv.Atoi(keys[2])
-				if err != nil {
-					return nil, errorRequest()
+				if keys[2] != "" {
+					step, err = strconv.Atoi(keys[2])
+					if err != nil {
+						return nil, errorRequest()
+					}
 				}
 			}
 
@@ -89,7 +100,10 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 				}
 			}
 			result = temporary
+		case strings.HasPrefix(cmd, "?("): // applies a filter (script) expression
+			//$..[?(@.price == 19.95 && @.color == 'red')].color
 
+		//case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
 		default: // try to get by key & Union
 			keys = strings.Split(cmd, ",")
 			temporary = make([]*Node, 0)
@@ -107,6 +121,15 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 		}
 	}
 	return
+}
+
+//Paths returns calculated paths of underlying nodes
+func Paths(array []*Node) []string {
+	result := make([]string, 0, len(array))
+	for _, element := range array {
+		result = append(result, element.Path())
+	}
+	return result
 }
 
 func recursiveChildren(node *Node) (result []*Node) {

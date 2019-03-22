@@ -39,11 +39,7 @@ var jsonpathTestData = []byte(`{ "store": {
 }`)
 
 func fullPath(array []*Node) string {
-	result := make([]string, 0, len(array))
-	for _, element := range array {
-		result = append(result, element.Path())
-	}
-	return sliceString(result)
+	return sliceString(Paths(array))
 }
 
 func sliceString(array []string) string {
@@ -83,9 +79,15 @@ func TestJsonPath(t *testing.T) {
 		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
 
 		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		{name: "slices 1", path: "$..[1:4:1]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		{name: "slices 2", path: "$['store']['book'][1:4:2]", expected: "[$['store']['book'][1], $['store']['book'][3]]"},
-		{name: "slices 2", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
+		{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 3", path: "$..[1:4:1]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 4", path: "$..[1:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 5", path: "$..[:2]", expected: "[$['store']['book'][0], $['store']['book'][1]]"},
+		{name: "slices 6", path: "$..[:4:2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "slices 7", path: "$..[:4:]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 8", path: "$..[::]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 9", path: "$['store']['book'][1:4:2]", expected: "[$['store']['book'][1], $['store']['book'][3]]"},
+		{name: "slices 0", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
