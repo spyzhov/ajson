@@ -36,6 +36,8 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 		temporary      []*Node
 		keys           []string
 		from, to, step int
+		c              byte
+		key            string
 	)
 	for i, cmd := range commands {
 		switch {
@@ -101,13 +103,47 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "?("): // applies a filter (script) expression
-			//$..[?(@.price == 19.95 && @.color == 'red')].color
-
-		//case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
+		//todo
+		//$..[?(@.price == 19.95 && @.color == 'red')].color
+		case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
+		//todo
 		default: // try to get by key & Union
-			keys = strings.Split(cmd, ",")
+			buf := newBuffer([]byte(cmd))
+			keys = make([]string, 0)
+			for {
+				c, err = buf.first()
+				if err != nil {
+					return nil, errorRequest("blank request")
+				}
+				if c == coma {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				from = buf.index
+				err = buf.token()
+				if err != nil && err != io.EOF {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				key = string(buf.data[from:buf.index])
+				if len(key) > 2 && key[0] == quote && key[len(key)-1] == quote { // string
+					key = key[1 : len(key)-1]
+				}
+				keys = append(keys, key)
+				c, err = buf.first()
+				if err != nil {
+					err = nil
+					break
+				}
+				if c != coma {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				err = buf.step()
+				if err != nil {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+			}
+
 			temporary = make([]*Node, 0)
-			for _, key := range keys {
+			for _, key = range keys {
 				for _, element := range result {
 					if element.isContainer() {
 						value, ok := element.children[key]
@@ -148,26 +184,33 @@ func recursiveChildren(node *Node) (result []*Node) {
 	return temp
 }
 
-//ParseJSONPath will parse current path and return all commands tobe run.
+// ParseJSONPath will parse current path and return all commands tobe run.
+// Example:
+//
+//	result, _ := ParseJSONPath("$.store.book[?(@.price < 10)].title")
+//	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
+//
 func ParseJSONPath(path string) (result []string, err error) {
 	buf := newBuffer([]byte(path))
 	result = make([]string, 0)
 	var (
-		b           byte
+		c           byte
 		start, stop int
 		childEnd    = map[byte]bool{dot: true, bracketL: true}
+		str         bool
 	)
 	for {
-		b, err = buf.current()
+		c, err = buf.current()
 		if err != nil {
 			break
 		}
+	parseSwitch:
 		switch true {
-		case b == dollar:
-			result = append(result, "$")
-		case b == dot:
+		case c == dollar || c == at:
+			result = append(result, string(c))
+		case c == dot:
 			start = buf.index
-			b, err = buf.next()
+			c, err = buf.next()
 			if err == io.EOF {
 				err = nil
 				break
@@ -175,7 +218,7 @@ func ParseJSONPath(path string) (result []string, err error) {
 			if err != nil {
 				break
 			}
-			if b == dot {
+			if c == dot {
 				result = append(result, "..")
 				buf.index--
 				break
@@ -194,34 +237,28 @@ func ParseJSONPath(path string) (result []string, err error) {
 			if start+1 < stop {
 				result = append(result, string(buf.data[start+1:stop]))
 			}
-		case b == bracketL:
-			b, err = buf.next()
+		case c == bracketL:
+			_, err = buf.next()
 			if err != nil {
 				return nil, buf.errorEOF()
 			}
 			start = buf.index
-			if b == quote {
-				start++
-				err = buf.string(quote)
-				if err != nil {
-					return nil, buf.errorEOF()
-				}
-				stop = buf.index
-				b, err = buf.next()
-				if err != nil {
-					return nil, buf.errorEOF()
-				}
-				if b != bracketR {
-					return nil, buf.errorSymbol()
-				}
-			} else {
-				err = buf.skip(bracketR)
-				stop = buf.index
-				if err != nil {
-					return nil, buf.errorEOF()
+			for ; buf.index < buf.length; buf.index++ {
+				c = buf.data[buf.index]
+				if c == quote {
+					if str {
+						str = buf.backslash()
+					} else {
+						str = true
+					}
+				} else if c == bracketR {
+					if !str {
+						result = append(result, string(buf.data[start:buf.index]))
+						break parseSwitch
+					}
 				}
 			}
-			result = append(result, string(buf.data[start:stop]))
+			return nil, buf.errorEOF()
 		default:
 			return nil, buf.errorSymbol()
 		}

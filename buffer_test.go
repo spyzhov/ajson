@@ -20,6 +20,15 @@ func TestBuffer_Token(t *testing.T) {
 
 		{name: "part 1", value: "@.foo+@.bar", index: 5, fail: false},
 		{name: "part 2", value: "@.foo && @.bar", index: 5, fail: false},
+		{name: "part 3", value: "@.foo,3", index: 5, fail: false},
+
+		{name: "number 1", value: "1", index: 1, fail: false},
+		{name: "number 2", value: "1.3e2", index: 5, fail: false},
+		{name: "number 3", value: "-1.3e2", index: 6, fail: false},
+		{name: "number 4", value: "-1.3e-2", index: 7, fail: false},
+
+		{name: "string 1", value: "'1'", index: 3, fail: false},
+		{name: "string 2", value: "'foo \\'bar '", index: 12, fail: false},
 
 		{name: "fail 1", value: "@.foo[", fail: true},
 		{name: "fail 2", value: "@.foo[(]", fail: true},

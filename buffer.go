@@ -275,44 +275,51 @@ func (b *buffer) step() error {
 func (b *buffer) token() (err error) {
 	var (
 		c     byte
-		str   bool
 		stack = make([]byte, 0)
+		start int
 	)
 tokenLoop:
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		switch {
 		case c == quote:
-			if !str {
-				str = true
-				stack = append(stack, c)
-			} else if !b.backslash() {
-				if len(stack) == 0 || stack[len(stack)-1] != quote {
-					return b.errorSymbol()
-				}
-				str = false
-				stack = stack[:len(stack)-1]
+			start = b.index
+			err = b.step()
+			if err != nil {
+				return b.errorEOF()
 			}
-		case c == bracketL && !str:
+			err = b.skip(quote)
+			if err == nil || err == io.EOF {
+				continue
+			}
+			b.index = start
+		case c == bracketL:
 			stack = append(stack, c)
-		case c == bracketR && !str:
+		case c == bracketR:
 			if len(stack) == 0 || stack[len(stack)-1] != bracketL {
 				return b.errorSymbol()
 			}
 			stack = stack[:len(stack)-1]
-		case c == parenthesesL && !str:
+		case c == parenthesesL:
 			stack = append(stack, c)
-		case c == parenthesesR && !str:
+		case c == parenthesesR:
 			if len(stack) == 0 || stack[len(stack)-1] != parenthesesL {
 				return b.errorSymbol()
 			}
 			stack = stack[:len(stack)-1]
-		case str:
-			continue
 		case c == dot || c == at || c == dollar || c == question || c == asterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard token name
 			continue
 		case len(stack) != 0:
 			continue
+		case c == minus || c == plus:
+			start = b.index
+			err = b.numeric()
+			if err == nil || err == io.EOF {
+				b.index--
+				continue
+			}
+			b.index = start
+			fallthrough
 		default:
 			break tokenLoop
 		}
@@ -320,7 +327,10 @@ tokenLoop:
 	if len(stack) != 0 {
 		return b.errorEOF()
 	}
-	return io.EOF
+	if b.index >= b.length {
+		return io.EOF
+	}
+	return nil
 }
 
 func (b *buffer) rpn() (result []string, err error) {
@@ -356,7 +366,6 @@ func (b *buffer) rpn() (result []string, err error) {
 					err = nil
 				}
 
-				found = false
 				for len(stack) > 0 {
 					temp = stack[len(stack)-1]
 					found = false
@@ -427,7 +436,6 @@ func (b *buffer) rpn() (result []string, err error) {
 			stack = append(stack, current)
 		case c == parenthesesR: // )
 			variable = true
-			current = string(c)
 			found = false
 			for len(stack) > 0 {
 				temp = stack[len(stack)-1]

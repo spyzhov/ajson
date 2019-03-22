@@ -75,7 +75,7 @@ func TestJsonPath(t *testing.T) {
 		{name: "all key bracket", path: "$..['price']", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
 		{name: "all fields", path: "$['store']['book'][1].*", expected: "[$['store']['book'][1]['author'], $['store']['book'][1]['category'], $['store']['book'][1]['price'], $['store']['book'][1]['title']]"},
 
-		{name: "union fields", path: "$['store']['book'][2]['author,price,title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
+		{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
 		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
 
 		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
@@ -122,6 +122,7 @@ func TestParseJSONPath(t *testing.T) {
 		{name: "path combined:dotted small", path: "$['root'].*.['element']", expected: []string{"$", "root", "*", "element"}},
 		{name: "phoneNumbers", path: "$.phoneNumbers[*].type", expected: []string{"$", "phoneNumbers", "*", "type"}},
 		{name: "filtered", path: "$.store.book[?(@.price < 10)].title", expected: []string{"$", "store", "book", "?(@.price < 10)", "title"}},
+		{name: "formula", path: "$..phoneNumbers..('ty' + 'pe')", expected: []string{"$", "..", "phoneNumbers", "..", "('ty' + 'pe')"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
