@@ -153,3 +153,17 @@ BenchmarkUnmarshal_JSON           200000             10264 ns/op             840
 - refactoring
 - [ ] try to remove node.borders
 - [ ] remove reflection in node.inheritors
+- FixMe:
+- [ ] backslash system symbols in JsonPath
+- [ ] evaluate... Result as key or filter
+- [ ] array index before zero
+- [x] slices like [:3], [-1:]
+- [ ] exists `‌$..book[?(@.isbn)]`
+- [ ] ‌rpn: only operations in stack (validation)
+- [x] array length as calculated node
+- [ ] ‌math: round, ceil, floor, exp, log, ln, sin, cos, tan, ctg,... Const: pi, e
+- [ ] check, what to do with an argument functions like `round(value, n)`?
+- [ ] const as *Node & function as func(*Node) (*Node, error)
+- [ ] ‌eval, Dereference : deref(Node, path):[] *Node , eval (node, cmd): [] *Node. 
+	Where: deref - parse path, eval each route and process all subresults. 
+	Eval - take a *Node and command and process it.

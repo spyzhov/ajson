@@ -88,6 +88,18 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 	return
 }
 
+func varNode(parent *Node, key string, _type NodeType, value interface{}) (current *Node) {
+	current = &Node{
+		parent:  parent,
+		data:    nil,
+		borders: [2]int{0, 0},
+		_type:   _type,
+		key:     &key,
+	}
+	current.value.Store(value)
+	return
+}
+
 //Parent returns link to the parent of current node, nil for root
 func (n *Node) Parent() *Node {
 	return n.parent
@@ -442,7 +454,7 @@ func (n *Node) Path() string {
 	if n.parent == nil {
 		return "$"
 	}
-	if n.parent.IsObject() {
+	if n.key != nil {
 		return n.parent.Path() + "['" + n.Key() + "']"
 	}
 	return n.parent.Path() + "[" + strconv.Itoa(n.Index()) + "]"

@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"math"
 	"strings"
 )
 
@@ -43,6 +44,8 @@ const (
 	pipe         byte = '|'
 	question     byte = '?'
 )
+
+type function func(*Node) (*Node, error)
 
 var (
 	_null  = []byte("null")
@@ -105,9 +108,33 @@ var (
 	}
 
 	// fixme
-	functions = map[string]bool{
-		"sin": true,
-		"cos": true,
+	functions = map[string]function{
+		"sin": func(node *Node) (result *Node, err error) {
+			if node.IsNumeric() {
+				num, err := node.GetNumeric()
+				if err != nil {
+					return &Node{}, err
+				}
+				return varNode(node, "sin", Numeric, math.Sin(num)), nil
+			}
+			return nil, errorRequest("function 'sin' was called from non numeric node")
+		},
+		"cos": func(node *Node) (result *Node, err error) {
+			if node.IsNumeric() {
+				num, err := node.GetNumeric()
+				if err != nil {
+					return &Node{}, err
+				}
+				return varNode(node, "cos", Numeric, math.Cos(num)), nil
+			}
+			return nil, errorRequest("function 'cos' was called from non numeric node")
+		},
+		"length": func(node *Node) (result *Node, err error) {
+			if node.IsArray() {
+				return varNode(node, "length", Numeric, float64(node.Size())), nil
+			}
+			return nil, errorRequest("function 'length' was called from non array node")
+		},
 	}
 	// fixme
 	constants = map[string]bool{

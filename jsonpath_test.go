@@ -87,7 +87,11 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 7", path: "$..[:4:]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 		{name: "slices 8", path: "$..[::]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 		{name: "slices 9", path: "$['store']['book'][1:4:2]", expected: "[$['store']['book'][1], $['store']['book'][3]]"},
-		{name: "slices 0", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
+		{name: "slices 10", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
+		{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
+		{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
+
+		{name: "length", path: "$['store']['book'].length", expected: "[$['store']['book']['length']]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -96,6 +100,48 @@ func TestJsonPath(t *testing.T) {
 				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if fullPath(result) != test.expected {
 				t.Errorf("Error on JsonPath(json, %s) as %s: path doesn't match\nExpected: %s\nActual:   %s", test.path, test.name, test.expected, fullPath(result))
+			}
+		})
+	}
+}
+
+func TestJsonPath_value(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		expected interface{}
+	}{
+		{name: "length", path: "$['store']['book'].length", expected: float64(4)},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := JSONPath(jsonpathTestData, test.path)
+			if err != nil {
+				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
+			} else if len(result) != 1 {
+				t.Errorf("Error on JsonPath(json, %s) as %s: path to long, expected only value\nActual: %s", test.path, test.name, fullPath(result))
+			} else {
+				val, err := result[0].Value()
+				if err != nil {
+					t.Errorf("Error on JsonPath(json, %s): error %s", test.path, err.Error())
+				} else {
+					switch {
+					case result[0].IsNumeric():
+						if val.(float64) != test.expected.(float64) {
+							t.Errorf("Error on JsonPath(json, %s): value doesn't match\nExpected: %v\nActual:   %v", test.path, test.expected, val)
+						}
+					case result[0].IsString():
+						if val.(string) != test.expected.(string) {
+							t.Errorf("Error on JsonPath(json, %s): value doesn't match\nExpected: %v\nActual:   %v", test.path, test.expected, val)
+						}
+					case result[0].IsBool():
+						if val.(bool) != test.expected.(bool) {
+							t.Errorf("Error on JsonPath(json, %s): value doesn't match\nExpected: %v\nActual:   %v", test.path, test.expected, val)
+						}
+					default:
+						t.Errorf("Error on JsonPath(json, %s): unsupported type found", test.path)
+					}
+				}
 			}
 		})
 	}

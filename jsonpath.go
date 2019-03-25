@@ -22,141 +22,11 @@ import (
 //	?()	applies a filter (script) expression.
 //	()	script expression, using the underlying script engine.
 func JSONPath(data []byte, path string) (result []*Node, err error) {
-	commands, err := ParseJSONPath(path)
+	node, err := Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
-	root, err := Unmarshal(data)
-	if err != nil {
-		return nil, err
-	}
-	result = make([]*Node, 0)
-
-	var (
-		temporary      []*Node
-		keys           []string
-		from, to, step int
-		c              byte
-		key            string
-	)
-	for i, cmd := range commands {
-		switch {
-		case cmd == "$": // root element
-			if i == 0 {
-				result = append(result, root)
-			}
-		case cmd == "..": // recursive descent
-			temporary = make([]*Node, 0)
-			for _, element := range result {
-				temporary = append(temporary, recursiveChildren(element)...)
-			}
-			result = append(result, temporary...)
-		case cmd == "*": // wildcard
-			temporary = make([]*Node, 0)
-			for _, element := range result {
-				temporary = append(temporary, element.inheritors()...)
-			}
-			result = temporary
-		case strings.Contains(cmd, ":"): // array slice operator
-			keys = strings.Split(cmd, ":")
-			if len(keys) > 3 {
-				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
-			}
-			if keys[0] == "" {
-				from = 0
-			} else {
-				from, err = strconv.Atoi(keys[0])
-				if err != nil {
-					return nil, errorRequest("start of slice must be number, got '%s'", keys[0])
-				}
-			}
-			if keys[1] == "" {
-				to = math.MaxInt64
-			} else {
-				to, err = strconv.Atoi(keys[1])
-				if err != nil {
-					return nil, errorRequest("stop of slice must be number, got '%s'", keys[1])
-				}
-			}
-			step = 1
-			if len(keys) == 3 {
-				if keys[2] != "" {
-					step, err = strconv.Atoi(keys[2])
-					if err != nil {
-						return nil, errorRequest("step of slice must be number, got '%s'", keys[2])
-					}
-				}
-			}
-
-			temporary = make([]*Node, 0)
-			for _, element := range result {
-				if element.IsArray() {
-					for i := from; i < to; i += step {
-						value, ok := element.children[strconv.Itoa(i)]
-						if ok {
-							temporary = append(temporary, value)
-						} else {
-							break
-						}
-					}
-				}
-			}
-			result = temporary
-		case strings.HasPrefix(cmd, "?("): // applies a filter (script) expression
-		//todo
-		//$..[?(@.price == 19.95 && @.color == 'red')].color
-		case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
-		//todo
-		default: // try to get by key & Union
-			buf := newBuffer([]byte(cmd))
-			keys = make([]string, 0)
-			for {
-				c, err = buf.first()
-				if err != nil {
-					return nil, errorRequest("blank request")
-				}
-				if c == coma {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				from = buf.index
-				err = buf.token()
-				if err != nil && err != io.EOF {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				key = string(buf.data[from:buf.index])
-				if len(key) > 2 && key[0] == quote && key[len(key)-1] == quote { // string
-					key = key[1 : len(key)-1]
-				}
-				keys = append(keys, key)
-				c, err = buf.first()
-				if err != nil {
-					err = nil
-					break
-				}
-				if c != coma {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				err = buf.step()
-				if err != nil {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-			}
-
-			temporary = make([]*Node, 0)
-			for _, key = range keys {
-				for _, element := range result {
-					if element.isContainer() {
-						value, ok := element.children[key]
-						if ok {
-							temporary = append(temporary, value)
-						}
-					}
-				}
-			}
-			result = temporary
-		}
-	}
-	return
+	return deReference(node, path)
 }
 
 //Paths returns calculated paths of underlying nodes
@@ -269,6 +139,180 @@ func ParseJSONPath(path string) (result []string, err error) {
 			}
 			break
 		}
+	}
+	return
+}
+
+func deReference(node *Node, path string) (result []*Node, err error) {
+	commands, err := ParseJSONPath(path)
+	if err != nil {
+		return nil, err
+	}
+	result = make([]*Node, 0)
+
+	var (
+		temporary      []*Node
+		keys           []string
+		from, to, step int
+		rfrom, rto     int
+		c              byte
+		key            string
+		ok             bool
+		value          *Node
+	)
+	for i, cmd := range commands {
+		switch {
+		case cmd == "$": // root element
+			if i == 0 {
+				result = append(result, root(node))
+			}
+		case cmd == "@": // current element
+			if i == 0 {
+				result = append(result, node)
+			}
+		case cmd == "..": // recursive descent
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				temporary = append(temporary, recursiveChildren(element)...)
+			}
+			result = append(result, temporary...)
+		case cmd == "*": // wildcard
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				temporary = append(temporary, element.inheritors()...)
+			}
+			result = temporary
+		case strings.Contains(cmd, ":"): // array slice operator
+			keys = strings.Split(cmd, ":")
+			if len(keys) > 3 {
+				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
+			}
+			if keys[0] == "" {
+				from = 0
+			} else {
+				from, err = strconv.Atoi(keys[0])
+				if err != nil {
+					return nil, errorRequest("start of slice must be number, got '%s'", keys[0])
+				}
+			}
+			if keys[1] == "" {
+				to = math.MaxInt64
+			} else {
+				to, err = strconv.Atoi(keys[1])
+				if err != nil {
+					return nil, errorRequest("stop of slice must be number, got '%s'", keys[1])
+				}
+			}
+			step = 1
+			if len(keys) == 3 {
+				if keys[2] != "" {
+					step, err = strconv.Atoi(keys[2])
+					if err != nil {
+						return nil, errorRequest("step of slice must be number, got '%s'", keys[2])
+					}
+				}
+			}
+
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				if element.IsArray() {
+					rfrom = from
+					if rfrom < 0 {
+						rfrom = element.Size() + rfrom
+					}
+					rto = to
+					if rto < 0 {
+						rto = element.Size() + rto
+					}
+
+					for i := rfrom; i < rto; i += step {
+						value, ok := element.children[strconv.Itoa(i)]
+						if ok {
+							temporary = append(temporary, value)
+						} else {
+							break
+						}
+					}
+				}
+			}
+			result = temporary
+		case strings.HasPrefix(cmd, "?("): // applies a filter (script) expression
+		//todo
+		//$..[?(@.price == 19.95 && @.color == 'red')].color
+		case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
+		//todo
+		default: // try to get by key & Union
+			buf := newBuffer([]byte(cmd))
+			keys = make([]string, 0)
+			for {
+				c, err = buf.first()
+				if err != nil {
+					return nil, errorRequest("blank request")
+				}
+				if c == coma {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				from = buf.index
+				err = buf.token()
+				if err != nil && err != io.EOF {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				key = string(buf.data[from:buf.index])
+				if len(key) > 2 && key[0] == quote && key[len(key)-1] == quote { // string
+					key = key[1 : len(key)-1]
+				}
+				keys = append(keys, key)
+				c, err = buf.first()
+				if err != nil {
+					err = nil
+					break
+				}
+				if c != coma {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				err = buf.step()
+				if err != nil {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+			}
+
+			temporary = make([]*Node, 0)
+			for _, key = range keys {
+				for _, element := range result {
+					if element.IsArray() {
+						if key == "length" {
+							value, err = functions["length"](element)
+							if err != nil {
+								return
+							}
+						} else {
+							from, err = strconv.Atoi(key)
+							if err != nil {
+								ok = false
+								err = nil
+							} else {
+								if from < 0 {
+									key = strconv.Itoa(element.Size() + from)
+								}
+								value, ok = element.children[key]
+							}
+						}
+					} else if element.IsObject() {
+						value, ok = element.children[key]
+					}
+					if ok {
+						temporary = append(temporary, value)
+					}
+				}
+			}
+			result = temporary
+		}
+	}
+	return
+}
+
+func root(node *Node) (result *Node) {
+	for result = node; result.parent != nil; result = result.parent {
 	}
 	return
 }
