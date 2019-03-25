@@ -22,11 +22,15 @@ import (
 //	?()	applies a filter (script) expression.
 //	()	script expression, using the underlying script engine.
 func JSONPath(data []byte, path string) (result []*Node, err error) {
+	commands, err := ParseJSONPath(path)
+	if err != nil {
+		return nil, err
+	}
 	node, err := Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
-	return deReference(node, path)
+	return deReference(node, commands)
 }
 
 //Paths returns calculated paths of underlying nodes
@@ -143,11 +147,7 @@ func ParseJSONPath(path string) (result []string, err error) {
 	return
 }
 
-func deReference(node *Node, path string) (result []*Node, err error) {
-	commands, err := ParseJSONPath(path)
-	if err != nil {
-		return nil, err
-	}
+func deReference(node *Node, commands []string) (result []*Node, err error) {
 	result = make([]*Node, 0)
 
 	var (
@@ -236,11 +236,44 @@ func deReference(node *Node, path string) (result []*Node, err error) {
 				}
 			}
 			result = temporary
-		case strings.HasPrefix(cmd, "?("): // applies a filter (script) expression
-		//todo
-		//$..[?(@.price == 19.95 && @.color == 'red')].color
-		case strings.HasPrefix(cmd, "("): // script expression, using the underlying script engine
-		//todo
+		case strings.HasPrefix(cmd, "?(") && strings.HasSuffix(cmd, ")"): // applies a filter (script) expression
+			buf := newBuffer([]byte(cmd[2 : len(cmd)-1]))
+			rpn, err := buf.rpn()
+			if err != nil {
+				return nil, errorRequest("wrong request: %s", cmd)
+			}
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				value, err = eval(element, rpn, cmd)
+				if err != nil {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				if value != nil {
+					ok, err = boolean(value)
+					if err != nil || !ok {
+						continue
+					}
+					temporary = append(temporary, element)
+				}
+			}
+			result = temporary
+		case strings.HasPrefix(cmd, "(") && strings.HasSuffix(cmd, ")"): // script expression, using the underlying script engine
+			buf := newBuffer([]byte(cmd[1 : len(cmd)-1]))
+			rpn, err := buf.rpn()
+			if err != nil {
+				return nil, errorRequest("wrong request: %s", cmd)
+			}
+			temporary = make([]*Node, 0)
+			for _, element := range result {
+				value, err = eval(element, rpn, cmd)
+				if err != nil {
+					return nil, errorRequest("wrong request: %s", cmd)
+				}
+				if value != nil {
+					temporary = append(temporary, value)
+				}
+			}
+			result = temporary
 		default: // try to get by key & Union
 			buf := newBuffer([]byte(cmd))
 			keys = make([]string, 0)
@@ -309,6 +342,85 @@ func deReference(node *Node, path string) (result []*Node, err error) {
 		}
 	}
 	return
+}
+
+// Evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
+func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
+	var (
+		stack    []*Node
+		slice    []*Node
+		temp     *Node
+		fn       function
+		op       operation
+		ok       bool
+		size     int
+		commands []string
+		bstr     []byte
+	)
+	for _, exp := range expression {
+		size = len(stack)
+		fn, ok = functions[exp]
+		if ok {
+			if size < 1 {
+				return nil, errorRequest("wrong request: %s", cmd)
+			}
+			stack[size-1], err = fn(stack[size-1])
+			if err != nil {
+				return
+			}
+			continue
+		}
+		op, ok = operations[exp]
+		if ok {
+			if size < 2 {
+				return nil, errorRequest("wrong request: %s", cmd)
+			}
+			stack[size-2], err = op(stack[size-2], stack[size-1])
+			if err != nil {
+				return
+			}
+			stack = stack[:size-1]
+			continue
+		}
+		if len(exp) > 0 {
+			if exp[0] == dollar || exp[0] == at {
+				commands, err = ParseJSONPath(exp)
+				if err != nil {
+					return
+				}
+				slice, err = deReference(node, commands)
+				if err != nil {
+					return
+				}
+				if len(slice) == 1 {
+					stack = append(stack, slice[0])
+				} else { // no data found, or array given
+					return nil, nil
+				}
+			} else {
+				bstr = []byte(exp)
+				size = len(bstr)
+				if size > 2 && bstr[0] == quote && bstr[size-1] == quote {
+					bstr[0] = quotes
+					bstr[size-1] = quotes
+				}
+				temp, err = Unmarshal(bstr)
+				if err != nil {
+					return
+				}
+				stack = append(stack, temp)
+			}
+		} else {
+			stack = append(stack, varNode(nil, "", String, ""))
+		}
+	}
+	if len(stack) == 1 {
+		return stack[0], nil
+	}
+	if len(stack) == 0 {
+		return nil, nil
+	}
+	return nil, errorRequest("wrong request: %s", cmd)
 }
 
 func root(node *Node) (result *Node) {

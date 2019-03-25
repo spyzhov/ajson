@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"math"
 	"sort"
 	"strconv"
 	"sync/atomic"
@@ -96,7 +97,9 @@ func varNode(parent *Node, key string, _type NodeType, value interface{}) (curre
 		_type:   _type,
 		key:     &key,
 	}
-	current.value.Store(value)
+	if value != nil {
+		current.value.Store(value)
+	}
 	return
 }
 
@@ -247,8 +250,11 @@ func (n *Node) GetNumeric() (value float64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	value = iValue.(float64)
-	return
+	value, ok := iValue.(float64)
+	if !ok {
+		return value, errorType()
+	}
+	return value, nil
 }
 
 //GetString returns string, if current type is String, else: WrongType error
@@ -260,8 +266,11 @@ func (n *Node) GetString() (value string, err error) {
 	if err != nil {
 		return "", err
 	}
-	value = iValue.(string)
-	return
+	value, ok := iValue.(string)
+	if !ok {
+		return value, errorType()
+	}
+	return value, nil
 }
 
 //GetBool returns bool, if current type is Bool, else: WrongType error
@@ -273,8 +282,11 @@ func (n *Node) GetBool() (value bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	value = iValue.(bool)
-	return
+	value, ok := iValue.(bool)
+	if !ok {
+		return value, errorType()
+	}
+	return value, nil
 }
 
 //GetArray returns []*Node, if current type is Array, else: WrongType error
@@ -286,8 +298,11 @@ func (n *Node) GetArray() (value []*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	value = iValue.([]*Node)
-	return
+	value, ok := iValue.([]*Node)
+	if !ok {
+		return value, errorType()
+	}
+	return value, nil
 }
 
 //GetObject returns map[string]*Node, if current type is Object, else: WrongType error
@@ -299,8 +314,11 @@ func (n *Node) GetObject() (value map[string]*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	value = iValue.(map[string]*Node)
-	return
+	value, ok := iValue.(map[string]*Node)
+	if !ok {
+		return value, errorType()
+	}
+	return value, nil
 }
 
 //MustNull returns nil, if current type is Null, else: panic if error happened
@@ -460,12 +478,200 @@ func (n *Node) Path() string {
 	return n.parent.Path() + "[" + strconv.Itoa(n.Index()) + "]"
 }
 
+// Check if nodes value are the same
+func (n *Node) Eq(node *Node) (result bool, err error) {
+	if n.Type() == node.Type() {
+		switch n.Type() {
+		case Bool:
+			lnum, rnum, err := _bools(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum == rnum
+		case Numeric:
+			lnum, rnum, err := _floats(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum == rnum
+		case String:
+			lnum, rnum, err := _strings(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum == rnum
+		case Null:
+			lnum, rnum, err := _nulls(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum == rnum
+		case Array:
+			lnum, rnum, err := _arrays(n, node)
+			if err != nil {
+				return false, err
+			}
+			if len(lnum) == len(rnum) {
+				result = true
+				for i := range lnum {
+					result, err = lnum[i].Eq(rnum[i])
+					if err != nil {
+						return false, err
+					}
+					if !result {
+						return false, err
+					}
+				}
+			}
+		case Object:
+			lnum, rnum, err := _objects(n, node)
+			if err != nil {
+				return false, err
+			}
+			if len(lnum) == len(rnum) {
+				result = true
+				for i := range lnum {
+					element, ok := rnum[i]
+					if !ok {
+						return false, nil
+					}
+					result, err = lnum[i].Eq(element)
+					if err != nil {
+						return false, err
+					}
+					if !result {
+						return false, err
+					}
+				}
+			}
+		}
+	}
+	return
+}
+
+// Check if nodes value is lesser than given
+func (n *Node) Le(node *Node) (result bool, err error) {
+	if n.Type() == node.Type() {
+		switch n.Type() {
+		case Numeric:
+			lnum, rnum, err := _floats(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum < rnum
+		case String:
+			lnum, rnum, err := _strings(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum < rnum
+		default:
+			return false, errorType()
+		}
+	}
+	return
+}
+
+// Check if nodes value is lesser or equal than given
+func (n *Node) Leq(node *Node) (result bool, err error) {
+	if n.Type() == node.Type() {
+		switch n.Type() {
+		case Numeric:
+			lnum, rnum, err := _floats(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum <= rnum
+		case String:
+			lnum, rnum, err := _strings(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum <= rnum
+		default:
+			return false, errorType()
+		}
+	}
+	return
+}
+
+// Check if nodes value is greater than given
+func (n *Node) Ge(node *Node) (result bool, err error) {
+	if n.Type() == node.Type() {
+		switch n.Type() {
+		case Numeric:
+			lnum, rnum, err := _floats(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum > rnum
+		case String:
+			lnum, rnum, err := _strings(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum > rnum
+		default:
+			return false, errorType()
+		}
+	}
+	return
+}
+
+// Check if nodes value is greater or equal than given
+func (n *Node) Geq(node *Node) (result bool, err error) {
+	if n.Type() == node.Type() {
+		switch n.Type() {
+		case Numeric:
+			lnum, rnum, err := _floats(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum >= rnum
+		case String:
+			lnum, rnum, err := _strings(n, node)
+			if err != nil {
+				return false, err
+			}
+			result = lnum >= rnum
+		default:
+			return false, errorType()
+		}
+	}
+	return
+}
+
 func (n *Node) ready() bool {
 	return n.borders[1] != 0
 }
 
 func (n *Node) isContainer() bool {
 	return n._type == Array || n._type == Object
+}
+
+func (n *Node) getInteger() (int, error) {
+	if !n.IsNumeric() {
+		return 0, errorType()
+	}
+	float, err := n.GetNumeric()
+	if err != nil {
+		return 0, err
+	}
+	if math.Mod(float, 1.0) != 0 {
+		return 0, errorRequest("node is not INT")
+	}
+	return int(float), nil
+}
+
+func (n *Node) getUInteger() (uint, error) {
+	result, err := n.getInteger()
+	if err != nil {
+		return 0, err
+	}
+	if result < 0 {
+		return 0, errorRequest("node is not UINT")
+	}
+	return uint(result), nil
 }
 
 // Return sorted by keys/index slice of children

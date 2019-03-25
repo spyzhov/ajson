@@ -669,3 +669,52 @@ func TestNode_Path(t *testing.T) {
 		t.Errorf("Wrong element.Path()")
 	}
 }
+
+func TestNode_Eq(t *testing.T) {
+	tests := []struct {
+		name        string
+		left, right *Node
+		expected    bool
+	}{
+		{
+			name:     "simple",
+			left:     varNode(nil, "bool", Bool, true),
+			right:    varNode(nil, "bool", Bool, true),
+			expected: true,
+		},
+		{
+			name:     "null",
+			left:     varNode(nil, "null", Null, nil),
+			right:    varNode(nil, "null", Null, nil),
+			expected: true,
+		},
+		{
+			name:     "float",
+			left:     varNode(nil, "123.5", Numeric, float64(123.5)),
+			right:    varNode(nil, "123.5", Numeric, float64(123.5)),
+			expected: true,
+		},
+		{
+			name:     "blank array",
+			left:     varNode(nil, "[]", Array, []*Node{}),
+			right:    varNode(nil, "[]", Array, []*Node{}),
+			expected: true,
+		},
+		{
+			name:     "blank map",
+			left:     varNode(nil, "{}", Object, map[string]*Node{}),
+			right:    varNode(nil, "{}", Object, map[string]*Node{}),
+			expected: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := test.left.Eq(test.right)
+			if err != nil {
+				t.Errorf("Error on node.Eq(): %s", err.Error())
+			} else if actual != test.expected {
+				t.Errorf("Failed node.Eq()")
+			}
+		})
+	}
+}
