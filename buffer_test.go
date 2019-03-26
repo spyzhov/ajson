@@ -21,6 +21,7 @@ func TestBuffer_Token(t *testing.T) {
 		{name: "part 1", value: "@.foo+@.bar", index: 5, fail: false},
 		{name: "part 2", value: "@.foo && @.bar", index: 5, fail: false},
 		{name: "part 3", value: "@.foo,3", index: 5, fail: false},
+		{name: "part 4", value: "@.length-1", index: 8, fail: false},
 
 		{name: "number 1", value: "1", index: 1, fail: false},
 		{name: "number 2", value: "1.3e2", index: 5, fail: false},
@@ -61,6 +62,7 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_5", value: "pi != 'bar'", expected: []string{"pi", "'bar'", "!="}},
 		{name: "example_6", value: "3 + 4 * -2 / (-1 - 5)**-2", expected: []string{"3", "4", "-2", "*", "-1", "5", "-", "-2", "**", "/", "+"}},
 		{name: "example_7", value: "1.3e2 + sin(2*pi/3)", expected: []string{"1.3e2", "2", "pi", "*", "3", "/", "sin", "+"}},
+		{name: "example_8", value: "@.length-1", expected: []string{"@.length", "1", "-"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

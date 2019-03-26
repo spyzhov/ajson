@@ -110,29 +110,19 @@ var (
 	}
 
 	operations = map[string]operation{
-		//"!": func(left *Node, right *Node) (result *Node, err error) {
-		//	if right != nil {
-		//		return nil, errorRequest("factorial MUST be called via one Node argument")
-		//	}
-		//	num, err := left.getUInteger()
-		//	if err != nil {
-		//		return
-		//	}
-		//	return varNode(left, "factorial", Numeric, float64(mathFactorial(num))), nil
-		//},
 		"**": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "power", Numeric, math.Pow(lnum, rnum)), nil
+			return varNode(nil, "power", Numeric, math.Pow(lnum, rnum)), nil
 		},
 		"*": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "multiply", Numeric, float64(lnum*rnum)), nil
+			return varNode(nil, "multiply", Numeric, float64(lnum*rnum)), nil
 		},
 		"/": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
@@ -142,7 +132,7 @@ var (
 			if rnum == 0 {
 				return nil, errorRequest("division by zero")
 			}
-			return varNode(left, "division", Numeric, float64(lnum/rnum)), nil
+			return varNode(nil, "division", Numeric, float64(lnum/rnum)), nil
 		},
 		"%": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, err := left.getInteger()
@@ -153,7 +143,7 @@ var (
 			if err != nil {
 				return
 			}
-			return varNode(left, "remainder", Numeric, float64(lnum%rnum)), nil
+			return varNode(nil, "remainder", Numeric, float64(lnum%rnum)), nil
 		},
 		"<<": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, err := left.getInteger()
@@ -164,7 +154,7 @@ var (
 			if err != nil {
 				return
 			}
-			return varNode(left, "left shift", Numeric, float64(lnum<<rnum)), nil
+			return varNode(nil, "left shift", Numeric, float64(lnum<<rnum)), nil
 		},
 		">>": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, err := left.getInteger()
@@ -175,35 +165,35 @@ var (
 			if err != nil {
 				return
 			}
-			return varNode(left, "right shift", Numeric, float64(lnum>>rnum)), nil
+			return varNode(nil, "right shift", Numeric, float64(lnum>>rnum)), nil
 		},
 		"&": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _ints(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "bitwise AND", Numeric, float64(lnum&rnum)), nil
+			return varNode(nil, "bitwise AND", Numeric, float64(lnum&rnum)), nil
 		},
 		"&^": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _ints(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "bit clear (AND NOT)", Numeric, float64(lnum&rnum)), nil
+			return varNode(nil, "bit clear (AND NOT)", Numeric, float64(lnum&rnum)), nil
 		},
 		"+": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "sum", Numeric, float64(lnum+rnum)), nil
+			return varNode(nil, "sum", Numeric, float64(lnum+rnum)), nil
 		},
 		"-": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
 			if err != nil {
 				return
 			}
-			return varNode(left, "sub", Numeric, float64(lnum-rnum)), nil
+			return varNode(nil, "sub", Numeric, float64(lnum-rnum)), nil
 		},
 		"|": func(left *Node, right *Node) (result *Node, err error) {
 			if left.IsNumeric() && right.IsNumeric() {
@@ -211,7 +201,7 @@ var (
 				if err != nil {
 					return nil, err
 				}
-				return varNode(left, "bitwise OR", Numeric, float64(lnum|rnum)), nil
+				return varNode(nil, "bitwise OR", Numeric, float64(lnum|rnum)), nil
 			}
 			return nil, errorRequest("function 'bitwise OR' was called from non numeric node")
 		},
@@ -221,7 +211,7 @@ var (
 				if err != nil {
 					return nil, err
 				}
-				return varNode(left, "bitwise XOR", Numeric, float64(lnum^rnum)), nil
+				return varNode(nil, "bitwise XOR", Numeric, float64(lnum^rnum)), nil
 			}
 			return nil, errorRequest("function 'bitwise XOR' was called from non numeric node")
 		},
@@ -230,42 +220,42 @@ var (
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "eq", Bool, bool(res)), nil
+			return varNode(nil, "eq", Bool, bool(res)), nil
 		},
 		"!=": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Eq(right)
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "neq", Bool, bool(!res)), nil
+			return varNode(nil, "neq", Bool, bool(!res)), nil
 		},
 		"<": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Le(right)
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "le", Bool, bool(!res)), nil
+			return varNode(nil, "le", Bool, bool(!res)), nil
 		},
 		"<=": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Leq(right)
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "leq", Bool, bool(!res)), nil
+			return varNode(nil, "leq", Bool, bool(!res)), nil
 		},
 		">": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Ge(right)
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "ge", Bool, bool(!res)), nil
+			return varNode(nil, "ge", Bool, bool(!res)), nil
 		},
 		">=": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Geq(right)
 			if err != nil {
 				return nil, err
 			}
-			return varNode(left, "geq", Bool, bool(!res)), nil
+			return varNode(nil, "geq", Bool, bool(!res)), nil
 		},
 		"&&": func(left *Node, right *Node) (result *Node, err error) {
 			res := false
@@ -280,7 +270,7 @@ var (
 				}
 				res = rval
 			}
-			return varNode(left, "AND", Bool, bool(!res)), nil
+			return varNode(nil, "AND", Bool, bool(!res)), nil
 		},
 		"||": func(left *Node, right *Node) (result *Node, err error) {
 			res := true
@@ -295,7 +285,7 @@ var (
 				}
 				res = rval
 			}
-			return varNode(left, "OR", Bool, bool(!res)), nil
+			return varNode(nil, "OR", Bool, bool(!res)), nil
 		},
 	}
 
@@ -306,7 +296,7 @@ var (
 				if err != nil {
 					return nil, err
 				}
-				return varNode(node, "sin", Numeric, math.Sin(num)), nil
+				return varNode(nil, "sin", Numeric, math.Sin(num)), nil
 			}
 			return nil, errorRequest("function 'sin' was called from non numeric node")
 		},
@@ -316,7 +306,7 @@ var (
 				if err != nil {
 					return nil, err
 				}
-				return varNode(node, "cos", Numeric, math.Cos(num)), nil
+				return varNode(nil, "cos", Numeric, math.Cos(num)), nil
 			}
 			return nil, errorRequest("function 'cos' was called from non numeric node")
 		},
@@ -325,6 +315,13 @@ var (
 				return varNode(node, "length", Numeric, float64(node.Size())), nil
 			}
 			return nil, errorRequest("function 'length' was called from non array node")
+		},
+		"factorial": func(node *Node) (result *Node, err error) {
+			num, err := node.getUInteger()
+			if err != nil {
+				return
+			}
+			return varNode(nil, "factorial", Numeric, float64(mathFactorial(num))), nil
 		},
 	}
 	constants = map[string]*Node{
@@ -494,12 +491,14 @@ func (b *buffer) token() (err error) {
 		c     byte
 		stack = make([]byte, 0)
 		start int
+		find  bool
 	)
 tokenLoop:
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		switch {
 		case c == quote:
+			find = true
 			start = b.index
 			err = b.step()
 			if err != nil {
@@ -511,31 +510,40 @@ tokenLoop:
 			}
 			b.index = start
 		case c == bracketL:
+			find = true
 			stack = append(stack, c)
 		case c == bracketR:
+			find = true
 			if len(stack) == 0 || stack[len(stack)-1] != bracketL {
 				return b.errorSymbol()
 			}
 			stack = stack[:len(stack)-1]
 		case c == parenthesesL:
+			find = true
 			stack = append(stack, c)
 		case c == parenthesesR:
+			find = true
 			if len(stack) == 0 || stack[len(stack)-1] != parenthesesL {
 				return b.errorSymbol()
 			}
 			stack = stack[:len(stack)-1]
 		case c == dot || c == at || c == dollar || c == question || c == asterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard token name
+			find = true
 			continue
 		case len(stack) != 0:
+			find = true
 			continue
 		case c == minus || c == plus:
-			start = b.index
-			err = b.numeric()
-			if err == nil || err == io.EOF {
-				b.index--
-				continue
+			if !find {
+				find = true
+				start = b.index
+				err = b.numeric()
+				if err == nil || err == io.EOF {
+					b.index--
+					continue
+				}
+				b.index = start
 			}
-			b.index = start
 			fallthrough
 		default:
 			break tokenLoop
@@ -642,12 +650,14 @@ func (b *buffer) rpn() (result rpn, err error) {
 				if err != io.EOF {
 					return nil, err
 				}
+			}
+			current = string(b.data[start:b.index])
+			result = append(result, current)
+			if err != nil {
 				err = nil
 			} else {
 				b.index--
 			}
-			current = string(b.data[start:b.index])
-			result = append(result, current)
 		case c == parenthesesL: // (
 			variable = false
 			current = string(c)
@@ -728,12 +738,12 @@ func (b *buffer) errorSymbol() error {
 	return errorSymbol(b)
 }
 
-//func mathFactorial(x uint) uint {
-//	if x == 0 {
-//		return 1
-//	}
-//	return x * mathFactorial(x-1)
-//}
+func mathFactorial(x uint) uint {
+	if x == 0 {
+		return 1
+	}
+	return x * mathFactorial(x-1)
+}
 
 func _floats(left, right *Node) (lnum, rnum float64, err error) {
 	lnum, err = left.GetNumeric()

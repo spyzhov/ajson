@@ -64,36 +64,39 @@ func TestJsonPath(t *testing.T) {
 		path     string
 		expected string
 	}{
-		//{name: "root", path: "$", expected: "[$]"},
-		//{name: "roots", path: "$.", expected: "[$]"},
-		//{name: "all objects", path: "$..", expected: "[$, $['store'], $['store']['bicycle'], $['store']['book'], $['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "only children", path: "$.*", expected: "[$['store']]"},
-		//
-		//{name: "by key", path: "$.store.bicycle", expected: "[$['store']['bicycle']]"},
-		//{name: "all key 1", path: "$..bicycle", expected: "[$['store']['bicycle']]"},
-		//{name: "all key 2", path: "$..price", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
-		//{name: "all key bracket", path: "$..['price']", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
-		//{name: "all fields", path: "$['store']['book'][1].*", expected: "[$['store']['book'][1]['author'], $['store']['book'][1]['category'], $['store']['book'][1]['price'], $['store']['book'][1]['title']]"},
-		//
-		//{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
-		//{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
-		//
-		//{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 3", path: "$..[1:4:1]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 4", path: "$..[1:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 5", path: "$..[:2]", expected: "[$['store']['book'][0], $['store']['book'][1]]"},
-		//{name: "slices 6", path: "$..[:4:2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
-		//{name: "slices 7", path: "$..[:4:]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 8", path: "$..[::]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		//{name: "slices 9", path: "$['store']['book'][1:4:2]", expected: "[$['store']['book'][1], $['store']['book'][3]]"},
-		//{name: "slices 10", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
-		//{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
-		//{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
-		//
-		//{name: "length", path: "$['store']['book'].length", expected: "[$['store']['book']['length']]"},
-		//
-		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][2]]"},
+		{name: "root", path: "$", expected: "[$]"},
+		{name: "roots", path: "$.", expected: "[$]"},
+		{name: "all objects", path: "$..", expected: "[$, $['store'], $['store']['bicycle'], $['store']['book'], $['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "only children", path: "$.*", expected: "[$['store']]"},
+
+		{name: "by key", path: "$.store.bicycle", expected: "[$['store']['bicycle']]"},
+		{name: "all key 1", path: "$..bicycle", expected: "[$['store']['bicycle']]"},
+		{name: "all key 2", path: "$..price", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
+		{name: "all key bracket", path: "$..['price']", expected: "[$['store']['bicycle']['price'], $['store']['book'][0]['price'], $['store']['book'][1]['price'], $['store']['book'][2]['price'], $['store']['book'][3]['price']]"},
+		{name: "all fields", path: "$['store']['book'][1].*", expected: "[$['store']['book'][1]['author'], $['store']['book'][1]['category'], $['store']['book'][1]['price'], $['store']['book'][1]['title']]"},
+
+		{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
+		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+
+		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 3", path: "$..[1:4:1]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 4", path: "$..[1:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 5", path: "$..[:2]", expected: "[$['store']['book'][0], $['store']['book'][1]]"},
+		{name: "slices 6", path: "$..[:4:2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "slices 7", path: "$..[:4:]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 8", path: "$..[::]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 9", path: "$['store']['book'][1:4:2]", expected: "[$['store']['book'][1], $['store']['book'][3]]"},
+		{name: "slices 10", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
+		{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
+		{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
+
+		{name: "length", path: "$['store']['book'].length", expected: "[$['store']['book']['length']]"},
+
+		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
+		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
+		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
+		{name: "calculated 4", path: "$..book[:(factorial(2))]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -470,7 +470,10 @@ func (n *Node) Empty() bool {
 // Path returns full JsonPath of current Node
 func (n *Node) Path() string {
 	if n.parent == nil {
-		return "$"
+		if n.key == nil {
+			return "$"
+		}
+		return n.Key()
 	}
 	if n.key != nil {
 		return n.parent.Path() + "['" + n.Key() + "']"

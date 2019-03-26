@@ -158,7 +158,8 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 		c              byte
 		key            string
 		ok             bool
-		value          *Node
+		value, temp    *Node
+		float          float64
 	)
 	for i, cmd := range commands {
 		switch {
@@ -182,7 +183,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 				temporary = append(temporary, element.inheritors()...)
 			}
 			result = temporary
-		case strings.Contains(cmd, ":"): // array slice operator
+		case strings.Contains(cmd, ":"): // fixme:array slice operator
 			keys = strings.Split(cmd, ":")
 			if len(keys) > 3 {
 				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
@@ -244,16 +245,20 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 			temporary = make([]*Node, 0)
 			for _, element := range result {
-				value, err = eval(element, rpn, cmd)
-				if err != nil {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				if value != nil {
-					ok, err = boolean(value)
-					if err != nil || !ok {
-						continue
+				if element.isContainer() {
+					for _, temp = range element.inheritors() {
+						value, err = eval(temp, rpn, cmd)
+						if err != nil {
+							return nil, errorRequest("wrong request: %s", cmd)
+						}
+						if value != nil {
+							ok, err = boolean(value)
+							if err != nil || !ok {
+								continue
+							}
+							temporary = append(temporary, temp)
+						}
 					}
-					temporary = append(temporary, element)
 				}
 			}
 			result = temporary
@@ -265,12 +270,51 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 			temporary = make([]*Node, 0)
 			for _, element := range result {
-				value, err = eval(element, rpn, cmd)
+				if !element.isContainer() {
+					continue
+				}
+				temp, err = eval(element, rpn, cmd)
 				if err != nil {
 					return nil, errorRequest("wrong request: %s", cmd)
 				}
-				if value != nil {
-					temporary = append(temporary, value)
+				if temp != nil {
+					value = nil
+					switch temp.Type() {
+					case String:
+						key, err = element.GetString()
+						if err != nil {
+							return nil, errorRequest("wrong type convert: %s", err.Error())
+						}
+						value, _ = element.children[key]
+					case Numeric:
+						from, err = temp.getInteger()
+						if err == nil { // INTEGER
+							if from < 0 {
+								key = strconv.Itoa(element.Size() - from)
+							} else {
+								key = strconv.Itoa(from)
+							}
+						} else {
+							float, err = temp.GetNumeric()
+							if err != nil {
+								return nil, errorRequest("wrong type convert: %s", err.Error())
+							}
+							key = strconv.FormatFloat(float, 'g', -1, 64)
+						}
+						value, _ = element.children[key]
+					case Bool:
+						ok, err = temp.GetBool()
+						if err != nil {
+							return nil, errorRequest("wrong type convert: %s", err.Error())
+						}
+						if ok {
+							temporary = append(temporary, element.inheritors()...)
+						}
+						continue
+					}
+					if value != nil {
+						temporary = append(temporary, value)
+					}
 				}
 			}
 			result = temporary
@@ -318,6 +362,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							if err != nil {
 								return
 							}
+							ok = true
 						} else {
 							from, err = strconv.Atoi(key)
 							if err != nil {
@@ -330,6 +375,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 								value, ok = element.children[key]
 							}
 						}
+
 					} else if element.IsObject() {
 						value, ok = element.children[key]
 					}
