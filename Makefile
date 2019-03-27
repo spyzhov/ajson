@@ -2,7 +2,7 @@
 all: tst fmt vet golint errcheck golangcilint gocyclo
 
 tst:
-	go test .
+	go test -race ./...
 
 fmt:
 	gofmt -d -e -s .
