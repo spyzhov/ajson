@@ -139,11 +139,19 @@ var (
 			return valueNode(nil, "bit clear (AND NOT)", Numeric, float64(lnum&rnum)), nil
 		},
 		"+": func(left *Node, right *Node) (result *Node, err error) {
-			lnum, rnum, err := _floats(left, right)
-			if err != nil {
-				return
+			if left.IsString() {
+				lnum, rnum, err := _strings(left, right)
+				if err != nil {
+					return nil, err
+				}
+				return valueNode(nil, "sum", String, string(lnum+rnum)), nil
+			} else {
+				lnum, rnum, err := _floats(left, right)
+				if err != nil {
+					return nil, err
+				}
+				return valueNode(nil, "sum", Numeric, float64(lnum+rnum)), nil
 			}
-			return valueNode(nil, "sum", Numeric, float64(lnum+rnum)), nil
 		},
 		"-": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
@@ -247,25 +255,50 @@ var (
 	}
 
 	functions = map[string]Function{
-		"sin": func(node *Node) (result *Node, err error) {
-			if node.IsNumeric() {
-				num, err := node.GetNumeric()
-				if err != nil {
-					return nil, err
-				}
-				return valueNode(nil, "sin", Numeric, math.Sin(num)), nil
+		"abs":         numericFunction("Abs", math.Abs),
+		"acos":        numericFunction("Acos", math.Acos),
+		"acosh":       numericFunction("Acosh", math.Acosh),
+		"asin":        numericFunction("Asin", math.Asin),
+		"asinh":       numericFunction("Asinh", math.Asinh),
+		"atan":        numericFunction("Atan", math.Atan),
+		"atanh":       numericFunction("Atanh", math.Atanh),
+		"cbrt":        numericFunction("Cbrt", math.Cbrt),
+		"ceil":        numericFunction("Ceil", math.Ceil),
+		"cos":         numericFunction("Cos", math.Cos),
+		"cosh":        numericFunction("Cosh", math.Cosh),
+		"erf":         numericFunction("Erf", math.Erf),
+		"erfc":        numericFunction("Erfc", math.Erfc),
+		"erfcinv":     numericFunction("Erfcinv", math.Erfcinv),
+		"erfinv":      numericFunction("Erfinv", math.Erfinv),
+		"exp":         numericFunction("Exp", math.Exp),
+		"exp2":        numericFunction("Exp2", math.Exp2),
+		"expm1":       numericFunction("Expm1", math.Expm1),
+		"floor":       numericFunction("Floor", math.Floor),
+		"gamma":       numericFunction("Gamma", math.Gamma),
+		"j0":          numericFunction("J0", math.J0),
+		"j1":          numericFunction("J1", math.J1),
+		"log":         numericFunction("Log", math.Log),
+		"log10":       numericFunction("Log10", math.Log10),
+		"log1p":       numericFunction("Log1p", math.Log1p),
+		"log2":        numericFunction("Log2", math.Log2),
+		"logb":        numericFunction("Logb", math.Logb),
+		"round":       numericFunction("Round", math.Round),
+		"roundtoeven": numericFunction("RoundToEven", math.RoundToEven),
+		"sin":         numericFunction("Sin", math.Sin),
+		"sinh":        numericFunction("Sinh", math.Sinh),
+		"sqrt":        numericFunction("Sqrt", math.Sqrt),
+		"tan":         numericFunction("Tan", math.Tan),
+		"tanh":        numericFunction("Tanh", math.Tanh),
+		"trunc":       numericFunction("Trunc", math.Trunc),
+		"y0":          numericFunction("Y0", math.Y0),
+		"y1":          numericFunction("Y1", math.Y1),
+
+		"pow10": func(node *Node) (result *Node, err error) {
+			num, err := node.getInteger()
+			if err != nil {
+				return
 			}
-			return nil, errorRequest("function 'sin' was called from non numeric node")
-		},
-		"cos": func(node *Node) (result *Node, err error) {
-			if node.IsNumeric() {
-				num, err := node.GetNumeric()
-				if err != nil {
-					return nil, err
-				}
-				return valueNode(nil, "cos", Numeric, math.Cos(num)), nil
-			}
-			return nil, errorRequest("function 'cos' was called from non numeric node")
+			return valueNode(nil, "Pow10", Numeric, float64(math.Pow10(num))), nil
 		},
 		"length": func(node *Node) (result *Node, err error) {
 			if node.IsArray() {
@@ -283,6 +316,7 @@ var (
 	}
 	constants = map[string]*Node{
 		"pi":    valueNode(nil, "pi", Numeric, float64(math.Pi)),
+		"phi":   valueNode(nil, "pi", Numeric, float64(math.Phi)),
 		"e":     valueNode(nil, "e", Numeric, float64(math.E)),
 		"true":  valueNode(nil, "true", Bool, true),
 		"false": valueNode(nil, "false", Bool, false),
@@ -308,4 +342,17 @@ func AddOperation(alias string, prior uint8, right bool, operation Operation) {
 // AddOperation - add a constant for internal JSONPath script
 func AddConstant(alias string, value *Node) {
 	constants[strings.ToLower(alias)] = value
+}
+
+func numericFunction(name string, fn func(float float64) float64) Function {
+	return func(node *Node) (result *Node, err error) {
+		if node.IsNumeric() {
+			num, err := node.GetNumeric()
+			if err != nil {
+				return nil, err
+			}
+			return valueNode(nil, name, Numeric, fn(num)), nil
+		}
+		return nil, errorRequest("function '%s' was called from non numeric node", name)
+	}
 }

@@ -187,3 +187,92 @@ func TestParseJSONPath(t *testing.T) {
 		})
 	}
 }
+
+func ExampleJSONPath() {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`)
+	authors, err := JSONPath(json, "$.store.book[*].author")
+	if err != nil {
+		panic(err)
+	}
+	for _, author := range authors {
+		println(author.MustString())
+	}
+	//Nigel Rees
+	//Evelyn Waugh
+	//Herman Melville
+	//J. R. R. Tolkien
+}
+
+func TestExampleEval(t *testing.T) {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`)
+	books, err := JSONPath(json, "$.store.book")
+	if err != nil {
+		panic(err)
+	}
+	result, err := Eval(books[0], "@.length")
+	if err != nil {
+		panic(err)
+	}
+	println(int(result.MustNumeric()))
+	//4
+}
