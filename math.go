@@ -8,7 +8,7 @@ import (
 // Function - internal left function of JSONPath
 type Function func(node *Node) (result *Node, err error)
 
-// Function - internal script operation of JSONPath
+// Operation - internal script operation of JSONPath
 type Operation func(left *Node, right *Node) (result *Node, err error)
 
 var (
@@ -145,13 +145,12 @@ var (
 					return nil, err
 				}
 				return valueNode(nil, "sum", String, string(lnum+rnum)), nil
-			} else {
-				lnum, rnum, err := _floats(left, right)
-				if err != nil {
-					return nil, err
-				}
-				return valueNode(nil, "sum", Numeric, float64(lnum+rnum)), nil
 			}
+			lnum, rnum, err := _floats(left, right)
+			if err != nil {
+				return nil, err
+			}
+			return valueNode(nil, "sum", Numeric, float64(lnum+rnum)), nil
 		},
 		"-": func(left *Node, right *Node) (result *Node, err error) {
 			lnum, rnum, err := _floats(left, right)
@@ -335,12 +334,12 @@ var (
 	}
 )
 
-// AddFunction - add a function for internal JSONPath script
+// AddFunction add a function for internal JSONPath script
 func AddFunction(alias string, function Function) {
 	functions[strings.ToLower(alias)] = function
 }
 
-// AddOperation - add an operation for internal JSONPath script
+// AddOperation add an operation for internal JSONPath script
 func AddOperation(alias string, prior uint8, right bool, operation Operation) {
 	alias = strings.ToLower(alias)
 	operations[alias] = operation
@@ -350,7 +349,7 @@ func AddOperation(alias string, prior uint8, right bool, operation Operation) {
 	}
 }
 
-// AddOperation - add a constant for internal JSONPath script
+// AddConstant add a constant for internal JSONPath script
 func AddConstant(alias string, value *Node) {
 	constants[strings.ToLower(alias)] = value
 }

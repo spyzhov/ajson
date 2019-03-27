@@ -427,7 +427,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							return nil, errorRequest("wrong type convert: %s", err.Error())
 						}
 						key, _ = str(key)
-						value, _ = element.children[key]
+						value = element.children[key]
 					case Numeric:
 						num, err = temp.getInteger()
 						if err == nil { // INTEGER
@@ -443,7 +443,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							}
 							key = strconv.FormatFloat(float, 'g', -1, 64)
 						}
-						value, _ = element.children[key]
+						value = element.children[key]
 					case Bool:
 						ok, err = temp.GetBool()
 						if err != nil {
@@ -531,7 +531,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 	return
 }
 
-// Evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
+// Eval evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
 func Eval(node *Node, cmd string) (result *Node, err error) {
 	buf := newBuffer([]byte(cmd))
 	rpn, err := buf.rpn()

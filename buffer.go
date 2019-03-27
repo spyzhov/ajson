@@ -720,16 +720,6 @@ func (t tokens) count(find string) int {
 	return i
 }
 
-func (t tokens) find(find string, from int) int {
-	n := len(t)
-	for i := from; i < n; i++ {
-		if t[i] == find {
-			return i
-		}
-	}
-	return -1
-}
-
 func (t tokens) slice(find string) []string {
 	n := len(t)
 	result := make([]string, 0, t.count(find))

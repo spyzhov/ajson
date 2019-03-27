@@ -563,7 +563,7 @@ func (n *Node) Path() string {
 	return n.parent.Path() + "[" + strconv.Itoa(n.Index()) + "]"
 }
 
-// Check if nodes value are the same
+// Eq check if nodes value are the same
 func (n *Node) Eq(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
 		switch n.Type() {
@@ -634,7 +634,7 @@ func (n *Node) Eq(node *Node) (result bool, err error) {
 	return
 }
 
-// Check if nodes value is lesser than given
+// Le check if nodes value is lesser than given
 func (n *Node) Le(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
 		switch n.Type() {
@@ -657,7 +657,7 @@ func (n *Node) Le(node *Node) (result bool, err error) {
 	return
 }
 
-// Check if nodes value is lesser or equal than given
+// Leq check if nodes value is lesser or equal than given
 func (n *Node) Leq(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
 		switch n.Type() {
@@ -680,7 +680,7 @@ func (n *Node) Leq(node *Node) (result bool, err error) {
 	return
 }
 
-// Check if nodes value is greater than given
+// Ge check if nodes value is greater than given
 func (n *Node) Ge(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
 		switch n.Type() {
@@ -703,7 +703,7 @@ func (n *Node) Ge(node *Node) (result bool, err error) {
 	return
 }
 
-// Check if nodes value is greater or equal than given
+// Geq check if nodes value is greater or equal than given
 func (n *Node) Geq(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
 		switch n.Type() {
