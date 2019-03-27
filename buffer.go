@@ -48,6 +48,7 @@ const (
 type function func(*Node) (*Node, error)
 type operation func(left *Node, right *Node) (*Node, error)
 type rpn []string
+type tokens []string
 
 var (
 	_null  = []byte("null")
@@ -407,13 +408,19 @@ func (b *buffer) numeric() error {
 			if find&2 == 0 && find&8 == 0 { // exp part of numeric MUST contains only digits
 				find &= 2
 			} else {
-				return errorSymbol(b)
+				if find&4 == 0 {
+					return errorSymbol(b)
+				}
+				return nil
 			}
 		case c == '+' || c == '-':
 			if find == 0 || find == 8 {
 				find |= 1
 			} else {
-				return errorSymbol(b)
+				if find&4 == 0 {
+					return errorSymbol(b)
+				}
+				return nil
 			}
 		case c == 'e' || c == 'E':
 			if find&8 == 0 && find&4 != 0 { // exp without base part
@@ -490,6 +497,7 @@ func (b *buffer) token() (err error) {
 	var (
 		c     byte
 		stack = make([]byte, 0)
+		first = b.index
 		start int
 		find  bool
 	)
@@ -552,13 +560,16 @@ tokenLoop:
 	if len(stack) != 0 {
 		return b.errorEOF()
 	}
+	if first == b.index {
+		return b.step()
+	}
 	if b.index >= b.length {
 		return io.EOF
 	}
 	return nil
 }
 
-//  Builder for `Reverse Polish notation`
+// Builder for `Reverse Polish notation`
 func (b *buffer) rpn() (result rpn, err error) {
 	var (
 		c        byte
@@ -730,6 +741,132 @@ func (b *buffer) rpn() (result rpn, err error) {
 	return
 }
 
+func (b *buffer) tokenize() (result tokens, err error) {
+	var (
+		c        byte
+		start    int
+		temp     string
+		current  string
+		variable bool
+	)
+	for {
+		c, err = b.first()
+		if err != nil {
+			break
+		}
+		switch true {
+		case c == asterisk || c == division || c == minus || c == plus || c == caret || c == ampersand || c == pipe || c == signL || c == signG || c == signE || c == exclamation: // operations
+			if variable || (c != minus && c != plus) {
+				variable = false
+				current = string(c)
+
+				c, err = b.next()
+				if err == nil {
+					temp = current + string(c)
+					if priority[temp] != 0 {
+						current = temp
+					} else {
+						b.index--
+					}
+				} else {
+					err = nil
+				}
+
+				result = append(result, current)
+				break
+			}
+			fallthrough // for numbers like `-1e6`
+		case c >= '0' && c <= '9': // numbers
+			variable = true
+			start = b.index
+			err = b.numeric()
+			if err != nil && err != io.EOF {
+				return nil, err
+			}
+			current = string(b.data[start:b.index])
+			result = append(result, current)
+			if err != nil {
+				err = nil
+			} else {
+				b.index--
+			}
+		case c == quote: // string
+			variable = true
+			start = b.index
+			err = b.string(quote)
+			if err != nil {
+				return nil, b.errorEOF()
+			}
+			current = string(b.data[start : b.index+1])
+			result = append(result, current)
+		case c == dollar || c == at: // variable : like @.length , $.expensive, etc.
+			variable = true
+			start = b.index
+			err = b.token()
+			if err != nil {
+				if err != io.EOF {
+					return nil, err
+				}
+			}
+			current = string(b.data[start:b.index])
+			result = append(result, current)
+			if err != nil {
+				err = nil
+			} else {
+				b.index--
+			}
+		case c == parenthesesL: // (
+			variable = false
+			current = string(c)
+			result = append(result, current)
+		case c == parenthesesR: // )
+			variable = true
+			current = string(c)
+			result = append(result, current)
+		default: // prefix functions or etc.
+			start = b.index
+			variable = true
+			for ; b.index < b.length; b.index++ {
+				c = b.data[b.index]
+				if c == parenthesesL { // function detection, example: sin(...), round(...), etc.
+					variable = false
+					break
+				}
+				if c < 'A' || c > 'z' {
+					if !(c >= '0' && c <= '9') && c != '_' { // constants detection, example: true, false, null, PI, e, etc.
+						break
+					}
+				}
+			}
+			if start == b.index {
+				err = b.step()
+				if err != nil {
+					err = nil
+					current = strings.ToLower(string(b.data[start : b.index+1]))
+				} else {
+					current = strings.ToLower(string(b.data[start:b.index]))
+					b.index--
+				}
+			} else {
+				current = strings.ToLower(string(b.data[start:b.index]))
+				b.index--
+			}
+			result = append(result, current)
+		}
+		err = b.step()
+		if err != nil {
+			break
+		}
+	}
+
+	if err != io.EOF {
+		return
+	}
+	err = nil
+
+	return
+}
+
 func (b *buffer) errorEOF() error {
 	return errorEOF(b)
 }
@@ -826,4 +963,60 @@ func boolean(node *Node) (bool, error) {
 		return !node.Empty(), nil
 	}
 	return false, nil
+}
+
+func tokenize(cmd string) (result tokens, err error) {
+	buf := newBuffer([]byte(cmd))
+	return buf.tokenize()
+}
+
+func (t tokens) exists(find string) bool {
+	for _, s := range t {
+		if s == find {
+			return true
+		}
+	}
+	return false
+}
+
+func (t tokens) count(find string) int {
+	i := 0
+	for _, s := range t {
+		if s == find {
+			i++
+		}
+	}
+	return i
+}
+
+func (t tokens) find(find string, from int) int {
+	n := len(t)
+	for i := from; i < n; i++ {
+		if t[i] == find {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t tokens) slice(find string) []string {
+	n := len(t)
+	result := make([]string, 0, t.count(find))
+	from := 0
+	for i := 0; i < n; i++ {
+		if t[i] == find {
+			result = append(result, strings.Join(t[from:i], ""))
+			from = i + 1
+		}
+	}
+	result = append(result, strings.Join(t[from:n], ""))
+	return result
+}
+
+func str(key string) (string, bool) {
+	from := len(key)
+	if from > 1 && key[0] == quote && key[from-1] == quote {
+		return key[1 : from-1], true
+	}
+	return key, false
 }

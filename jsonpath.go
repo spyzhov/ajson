@@ -2,7 +2,6 @@ package ajson
 
 import (
 	"io"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -149,19 +148,25 @@ func ParseJSONPath(path string) (result []string, err error) {
 
 func deReference(node *Node, commands []string) (result []*Node, err error) {
 	result = make([]*Node, 0)
-
 	var (
-		temporary      []*Node
-		keys           []string
-		from, to, step int
-		rfrom, rto     int
-		c              byte
-		key            string
-		ok             bool
-		value, temp    *Node
-		float          float64
+		temporary   []*Node
+		keys, skeys []string
+		ikeys       []int
+		num         int
+		key         string
+		ok          bool
+		value, temp *Node
+		float       float64
+		tokens      tokens
+		rpn         rpn
+		buf         *buffer
 	)
 	for i, cmd := range commands {
+		buf = newBuffer([]byte(cmd))
+		tokens, err = buf.tokenize()
+		if err != nil {
+			return
+		}
 		switch {
 		case cmd == "$": // root element
 			if i == 0 {
@@ -183,62 +188,72 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 				temporary = append(temporary, element.inheritors()...)
 			}
 			result = temporary
-		case strings.Contains(cmd, ":"): // fixme:array slice operator
-			keys = strings.Split(cmd, ":")
-			if len(keys) > 3 {
+		case tokens.exists(":"): // array slice operator
+			if tokens.count(":") > 3 {
 				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
 			}
+			keys = tokens.slice(":")
+			skeys = make([]string, 3)
+			ikeys = make([]int, 3)
 			if keys[0] == "" {
-				from = 0
+				skeys[0] = "0"
 			} else {
-				from, err = strconv.Atoi(keys[0])
-				if err != nil {
-					return nil, errorRequest("start of slice must be number, got '%s'", keys[0])
-				}
+				skeys[0] = keys[0]
 			}
 			if keys[1] == "" {
-				to = math.MaxInt64
+				skeys[1] = "(@.length)"
 			} else {
-				to, err = strconv.Atoi(keys[1])
-				if err != nil {
-					return nil, errorRequest("stop of slice must be number, got '%s'", keys[1])
-				}
+				skeys[1] = keys[1]
 			}
-			step = 1
-			if len(keys) == 3 {
-				if keys[2] != "" {
-					step, err = strconv.Atoi(keys[2])
-					if err != nil {
-						return nil, errorRequest("step of slice must be number, got '%s'", keys[2])
-					}
-				}
+			if len(keys) < 3 || keys[2] == "" {
+				skeys[2] = "1"
+			} else {
+				skeys[2] = keys[2]
 			}
 
 			temporary = make([]*Node, 0)
 			for _, element := range result {
 				if element.IsArray() {
-					rfrom = from
-					if rfrom < 0 {
-						rfrom = element.Size() + rfrom
-					}
-					rto = to
-					if rto < 0 {
-						rto = element.Size() + rto
+					for num, key = range skeys {
+						if key == "(@.length)" {
+							ikeys[num] = element.Size()
+						} else if strings.HasPrefix(key, "(") && strings.HasSuffix(key, ")") {
+							buf = newBuffer([]byte(key[1 : len(key)-1]))
+							rpn, err = buf.rpn()
+							if err != nil {
+								return nil, err
+							}
+							temp, err = eval(element, rpn, key)
+							if err != nil {
+								err = nil
+								continue
+							}
+							ikeys[num], err = temp.getInteger()
+							if err != nil {
+								continue
+							}
+						} else {
+							ikeys[num], err = strconv.Atoi(key)
+							if err != nil {
+								return nil, errorRequest("wrong request: %s", cmd)
+							}
+						}
+						if num != 2 && ikeys[num] < 0 {
+							ikeys[num] += element.Size()
+						}
 					}
 
-					for i := rfrom; i < rto; i += step {
+					for i := ikeys[0]; i < ikeys[1]; i += ikeys[2] {
 						value, ok := element.children[strconv.Itoa(i)]
 						if ok {
 							temporary = append(temporary, value)
-						} else {
-							break
 						}
 					}
 				}
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "?(") && strings.HasSuffix(cmd, ")"): // applies a filter (script) expression
-			buf := newBuffer([]byte(cmd[2 : len(cmd)-1]))
+			buf = newBuffer([]byte(cmd[2 : len(cmd)-1]))
 			rpn, err := buf.rpn()
 			if err != nil {
 				return nil, errorRequest("wrong request: %s", cmd)
@@ -285,14 +300,15 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 						if err != nil {
 							return nil, errorRequest("wrong type convert: %s", err.Error())
 						}
+						key, _ = str(key)
 						value, _ = element.children[key]
 					case Numeric:
-						from, err = temp.getInteger()
+						num, err = temp.getInteger()
 						if err == nil { // INTEGER
-							if from < 0 {
-								key = strconv.Itoa(element.Size() - from)
+							if num < 0 {
+								key = strconv.Itoa(element.Size() - num)
 							} else {
-								key = strconv.Itoa(from)
+								key = strconv.Itoa(num)
 							}
 						} else {
 							float, err = temp.GetNumeric()
@@ -311,6 +327,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							temporary = append(temporary, element.inheritors()...)
 						}
 						continue
+						// case Array: // get all keys from element via array values
 					}
 					if value != nil {
 						temporary = append(temporary, value)
@@ -319,64 +336,62 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		default: // try to get by key & Union
-			buf := newBuffer([]byte(cmd))
-			keys = make([]string, 0)
-			for {
-				c, err = buf.first()
-				if err != nil {
-					return nil, errorRequest("blank request")
-				}
-				if c == coma {
+			if tokens.exists(",") {
+				keys = tokens.slice(",")
+				if len(keys) == 0 {
 					return nil, errorRequest("wrong request: %s", cmd)
 				}
-				from = buf.index
-				err = buf.token()
-				if err != nil && err != io.EOF {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				key = string(buf.data[from:buf.index])
-				if len(key) > 2 && key[0] == quote && key[len(key)-1] == quote { // string
-					key = key[1 : len(key)-1]
-				}
-				keys = append(keys, key)
-				c, err = buf.first()
-				if err != nil {
-					err = nil
-					break
-				}
-				if c != coma {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
-				err = buf.step()
-				if err != nil {
-					return nil, errorRequest("wrong request: %s", cmd)
-				}
+			} else {
+				keys = []string{cmd}
 			}
 
 			temporary = make([]*Node, 0)
 			for _, key = range keys {
 				for _, element := range result {
 					if element.IsArray() {
-						if key == "length" {
+						if key == "length" || key == "'length'" {
 							value, err = functions["length"](element)
 							if err != nil {
 								return
 							}
 							ok = true
-						} else {
-							from, err = strconv.Atoi(key)
+						} else if strings.HasPrefix(key, "(") && strings.HasSuffix(key, ")") {
+							buf = newBuffer([]byte(key[1 : len(key)-1]))
+							rpn, err = buf.rpn()
+							if err != nil {
+								return nil, err
+							}
+							temp, err = eval(element, rpn, key)
+							if err != nil {
+								err = nil
+								continue
+							}
+							num, err = temp.getInteger()
 							if err != nil {
 								ok = false
 								err = nil
 							} else {
-								if from < 0 {
-									key = strconv.Itoa(element.Size() + from)
+								if num < 0 {
+									key = strconv.Itoa(element.Size() + num)
+								}
+								value, ok = element.children[key]
+							}
+						} else {
+							key, _ = str(key)
+							num, err = strconv.Atoi(key)
+							if err != nil {
+								ok = false
+								err = nil
+							} else {
+								if num < 0 {
+									key = strconv.Itoa(element.Size() + num)
 								}
 								value, ok = element.children[key]
 							}
 						}
 
 					} else if element.IsObject() {
+						key, _ = str(key)
 						value, ok = element.children[key]
 					}
 					if ok {

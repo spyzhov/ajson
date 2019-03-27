@@ -96,7 +96,7 @@ func TestJsonPath(t *testing.T) {
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
-		{name: "calculated 4", path: "$..book[:(factorial(2))]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
+		{name: "calculated 4", path: "$..[?(@.price < factorial(3) + 3)]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

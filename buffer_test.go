@@ -63,11 +63,43 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_6", value: "3 + 4 * -2 / (-1 - 5)**-2", expected: []string{"3", "4", "-2", "*", "-1", "5", "-", "-2", "**", "/", "+"}},
 		{name: "example_7", value: "1.3e2 + sin(2*pi/3)", expected: []string{"1.3e2", "2", "pi", "*", "3", "/", "sin", "+"}},
 		{name: "example_8", value: "@.length-1", expected: []string{"@.length", "1", "-"}},
+		{name: "example_9", value: "@.length+-1", expected: []string{"@.length", "-1", "+"}},
+		{name: "example_10", value: "@.length/e", expected: []string{"@.length", "e", "/"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := newBuffer([]byte(test.value))
 			result, err := buf.rpn()
+			if err != nil {
+				t.Errorf("Unexpected error: %s", err.Error())
+			} else if !sliceEqual(test.expected, result) {
+				t.Errorf("Error on RPN(%s): result doesn't match\nExpected: %s\nActual:   %s", test.value, sliceString(test.expected), sliceString(result))
+			}
+		})
+	}
+}
+
+func TestTokenize(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected []string
+	}{
+		{name: "example_1", value: "@.length", expected: []string{"@.length"}},
+		{name: "example_2", value: "1 + 2", expected: []string{"1", "+", "2"}},
+		{name: "example_3", value: "1+2", expected: []string{"1", "+", "2"}},
+		{name: "example_4", value: "1:", expected: []string{"1", ":"}},
+		{name: "example_5", value: ":2 :1", expected: []string{":", "2", ":", "1"}},
+		{name: "example_6", value: "1 ,2,'foo'", expected: []string{"1", ",", "2", ",", "'foo'"}},
+		{name: "example_7", value: "(@.length-1)", expected: []string{"(", "@.length", "-", "1", ")"}},
+		{name: "example_8", value: "?(@.length-1)", expected: []string{"?", "(", "@.length", "-", "1", ")"}},
+		{name: "example_9", value: "'foo'", expected: []string{"'foo'"}},
+		{name: "example_10", value: "$.foo[(@.length - 3):3:]", expected: []string{"$.foo[(@.length - 3):3:]"}},
+		{name: "example_11", value: "$..", expected: []string{"$.."}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := tokenize(test.value)
 			if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if !sliceEqual(test.expected, result) {
