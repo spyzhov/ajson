@@ -501,11 +501,17 @@ func (b *buffer) tokenize() (result tokens, err error) {
 				break
 			}
 			fallthrough // for numbers like `-1e6`
-		case c >= '0' && c <= '9': // numbers todo add dot
+		case (c >= '0' && c <= '9') || c == dot: // numbers
 			variable = true
 			start = b.index
 			err = b.numeric()
 			if err != nil && err != io.EOF {
+				if c == dot {
+					err = nil
+					result = append(result, ".")
+					b.index = start
+					break
+				}
 				return nil, err
 			}
 			current = string(b.data[start:b.index])

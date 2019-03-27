@@ -117,6 +117,7 @@ func TestJsonPath_value(t *testing.T) {
 		expected interface{}
 	}{
 		{name: "length", path: "$['store']['book'].length", expected: float64(4)},
+		{name: "price", path: "$['store']['book'][?(@.price + .05 == 9)].price", expected: float64(8.95)},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
