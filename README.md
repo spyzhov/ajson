@@ -199,6 +199,17 @@ Package has several predefined constants. You are free to add new one with `AddC
      e       math.E     float64
      pi      math.Pi    float64
      phi     math.Phi   float64
+     
+     sqrt2     math.Sqrt2   float64
+     sqrte     math.SqrtE   float64
+     sqrtpi    math.SqrtPi  float64
+     sqrtphi   math.SqrtPhi float64
+     
+     ln2     math.Ln2    float64
+     log2e   math.Log2E  float64
+     ln10    math.Ln10   float64
+     log10e  math.Log10E float64
+          
      true    true       bool
      false   false      bool
      null    nil        interface{}

@@ -315,9 +315,20 @@ var (
 		},
 	}
 	constants = map[string]*Node{
-		"pi":    valueNode(nil, "pi", Numeric, float64(math.Pi)),
-		"phi":   valueNode(nil, "pi", Numeric, float64(math.Phi)),
-		"e":     valueNode(nil, "e", Numeric, float64(math.E)),
+		"e":   valueNode(nil, "e", Numeric, float64(math.E)),
+		"pi":  valueNode(nil, "pi", Numeric, float64(math.Pi)),
+		"phi": valueNode(nil, "phi", Numeric, float64(math.Phi)),
+
+		"sqrt2":   valueNode(nil, "sqrt2", Numeric, float64(math.Sqrt2)),
+		"sqrte":   valueNode(nil, "sqrte", Numeric, float64(math.SqrtE)),
+		"sqrtpi":  valueNode(nil, "sqrtpi", Numeric, float64(math.SqrtPi)),
+		"sqrtphi": valueNode(nil, "sqrtphi", Numeric, float64(math.SqrtPhi)),
+
+		"ln2":    valueNode(nil, "ln2", Numeric, float64(math.Ln2)),
+		"log2e":  valueNode(nil, "log2e", Numeric, float64(math.Log2E)),
+		"ln10":   valueNode(nil, "ln10", Numeric, float64(math.Ln10)),
+		"log10e": valueNode(nil, "log10e", Numeric, float64(math.Log10E)),
+
 		"true":  valueNode(nil, "true", Bool, true),
 		"false": valueNode(nil, "false", Bool, false),
 		"null":  valueNode(nil, "null", Null, nil),
