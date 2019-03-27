@@ -411,8 +411,8 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		stack    []*Node
 		slice    []*Node
 		temp     *Node
-		fn       function
-		op       operation
+		fn       Function
+		op       Operation
 		ok       bool
 		size     int
 		commands []string
@@ -472,7 +472,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				stack = append(stack, temp)
 			}
 		} else {
-			stack = append(stack, varNode(nil, "", String, ""))
+			stack = append(stack, valueNode(nil, "", String, ""))
 		}
 	}
 	if len(stack) == 1 {

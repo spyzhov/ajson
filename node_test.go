@@ -678,32 +678,32 @@ func TestNode_Eq(t *testing.T) {
 	}{
 		{
 			name:     "simple",
-			left:     varNode(nil, "bool", Bool, true),
-			right:    varNode(nil, "bool", Bool, true),
+			left:     valueNode(nil, "bool", Bool, true),
+			right:    valueNode(nil, "bool", Bool, true),
 			expected: true,
 		},
 		{
 			name:     "null",
-			left:     varNode(nil, "null", Null, nil),
-			right:    varNode(nil, "null", Null, nil),
+			left:     valueNode(nil, "null", Null, nil),
+			right:    valueNode(nil, "null", Null, nil),
 			expected: true,
 		},
 		{
 			name:     "float",
-			left:     varNode(nil, "123.5", Numeric, float64(123.5)),
-			right:    varNode(nil, "123.5", Numeric, float64(123.5)),
+			left:     valueNode(nil, "123.5", Numeric, float64(123.5)),
+			right:    valueNode(nil, "123.5", Numeric, float64(123.5)),
 			expected: true,
 		},
 		{
 			name:     "blank array",
-			left:     varNode(nil, "[]", Array, []*Node{}),
-			right:    varNode(nil, "[]", Array, []*Node{}),
+			left:     valueNode(nil, "[]", Array, []*Node{}),
+			right:    valueNode(nil, "[]", Array, []*Node{}),
 			expected: true,
 		},
 		{
 			name:     "blank map",
-			left:     varNode(nil, "{}", Object, map[string]*Node{}),
-			right:    varNode(nil, "{}", Object, map[string]*Node{}),
+			left:     valueNode(nil, "{}", Object, map[string]*Node{}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{}),
 			expected: true,
 		},
 	}
@@ -716,5 +716,75 @@ func TestNode_Eq(t *testing.T) {
 				t.Errorf("Failed node.Eq()")
 			}
 		})
+	}
+}
+
+func TestNullNode(t *testing.T) {
+	node := NullNode("test")
+	if node.MustNull() != nil {
+		t.Errorf("Failed")
+	}
+}
+
+func TestNumericNode(t *testing.T) {
+	node := NumericNode("test", 1.5)
+	if node.MustNumeric() != 1.5 {
+		t.Errorf("Failed")
+	}
+}
+
+func TestStringNode(t *testing.T) {
+	node := StringNode("test", "check")
+	if node.MustString() != "check" {
+		t.Errorf("Failed")
+	}
+}
+
+func TestBoolNode(t *testing.T) {
+	node := BoolNode("test", true)
+	if !node.MustBool() {
+		t.Errorf("Failed")
+	}
+}
+
+func TestArrayNode(t *testing.T) {
+	array := []*Node{
+		NullNode("0"),
+		NumericNode("1", 1),
+		StringNode("str", "foo"),
+	}
+	node := ArrayNode("test", array)
+	result := node.MustArray()
+	if len(result) != len(array) {
+		t.Errorf("Failed: length")
+	}
+	for i, val := range result {
+		ok, err := val.Eq(array[i])
+		if err != nil {
+			t.Errorf("Failed: %s", err.Error())
+		} else if !ok {
+			t.Errorf("Failed: compare '%s' & '%s'", val, array[i])
+		}
+	}
+}
+
+func TestObjectNode(t *testing.T) {
+	objects := map[string]*Node{
+		"zero": NullNode("0"),
+		"foo":  NumericNode("1", 1),
+		"bar":  StringNode("str", "foo"),
+	}
+	node := ObjectNode("test", objects)
+	result := node.MustObject()
+	if len(result) != len(objects) {
+		t.Errorf("Failed: length")
+	}
+	for i, val := range result {
+		ok, err := val.Eq(objects[i])
+		if err != nil {
+			t.Errorf("Failed: %s", err.Error())
+		} else if !ok {
+			t.Errorf("Failed: compare '%s' & '%s'", val, objects[i])
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -59,6 +60,77 @@ const (
 	Object
 )
 
+// NullNode is constructor for Node with Null value
+func NullNode(key string) *Node {
+	return &Node{
+		_type: Null,
+		key:   &key,
+	}
+}
+
+// NumericNode is constructor for Node with a Numeric value
+func NumericNode(key string, value float64) (current *Node) {
+	current = &Node{
+		_type: Numeric,
+		key:   &key,
+	}
+	current.value.Store(value)
+	return
+}
+
+// StringNode is constructor for Node with a String value
+func StringNode(key string, value string) (current *Node) {
+	current = &Node{
+		_type: String,
+		key:   &key,
+	}
+	current.value.Store(value)
+	return
+}
+
+// BoolNode is constructor for Node with a Bool value
+func BoolNode(key string, value bool) (current *Node) {
+	current = &Node{
+		_type: Bool,
+		key:   &key,
+	}
+	current.value.Store(value)
+	return
+}
+
+// ArrayNode is constructor for Node with an Array value
+func ArrayNode(key string, value []*Node) (current *Node) {
+	current = &Node{
+		data:  nil,
+		_type: Array,
+		key:   &key,
+	}
+	current.value.Store(value)
+	current.children = make(map[string]*Node, len(value))
+	for i, val := range value {
+		var index = i
+		current.children[strconv.Itoa(i)] = val
+		val.parent = current
+		val.index = &index
+	}
+	return
+}
+
+// ObjectNode is constructor for Node with an Object value
+func ObjectNode(key string, value map[string]*Node) (current *Node) {
+	current = &Node{
+		_type:    Object,
+		key:      &key,
+		children: value,
+	}
+	current.value.Store(value)
+	for key, val := range value {
+		val.parent = current
+		val.key = &key
+	}
+	return
+}
+
 func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *Node, err error) {
 	current = &Node{
 		parent:  parent,
@@ -89,7 +161,7 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 	return
 }
 
-func varNode(parent *Node, key string, _type NodeType, value interface{}) (current *Node) {
+func valueNode(parent *Node, key string, _type NodeType, value interface{}) (current *Node) {
 	current = &Node{
 		parent:  parent,
 		data:    nil,
@@ -110,12 +182,22 @@ func (n *Node) Parent() *Node {
 
 //Source returns slice of bytes, which was identified to be current node
 func (n *Node) Source() []byte {
-	return (*n.data)[n.borders[0]:n.borders[1]]
+	if n.ready() {
+		return (*n.data)[n.borders[0]:n.borders[1]]
+	}
+	return nil
 }
 
 //String is implementation of Stringer interface, returns string based on source part
 func (n *Node) String() string {
-	return string(n.Source())
+	if n.ready() {
+		return string(n.Source())
+	}
+	val := n.value.Load()
+	if val != nil {
+		return fmt.Sprint(val)
+	}
+	return "null"
 }
 
 //Type will return type of current node

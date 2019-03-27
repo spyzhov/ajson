@@ -130,16 +130,15 @@ $ go test -bench=. -cpu=1 -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
-BenchmarkUnmarshal_AJSON          200000              6139 ns/op            5592 B/op         96 allocs/op
-BenchmarkUnmarshal_JSON           200000             10264 ns/op             840 B/op         28 allocs/op
+BenchmarkUnmarshal_AJSON          200000              6245 ns/op            4896 B/op         95 allocs/op
+BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/op
 ```
 
 # TODO
 
 - Functions 
-- [ ] `func JsonPath(data [] byte, path string) ([]*Node, error)` 
+- [x] `func JsonPath(data [] byte, path string) ([]*Node, error)` 
 - [ ] `func (n *Node) JsonPath(path string) ([]*Node, error)`
-- [ ] `func Validate(data [] byte, path string) error`
 - node
 - [ ] add `atomic.Value` for `Path()`
 - [ ] add `atomic.Value` for `Key()`, remove preparse key value
@@ -155,15 +154,15 @@ BenchmarkUnmarshal_JSON           200000             10264 ns/op             840
 - [ ] remove reflection in node.inheritors
 - FixMe:
 - [ ] backslash system symbols in JsonPath
-- [ ] evaluate... Result as key or filter
-- [ ] array index before zero
+- [x] evaluate... Result as key or filter
+- [x] array index before zero
 - [x] slices like [:3], [-1:]
-- [ ] exists `‌$..book[?(@.isbn)]`
-- [ ] ‌rpn: only operations in stack (validation)
+- [x] exists `‌$..book[?(@.isbn)]`
+- [x] ‌rpn: only operations in stack (validation)
 - [x] array length as calculated node
 - [ ] ‌math: round, ceil, floor, exp, log, ln, sin, cos, tan, ctg,... Const: pi, e
 - [ ] check, what to do with an argument functions like `round(value, n)`?
-- [ ] const as *Node & function as func(*Node) (*Node, error)
-- [ ] ‌eval, Dereference : deref(Node, path):[] *Node , eval (node, cmd): [] *Node. 
+- [x] const as *Node & function as func(*Node) (*Node, error)
+- [x] ‌eval, Dereference : deref(Node, path):[] *Node , eval (node, cmd): [] *Node. 
 	Where: deref - parse path, eval each route and process all subresults. 
 	Eval - take a *Node and command and process it.
