@@ -4,12 +4,14 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/spyzhov/ajson)](https://goreportcard.com/report/github.com/spyzhov/ajson)
 [![GoDoc](https://godoc.org/github.com/spyzhov/ajson?status.svg)](https://godoc.org/github.com/spyzhov/ajson)
 
-Abstract JSON is a small golang package that provide a parser for JSON, in case when you are not sure in it's structure.
+Abstract [JSON](https://www.json.org/) is a small golang package that provide a parser for JSON, in case when you are not sure in it's structure.
 
 Method `Unmarshal` will scan all the byte slice to create a root node of JSON structure, with all it behaviors.
 
 Each `Node` has it's own type and calculated value, which will be calculated on demand. 
 Calculated value saves in `atomic.Value`, so it's thread safe.
+
+Method `JSONPath` will returns slice of founded elements in current JSON data, by it's JSONPath.
 
 ## Example
 
@@ -387,6 +389,7 @@ Test data:
   }
 }
 ```
+JSONPath: `$.store..price`
 
 ```
 $ go test -bench=. -cpu=1 -benchmem
