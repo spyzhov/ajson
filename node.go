@@ -789,3 +789,12 @@ func (n *Node) Inheritors() (result []*Node) {
 	}
 	return
 }
+
+// JSONPath evaluate path for current node
+func (n *Node) JSONPath(path string) (result []*Node, err error) {
+	commands, err := ParseJSONPath(path)
+	if err != nil {
+		return nil, err
+	}
+	return deReference(n, commands)
+}

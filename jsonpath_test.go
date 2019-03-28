@@ -237,7 +237,7 @@ func ExampleJSONPath() {
 	//J. R. R. Tolkien
 }
 
-func TestExampleEval(t *testing.T) {
+func ExampleEval() {
 	json := []byte(`{ "store": {
     "book": [ 
       { "category": "reference",
@@ -263,20 +263,84 @@ func TestExampleEval(t *testing.T) {
         "price": 22.99
       }
     ],
-    "bicycle": {
-      "color": "red",
-      "price": 19.95
-    }
+    "bicycle": [
+      {
+        "color": "red",
+        "price": 19.95
+      }
+    ]
   }
 }`)
-	books, err := JSONPath(json, "$.store.book")
+	root, err := Unmarshal(json)
 	if err != nil {
 		panic(err)
 	}
-	result, err := Eval(books[0], "@.length")
+	result, err := Eval(root, "avg($..price)")
 	if err != nil {
 		panic(err)
 	}
-	println(int(result.MustNumeric()))
-	//4
+	println(result.MustNumeric())
+	//14.774000000000001
+}
+
+func TestEval(t *testing.T) {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": [
+      {
+        "color": "red",
+        "price": 19.95
+      }
+    ]
+  }
+}`)
+	root, err := Unmarshal(json)
+	if err != nil {
+		t.Errorf("Unmarshal error: %s", err.Error())
+	} else {
+		result, err := Eval(root, "avg($..price)")
+		if err != nil {
+			t.Errorf("Eval error: %s", err.Error())
+		} else {
+			value, err := result.GetNumeric()
+			if err != nil {
+				t.Errorf("GetNumeric error: %s", err.Error())
+			} else if value-14.774 > 0.0000001 {
+				t.Errorf("avg error '%f' != '14.774000000000001'", value)
+			}
+		}
+	}
+}
+
+func BenchmarkJSONPath_all_prices(b *testing.B) {
+	var err error
+	for i := 0; i < b.N; i++ {
+		_, err = JSONPath(jsonpathTestData, "$.store..price")
+		if err != nil {
+			b.Error()
+		}
+	}
 }

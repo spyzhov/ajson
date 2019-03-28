@@ -112,6 +112,7 @@ import (
 //     asinh        math.Asinh        integers, floats
 //     atan         math.Atan         integers, floats
 //     atanh        math.Atanh        integers, floats
+//     avg          Average           array of integers or floats
 //     cbrt         math.Cbrt         integers, floats
 //     ceil         math.Ceil         integers, floats
 //     cos          math.Cos          integers, floats
@@ -588,9 +589,11 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				if err != nil {
 					return
 				}
-				if len(slice) == 1 {
+				if len(slice) > 1 { // array given
+					stack = append(stack, ArrayNode("", slice))
+				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
-				} else { // no data found, or array given
+				} else { // no data found
 					return nil, nil
 				}
 			} else {

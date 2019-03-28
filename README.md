@@ -15,6 +15,8 @@ Calculated value saves in `atomic.Value`, so it's thread safe.
 
 Calculating `AVG(price)` when object is heterogeneous.
 
+### Unmarshal
+
 ```go
 package main
 
@@ -86,7 +88,7 @@ func main() {
 }
 ```
 
-With JSONPath:
+### JSONPath:
 
 ```go
 package main
@@ -146,6 +148,62 @@ func main() {
 	} else {
 		fmt.Println("AVG price:", 0)
 	}
+}
+```
+
+### Eval
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": [
+      {
+        "color": "red",
+        "price": 19.95
+      }
+    ]
+  }
+}`)
+	root, err := ajson.Unmarshal(json)
+	if err != nil {
+		panic(err)
+	}
+	result, err := ajson.Eval(root, "avg($..price)")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("AVG price:", result.MustNumeric())
 }
 ```
 
@@ -256,6 +314,7 @@ Package has several predefined functions. You are free to add new one with `AddF
     asinh        math.Asinh        integers, floats
     atan         math.Atan         integers, floats
     atanh        math.Atanh        integers, floats
+    avg          Average           array of integers or floats
     cbrt         math.Cbrt         integers, floats
     ceil         math.Ceil         integers, floats
     cos          math.Cos          integers, floats
@@ -335,13 +394,12 @@ goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
 BenchmarkUnmarshal_AJSON          200000              6245 ns/op            4896 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/op
+BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/opgoos: linux
+BenchmarkJSONPath_all_prices      200000             10829 ns/op            6920 B/op        161 allocs/op
 ```
 
 # TODO
 
-- Functions 
-- [ ] `func (n *Node) JsonPath(path string) ([]*Node, error)`
 - node
 - [ ] add `atomic.Value` for `Path()`
 - [ ] add `atomic.Value` for `Key()`, remove preparse key value
@@ -355,7 +413,7 @@ BenchmarkUnmarshal_JSON           200000             10318 ns/op             840
 - refactoring
 - [ ] try to remove node.borders
 - [ ] remove reflection in node.inheritors
-- FixMe:
+- fixme:
 - [ ] backslash system symbols in JsonPath
 - [ ] ‌math: round, ceil, floor, exp, log, ln, sin, cos, tan, ctg,... Const: pi, e
 - [ ] check, what to do with an argument functions like `round(value, n)`?

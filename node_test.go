@@ -1462,3 +1462,19 @@ func TestNode_Inheritors(t *testing.T) {
 		})
 	}
 }
+
+func TestNode_JSONPath(t *testing.T) {
+	root, err := Unmarshal(jsonpathTestData)
+	if err != nil {
+		t.Errorf("Error: %s", err.Error())
+		return
+	}
+	result, err := root.MustKey("store").MustKey("book").JSONPath("@.*")
+	if err != nil {
+		t.Errorf("Error: %s", err.Error())
+		return
+	}
+	if len(result) != 4 {
+		t.Errorf("Error: JSONPath")
+	}
+}
