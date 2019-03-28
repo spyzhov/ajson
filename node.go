@@ -105,13 +105,15 @@ func ArrayNode(key string, value []*Node) (current *Node) {
 		_type: Array,
 		key:   &key,
 	}
-	current.value.Store(value)
 	current.children = make(map[string]*Node, len(value))
-	for i, val := range value {
-		var index = i
-		current.children[strconv.Itoa(i)] = val
-		val.parent = current
-		val.index = &index
+	if value != nil {
+		current.value.Store(value)
+		for i, val := range value {
+			var index = i
+			current.children[strconv.Itoa(i)] = val
+			val.parent = current
+			val.index = &index
+		}
 	}
 	return
 }
@@ -123,10 +125,12 @@ func ObjectNode(key string, value map[string]*Node) (current *Node) {
 		key:      &key,
 		children: value,
 	}
-	current.value.Store(value)
-	for key, val := range value {
-		val.parent = current
-		val.key = &key
+	if value != nil {
+		current.value.Store(value)
+		for key, val := range value {
+			val.parent = current
+			val.key = &key
+		}
 	}
 	return
 }
@@ -634,6 +638,12 @@ func (n *Node) Eq(node *Node) (result bool, err error) {
 	return
 }
 
+// Neq check if nodes value are not the same
+func (n *Node) Neq(node *Node) (result bool, err error) {
+	result, err = n.Eq(node)
+	return !result, err
+}
+
 // Le check if nodes value is lesser than given
 func (n *Node) Le(node *Node) (result bool, err error) {
 	if n.Type() == node.Type() {
@@ -759,8 +769,8 @@ func (n *Node) getUInteger() (uint, error) {
 	return uint(result), nil
 }
 
-// Return sorted by keys/index slice of children
-func (n *Node) inheritors() (result []*Node) {
+// Inheritors return sorted by keys/index slice of children
+func (n *Node) Inheritors() (result []*Node) {
 	size := len(n.children)
 	if n.IsObject() {
 		result = make([]*Node, size)

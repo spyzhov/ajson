@@ -169,7 +169,7 @@ func Paths(array []*Node) []string {
 
 func recursiveChildren(node *Node) (result []*Node) {
 	if node.isContainer() {
-		for _, element := range node.inheritors() {
+		for _, element := range node.Inheritors() {
 			if element.isContainer() {
 				result = append(result, element)
 			}
@@ -311,7 +311,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 		case cmd == "*": // wildcard
 			temporary = make([]*Node, 0)
 			for _, element := range result {
-				temporary = append(temporary, element.inheritors()...)
+				temporary = append(temporary, element.Inheritors()...)
 			}
 			result = temporary
 		case tokens.exists(":"): // array slice operator
@@ -387,7 +387,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			temporary = make([]*Node, 0)
 			for _, element := range result {
 				if element.isContainer() {
-					for _, temp = range element.inheritors() {
+					for _, temp = range element.Inheritors() {
 						value, err = eval(temp, rpn, cmd)
 						if err != nil {
 							return nil, errorRequest("wrong request: %s", cmd)
@@ -450,7 +450,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							return nil, errorRequest("wrong type convert: %s", err.Error())
 						}
 						if ok {
-							temporary = append(temporary, element.inheritors()...)
+							temporary = append(temporary, element.Inheritors()...)
 						}
 						continue
 						// case Array: // get all keys from element via array values
