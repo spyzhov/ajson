@@ -1,5 +1,8 @@
 
-all: fmt vet golint errcheck golangcilint gocyclo
+all: tst fmt vet golint errcheck golangcilint gocyclo
+
+tst:
+	go test -race ./...
 
 fmt:
 	gofmt -d -e -s .
