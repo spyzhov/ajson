@@ -28,6 +28,8 @@ notifications:
 before_script:
   - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
   - go get -u github.com/kisielk/errcheck
+  - go get golang.org/x/tools/cmd/cover # coveralls.io
+  - go get github.com/mattn/goveralls   # coveralls.io
 
 # script always runs to completion (set +e). If we have linter issues AND a
 # failing test, we want to see both. Configure golangci-lint with a
@@ -36,3 +38,5 @@ script:
   - errcheck .
   - golangci-lint run       # run a bunch of code checkers/linters in parallel
   - go test -v -race ./...  # Run all the tests with the race detector enabled
+  - go test -v -covermode=count -coverprofile=coverage.out # coveralls.io
+  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # coveralls.io
