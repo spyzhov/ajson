@@ -398,6 +398,6 @@ goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
 BenchmarkUnmarshal_AJSON          200000              6245 ns/op            4896 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/opgoos: linux
+BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/op
 BenchmarkJSONPath_all_prices      200000             10829 ns/op            6920 B/op        161 allocs/op
 ```
