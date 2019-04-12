@@ -5,7 +5,7 @@
 [![GoDoc](https://godoc.org/github.com/spyzhov/ajson?status.svg)](https://godoc.org/github.com/spyzhov/ajson)
 [![Coverage Status](https://coveralls.io/repos/github/spyzhov/ajson/badge.svg?branch=master)](https://coveralls.io/github/spyzhov/ajson?branch=master)
 
-Abstract [JSON](https://www.json.org/) is a small golang package that provide a parser for JSON, in case when you are not sure in it's structure.
+Abstract [JSON](https://www.json.org/) is a small golang package that provide a parser for JSON with support of JSONPath, in case when you are not sure in it's structure.
 
 Method `Unmarshal` will scan all the byte slice to create a root node of JSON structure, with all it behaviors.
 
