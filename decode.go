@@ -1,4 +1,4 @@
-// Package ajson implements decoding of JSON as defined in RFC 7159 without predefined mapping to a struct of golang.
+// Package ajson implements decoding of JSON as defined in RFC 7159 without predefined mapping to a struct of golang, with support of JSONPath.
 //
 // All JSON structs reflects to a custom struct of Node, witch can be presented by it type and value.
 //
