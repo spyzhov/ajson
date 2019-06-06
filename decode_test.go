@@ -202,6 +202,7 @@ func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
 		{name: "one quote", input: []byte("\"")},
 		{name: "one quote char", input: []byte("\"c")},
 		{name: "wrong quotes", input: []byte("'cat'")},
+		{name: "double string", input: []byte("\"Hello\" \"World\"")},
 		{name: "quotes in quotes", input: []byte("\"good \"cat\"\"")},
 	}
 	for _, test := range tests {
@@ -231,6 +232,7 @@ func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
 		{name: "NILL", input: []byte("NILL")},
 		{name: "spaces", input: []byte("Nu ll")},
 		{name: "null1", input: []byte("null1")},
+		{name: "double", input: []byte("null null")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -263,6 +265,7 @@ func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 		simpleCorrupted("fals"),
 		simpleCorrupted("tre"),
 		simpleCorrupted("fal se"),
+		simpleCorrupted("true false"),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -345,6 +348,8 @@ func TestUnmarshal_ObjectSimpleCorrupted(t *testing.T) {
 		simpleCorrupted(`{}1`),
 		simpleCorrupted(`1{}`),
 		simpleCorrupted(`{"x"::1}`),
+		simpleCorrupted(`{null:null}`),
+		simpleCorrupted(`{"foo:"bar"}`),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
