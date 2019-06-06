@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -90,6 +91,12 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_8", value: "@.length-1", expected: []string{"@.length", "1", "-"}},
 		{name: "example_9", value: "@.length+-1", expected: []string{"@.length", "-1", "+"}},
 		{name: "example_10", value: "@.length/e", expected: []string{"@.length", "e", "/"}},
+		{name: "example_11", value: "", expected: []string{}},
+
+		{name: "1 /", value: "1 /", expected: []string{"1", "/"}},
+		{name: "1 + ", value: "1 + ", expected: []string{"1", "+"}},
+		{name: "1 -", value: "1 -", expected: []string{"1", "-"}},
+		{name: "1 * ", value: "1 * ", expected: []string{"1", "*"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -99,6 +106,39 @@ func TestBuffer_RPN(t *testing.T) {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if !sliceEqual(test.expected, result) {
 				t.Errorf("Error on RPN(%s): result doesn't match\nExpected: %s\nActual:   %s", test.value, sliceString(test.expected), sliceString(result))
+			}
+		})
+	}
+}
+
+func TestBuffer_RPNError(t *testing.T) {
+	tests := []struct {
+		value string
+	}{
+		{value: "1 + / 1"},
+		{value: "1 * / 1"},
+		{value: "1 - / 1"},
+		{value: "1 / / 1"},
+
+		{value: "1 + * 1"},
+		{value: "1 * * 1"},
+		{value: "1 - * 1"},
+		{value: "1 / * 1"},
+
+		{value: "1e1.1 + 1"},
+
+		{value: "len('string)"},
+		{value: "'Hello ' + 'World"},
+
+		{value: "@.length + $['length')"},
+		{value: "2 + 2)"},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			buf := newBuffer([]byte(test.value))
+			result, err := buf.rpn()
+			if err == nil {
+				t.Errorf("Expected error, nil given, with result: %v", strings.Join(result, ", "))
 			}
 		})
 	}

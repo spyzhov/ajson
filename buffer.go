@@ -131,13 +131,13 @@ func (b *buffer) numeric() error {
 		case c >= '0' && c <= '9':
 			find |= _num
 		case c == '.':
-			if find&_dot == 0 && find&_exp == 0 { // exp part of numeric MUST contains only digits
+			if find&_exp != 0 { // exp part of numeric MUST contains only digits
+				return errorSymbol(b)
+			}
+			if find&_dot == 0 {
 				find |= _dot
 			} else {
-				if find&_num == 0 {
-					return errorSymbol(b)
-				}
-				return nil
+				return errorSymbol(b)
 			}
 		case c == '+' || c == '-':
 			if find == _none || find == _exp {
