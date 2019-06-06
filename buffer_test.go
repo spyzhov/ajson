@@ -108,3 +108,55 @@ func TestTokenize(t *testing.T) {
 		})
 	}
 }
+
+func TestBuffer_Current(t *testing.T) {
+	buf := newBuffer([]byte{})
+	_, err := buf.current()
+	if err != io.EOF {
+		t.Error("Unexpected result: io.EOF expected")
+	}
+}
+
+func TestBuffer_numeric(t *testing.T) {
+	tests := []struct {
+		value string
+		index int
+		fail  bool
+	}{
+		{value: "1", index: 1, fail: false},
+		{value: "0", index: 1, fail: false},
+		{value: "1.3e2", index: 5, fail: false},
+		{value: "-1.3e2", index: 6, fail: false},
+		{value: "-1.3e-2", index: 7, fail: false},
+		{value: "..3", index: 0, fail: true},
+		{value: "e.", index: 0, fail: true},
+		{value: ".e.", index: 0, fail: true},
+		{value: "1.e1", index: 4, fail: false},
+		{value: "0.e0", index: 4, fail: false},
+		{value: "0.e0", index: 4, fail: false},
+		{value: "0+0", index: 1, fail: false},
+		{value: "0-1", index: 1, fail: false},
+		{value: "++1", index: 0, fail: true},
+		{value: "--1", index: 0, fail: true},
+		{value: "-+1", index: 0, fail: true},
+		{value: "+-1", index: 0, fail: true},
+		{value: "+", index: 0, fail: true},
+		{value: "-", index: 0, fail: true},
+		{value: ".", index: 0, fail: true},
+		{value: "e", index: 0, fail: true},
+		{value: "+a", index: 0, fail: true},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			buf := newBuffer([]byte(test.value))
+			err := buf.numeric()
+			if !test.fail && err != nil && err != io.EOF {
+				t.Errorf("Unexpected error: %s", err.Error())
+			} else if test.fail && (err == nil || err == io.EOF) {
+				t.Errorf("Expected error, got nothing")
+			} else if !test.fail && test.index != buf.index {
+				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.index)
+			}
+		})
+	}
+}
