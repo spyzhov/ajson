@@ -132,6 +132,11 @@ func TestBuffer_RPNError(t *testing.T) {
 
 		{value: "@.length + $['length')"},
 		{value: "2 + 2)"},
+		{value: "(2 + 2"},
+
+		{value: "e + q"},
+		{value: "foo(e)"},
+		{value: "++2"},
 	}
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
