@@ -239,10 +239,9 @@ tokenLoop:
 				return b.errorEOF()
 			}
 			err = b.skip(quote)
-			if err == nil || err == io.EOF {
-				continue
+			if err == io.EOF {
+				return b.errorEOF()
 			}
-			b.index = start
 		case c == bracketL:
 			find = true
 			stack = append(stack, c)

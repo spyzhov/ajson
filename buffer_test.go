@@ -33,6 +33,8 @@ func TestBuffer_Token(t *testing.T) {
 
 		{name: "fail 1", value: "@.foo[", fail: true},
 		{name: "fail 2", value: "@.foo[(]", fail: true},
+		{name: "fail 3", value: "'", fail: true},
+		{name: "fail 4", value: "'x", fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
