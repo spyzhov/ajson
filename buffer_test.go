@@ -154,6 +154,7 @@ func TestTokenize(t *testing.T) {
 		name     string
 		value    string
 		expected []string
+		fail     bool
 	}{
 		{name: "example_1", value: "@.length", expected: []string{"@.length"}},
 		{name: "example_2", value: "1 + 2", expected: []string{"1", "+", "2"}},
@@ -166,11 +167,19 @@ func TestTokenize(t *testing.T) {
 		{name: "example_9", value: "'foo'", expected: []string{"'foo'"}},
 		{name: "example_10", value: "$.foo[(@.length - 3):3:]", expected: []string{"$.foo[(@.length - 3):3:]"}},
 		{name: "example_11", value: "$..", expected: []string{"$.."}},
+		{name: "blank", value: "", expected: []string{}},
+		{name: "number", value: "1e", fail: true},
+		{name: "string", value: "'foo", fail: true},
+		{name: "fail", value: "@.[", fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := tokenize(test.value)
-			if err != nil {
+			if test.fail {
+				if err == nil {
+					t.Error("Expected error: nil given")
+				}
+			} else if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if !sliceEqual(test.expected, result) {
 				t.Errorf("Error on RPN(%s): result doesn't match\nExpected: %s\nActual:   %s", test.value, sliceString(test.expected), sliceString(result))
@@ -187,7 +196,7 @@ func TestBuffer_Current(t *testing.T) {
 	}
 }
 
-func TestBuffer_numeric(t *testing.T) {
+func TestBuffer_Numeric(t *testing.T) {
 	tests := []struct {
 		value string
 		index int
