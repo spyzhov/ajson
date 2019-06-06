@@ -45,6 +45,16 @@ func TestBuffer_Token(t *testing.T) {
 		{name: "parentheses 6", value: "@)", index: 1, fail: false},
 		{name: "parentheses 7", value: "[)", fail: true},
 		{name: "parentheses 8", value: "[())", fail: true},
+
+		{name: "bracket 0", value: "[]", index: 2, fail: false},
+		{name: "bracket 1", value: "[@]", index: 3, fail: false},
+		{name: "bracket 2", value: "[", fail: true},
+		{name: "bracket 3", value: "]", fail: true},
+		{name: "bracket 4", value: "[x", fail: true},
+		{name: "bracket 5", value: "[[[]]", fail: true},
+		{name: "bracket 6", value: "@]", index: 1, fail: false},
+		{name: "bracket 7", value: "(]", fail: true},
+		{name: "bracket 8", value: "([]]", fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

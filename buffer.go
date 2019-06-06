@@ -248,6 +248,9 @@ tokenLoop:
 		case c == bracketR:
 			find = true
 			if len(stack) == 0 {
+				if first == b.index {
+					return b.errorSymbol()
+				}
 				break tokenLoop
 			}
 			if stack[len(stack)-1] != bracketL {
