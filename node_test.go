@@ -830,10 +830,12 @@ func TestNode_Eq(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual, err := test.left.Eq(test.right)
-			if err != nil {
-				if !test.error {
-					t.Errorf("Error on node.Eq(): %s", err.Error())
+			if test.error {
+				if err == nil {
+					t.Errorf("Error expected: nil given")
 				}
+			} else if err != nil {
+				t.Errorf("Error on node.Eq(): %s", err.Error())
 			} else if actual != test.expected {
 				t.Errorf("Failed node.Eq()")
 			}

@@ -72,6 +72,16 @@ func testBoolOperation(operator string, results [4]bool) []*operationTest {
 		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: BoolNode("", results[1])},
 		{name: "10" + operator + "0", operation: operator, left: NumericNode("", 10), right: NumericNode("", 0), result: BoolNode("", results[2])},
 		{name: "0" + operator + "10", operation: operator, left: NumericNode("", 0), right: NumericNode("", 10), result: BoolNode("", results[3])},
+		{name: "left error: " + operator, operation: operator, left: valueNode(nil, "", Numeric, "foo"), right: NumericNode("", 10), fail: true},
+		{name: "right error: " + operator, operation: operator, left: NumericNode("", 10), right: valueNode(nil, "", Numeric, "foo"), fail: true},
+	}
+}
+func testBooleanOperation(operator string, results [4]bool) []*operationTest {
+	return []*operationTest{
+		{name: "2" + operator + "2", operation: operator, left: NumericNode("", 2), right: NumericNode("", 2), result: BoolNode("", results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: BoolNode("", results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NumericNode("", 10), right: NumericNode("", 0), result: BoolNode("", results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NumericNode("", 0), right: NumericNode("", 10), result: BoolNode("", results[3])},
 	}
 }
 
@@ -103,8 +113,28 @@ func TestOperations(t *testing.T) {
 	tests = append(tests, testBoolOperation(">", [4]bool{false, false, true, false})...)
 	tests = append(tests, testBoolOperation(">=", [4]bool{true, true, true, false})...)
 
-	tests = append(tests, testBoolOperation("&&", [4]bool{true, true, false, false})...)
-	tests = append(tests, testBoolOperation("||", [4]bool{true, true, true, true})...)
+	tests = append(tests, testBooleanOperation("&&", [4]bool{true, true, false, false})...)
+	tests = append(tests, testBooleanOperation("||", [4]bool{true, true, true, true})...)
+
+	_e := valueNode(nil, "", Numeric, "foo")
+	_t := NumericNode("", 1)
+	_f := NumericNode("", 0)
+	_false := BoolNode("", false)
+	_true := BoolNode("", true)
+	tests = append(
+		tests,
+		&operationTest{name: "error && true", operation: "&&", left: _e, right: _t, fail: true},
+		&operationTest{name: "error && error", operation: "&&", left: _e, right: _e, fail: true},
+		&operationTest{name: "error && false", operation: "&&", left: _e, right: _f, fail: true},
+		&operationTest{name: "false && error", operation: "&&", left: _f, right: _e, result: _false},
+		&operationTest{name: "true && error", operation: "&&", left: _t, right: _e, fail: true},
+
+		&operationTest{name: "error || true", operation: "||", left: _e, right: _t, fail: true},
+		&operationTest{name: "error || error", operation: "||", left: _e, right: _e, fail: true},
+		&operationTest{name: "error || false", operation: "||", left: _e, right: _f, fail: true},
+		&operationTest{name: "false || error", operation: "||", left: _f, right: _e, fail: true},
+		&operationTest{name: "true || error", operation: "||", left: _t, right: _e, result: _true},
+	)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
