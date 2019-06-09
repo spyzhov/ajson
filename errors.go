@@ -50,9 +50,9 @@ func (err *Error) Error() string {
 	case WrongSymbol:
 		return fmt.Sprintf("wrong symbol '%s' at %d", []byte{err.Char}, err.Index)
 	case UnexpectedEOF:
-		return fmt.Sprintf("unexpected end of file")
+		return "unexpected end of file"
 	case WrongType:
-		return fmt.Sprintf("wrong type of Node")
+		return "wrong type of Node"
 	case WrongRequest:
 		return fmt.Sprintf("wrong request: %s", err.Message)
 	}
