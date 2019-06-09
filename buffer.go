@@ -233,7 +233,6 @@ tokenLoop:
 		switch {
 		case c == quote:
 			find = true
-			start = b.index
 			err = b.step()
 			if err != nil {
 				return b.errorEOF()

@@ -154,3 +154,40 @@ func TestOperations(t *testing.T) {
 		})
 	}
 }
+
+func TestAddConstant(t *testing.T) {
+	name := "new_constant_name"
+	if _, ok := constants[name]; ok {
+		t.Error("test constant already exists")
+	}
+	AddConstant(name, NumericNode(name, 3.14))
+	if _, ok := constants[name]; !ok {
+		t.Error("test constant was not added")
+	}
+}
+
+func TestAddOperation(t *testing.T) {
+	name := "new_operation_name"
+	if _, ok := operations[name]; ok {
+		t.Error("test operation already exists")
+	}
+	AddOperation(name, 1, true, func(left *Node, right *Node) (result *Node, err error) {
+		return NumericNode("example", 1), nil
+	})
+	if _, ok := operations[name]; !ok {
+		t.Error("test operation was not added")
+	}
+}
+
+func TestAddFunction(t *testing.T) {
+	name := "new_function_name"
+	if _, ok := functions[name]; ok {
+		t.Error("test constant already exists")
+	}
+	AddFunction(name, func(node *Node) (result *Node, err error) {
+		return NumericNode("example", 2), nil
+	})
+	if _, ok := functions[name]; !ok {
+		t.Error("test function was not added")
+	}
+}
