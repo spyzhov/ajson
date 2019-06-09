@@ -62,6 +62,16 @@ func testNumOperation(operator string, results [3]float64) []*operationTest {
 		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: NumericNode("", results[1])},
 		{name: "10" + operator + "3", operation: operator, left: NumericNode("", 10), right: NumericNode("", 3), result: NumericNode("", results[2])},
 		{name: "X" + operator + "2", operation: operator, left: StringNode("", "X"), right: NumericNode("", 2), fail: true},
+		{name: "2" + operator + "Y", operation: operator, left: NumericNode("", 2), right: StringNode("", "Y"), fail: true},
+	}
+}
+
+func testBoolOperation(operator string, results [4]bool) []*operationTest {
+	return []*operationTest{
+		{name: "2" + operator + "2", operation: operator, left: NumericNode("", 2), right: NumericNode("", 2), result: BoolNode("", results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: BoolNode("", results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NumericNode("", 10), right: NumericNode("", 0), result: BoolNode("", results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NumericNode("", 0), right: NumericNode("", 10), result: BoolNode("", results[3])},
 	}
 }
 
@@ -72,10 +82,30 @@ func TestOperations(t *testing.T) {
 		{name: "X+Y", operation: "+", left: StringNode("", "X"), right: StringNode("", "Y"), result: StringNode("", "XY")},
 	}
 	tests = append(tests, testNumOperation("**", [3]float64{4, 27, 1000})...)
+
 	tests = append(tests, testNumOperation("*", [3]float64{4, 9, 30})...)
 	tests = append(tests, testNumOperation("+", [3]float64{4, 6, 13})...)
 	tests = append(tests, testNumOperation("-", [3]float64{0, 0, 7})...)
 	tests = append(tests, testNumOperation("/", [3]float64{1, 1, 10. / 3.})...)
+	tests = append(tests, testNumOperation("%", [3]float64{0, 0, 1})...)
+
+	tests = append(tests, testNumOperation("<<", [3]float64{8, 24, 80})...)
+	tests = append(tests, testNumOperation(">>", [3]float64{0, 0, 1})...)
+	tests = append(tests, testNumOperation("&", [3]float64{2, 3, 2})...)
+	tests = append(tests, testNumOperation("&^", [3]float64{0, 0, 8})...)
+	tests = append(tests, testNumOperation("|", [3]float64{2, 3, 11})...)
+	tests = append(tests, testNumOperation("^", [3]float64{0, 0, 9})...)
+
+	tests = append(tests, testBoolOperation("==", [4]bool{true, true, false, false})...)
+	tests = append(tests, testBoolOperation("!=", [4]bool{false, false, true, true})...)
+	tests = append(tests, testBoolOperation("<", [4]bool{false, false, false, true})...)
+	tests = append(tests, testBoolOperation("<=", [4]bool{true, true, false, true})...)
+	tests = append(tests, testBoolOperation(">", [4]bool{false, false, true, false})...)
+	tests = append(tests, testBoolOperation(">=", [4]bool{true, true, true, false})...)
+
+	tests = append(tests, testBoolOperation("&&", [4]bool{true, true, false, false})...)
+	tests = append(tests, testBoolOperation("||", [4]bool{true, true, true, true})...)
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := operations[test.operation](test.left, test.right)
