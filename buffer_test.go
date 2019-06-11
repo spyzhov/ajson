@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,31 @@ func TestBuffer_Token(t *testing.T) {
 
 		{name: "fail 1", value: "@.foo[", fail: true},
 		{name: "fail 2", value: "@.foo[(]", fail: true},
+		{name: "fail 3", value: "'", fail: true},
+		{name: "fail 4", value: "'x", fail: true},
+
+		{name: "parentheses 0", value: "()", index: 2, fail: false},
+		{name: "parentheses 1", value: "(@)", index: 3, fail: false},
+		{name: "parentheses 2", value: "(", fail: true},
+		{name: "parentheses 3", value: ")", fail: true},
+		{name: "parentheses 4", value: "(x", fail: true},
+		{name: "parentheses 5", value: "((())", fail: true},
+		{name: "parentheses 6", value: "@)", index: 1, fail: false},
+		{name: "parentheses 7", value: "[)", fail: true},
+		{name: "parentheses 8", value: "[())", fail: true},
+
+		{name: "bracket 0", value: "[]", index: 2, fail: false},
+		{name: "bracket 1", value: "[@]", index: 3, fail: false},
+		{name: "bracket 2", value: "[", fail: true},
+		{name: "bracket 3", value: "]", fail: true},
+		{name: "bracket 4", value: "[x", fail: true},
+		{name: "bracket 5", value: "[[[]]", fail: true},
+		{name: "bracket 6", value: "@]", index: 1, fail: false},
+		{name: "bracket 7", value: "(]", fail: true},
+		{name: "bracket 8", value: "([]]", fail: true},
+
+		{name: "sign 1", value: "+X", index: 1},
+		{name: "sign 2", value: "-X", index: 1},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -65,6 +91,12 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_8", value: "@.length-1", expected: []string{"@.length", "1", "-"}},
 		{name: "example_9", value: "@.length+-1", expected: []string{"@.length", "-1", "+"}},
 		{name: "example_10", value: "@.length/e", expected: []string{"@.length", "e", "/"}},
+		{name: "example_11", value: "", expected: []string{}},
+
+		{name: "1 /", value: "1 /", expected: []string{"1", "/"}},
+		{name: "1 + ", value: "1 + ", expected: []string{"1", "+"}},
+		{name: "1 -", value: "1 -", expected: []string{"1", "-"}},
+		{name: "1 * ", value: "1 * ", expected: []string{"1", "*"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -79,11 +111,50 @@ func TestBuffer_RPN(t *testing.T) {
 	}
 }
 
+func TestBuffer_RPNError(t *testing.T) {
+	tests := []struct {
+		value string
+	}{
+		{value: "1 + / 1"},
+		{value: "1 * / 1"},
+		{value: "1 - / 1"},
+		{value: "1 / / 1"},
+
+		{value: "1 + * 1"},
+		{value: "1 * * 1"},
+		{value: "1 - * 1"},
+		{value: "1 / * 1"},
+
+		{value: "1e1.1 + 1"},
+
+		{value: "len('string)"},
+		{value: "'Hello ' + 'World"},
+
+		{value: "@.length + $['length')"},
+		{value: "2 + 2)"},
+		{value: "(2 + 2"},
+
+		{value: "e + q"},
+		{value: "foo(e)"},
+		{value: "++2"},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			buf := newBuffer([]byte(test.value))
+			result, err := buf.rpn()
+			if err == nil {
+				t.Errorf("Expected error, nil given, with result: %v", strings.Join(result, ", "))
+			}
+		})
+	}
+}
+
 func TestTokenize(t *testing.T) {
 	tests := []struct {
 		name     string
 		value    string
 		expected []string
+		fail     bool
 	}{
 		{name: "example_1", value: "@.length", expected: []string{"@.length"}},
 		{name: "example_2", value: "1 + 2", expected: []string{"1", "+", "2"}},
@@ -96,14 +167,74 @@ func TestTokenize(t *testing.T) {
 		{name: "example_9", value: "'foo'", expected: []string{"'foo'"}},
 		{name: "example_10", value: "$.foo[(@.length - 3):3:]", expected: []string{"$.foo[(@.length - 3):3:]"}},
 		{name: "example_11", value: "$..", expected: []string{"$.."}},
+		{name: "blank", value: "", expected: []string{}},
+		{name: "number", value: "1e", fail: true},
+		{name: "string", value: "'foo", fail: true},
+		{name: "fail", value: "@.[", fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := tokenize(test.value)
-			if err != nil {
+			if test.fail {
+				if err == nil {
+					t.Error("Expected error: nil given")
+				}
+			} else if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if !sliceEqual(test.expected, result) {
 				t.Errorf("Error on RPN(%s): result doesn't match\nExpected: %s\nActual:   %s", test.value, sliceString(test.expected), sliceString(result))
+			}
+		})
+	}
+}
+
+func TestBuffer_Current(t *testing.T) {
+	buf := newBuffer([]byte{})
+	_, err := buf.current()
+	if err != io.EOF {
+		t.Error("Unexpected result: io.EOF expected")
+	}
+}
+
+func TestBuffer_Numeric(t *testing.T) {
+	tests := []struct {
+		value string
+		index int
+		fail  bool
+	}{
+		{value: "1", index: 1, fail: false},
+		{value: "0", index: 1, fail: false},
+		{value: "1.3e2", index: 5, fail: false},
+		{value: "-1.3e2", index: 6, fail: false},
+		{value: "-1.3e-2", index: 7, fail: false},
+		{value: "..3", index: 0, fail: true},
+		{value: "e.", index: 0, fail: true},
+		{value: ".e.", index: 0, fail: true},
+		{value: "1.e1", index: 4, fail: false},
+		{value: "0.e0", index: 4, fail: false},
+		{value: "0.e0", index: 4, fail: false},
+		{value: "0+0", index: 1, fail: false},
+		{value: "0-1", index: 1, fail: false},
+		{value: "++1", index: 0, fail: true},
+		{value: "--1", index: 0, fail: true},
+		{value: "-+1", index: 0, fail: true},
+		{value: "+-1", index: 0, fail: true},
+		{value: "+", index: 0, fail: true},
+		{value: "-", index: 0, fail: true},
+		{value: ".", index: 0, fail: true},
+		{value: "e", index: 0, fail: true},
+		{value: "+a", index: 0, fail: true},
+	}
+	for _, test := range tests {
+		t.Run(test.value, func(t *testing.T) {
+			buf := newBuffer([]byte(test.value))
+			err := buf.numeric()
+			if !test.fail && err != nil && err != io.EOF {
+				t.Errorf("Unexpected error: %s", err.Error())
+			} else if test.fail && (err == nil || err == io.EOF) {
+				t.Errorf("Expected error, got nothing")
+			} else if !test.fail && test.index != buf.index {
+				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.index)
 			}
 		})
 	}

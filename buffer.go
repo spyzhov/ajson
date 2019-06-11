@@ -117,44 +117,51 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 
 func (b *buffer) numeric() error {
 	var c byte
+	const (
+		_none = 0      // 0
+		_sign = 1 << 0 // 1
+		_dot  = 1 << 1 // 2
+		_num  = 1 << 2 // 4
+		_exp  = 1 << 3 // 8
+	)
 	find := 0
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		switch true {
 		case c >= '0' && c <= '9':
-			find |= 4
+			find |= _num
 		case c == '.':
-			if find&2 == 0 && find&8 == 0 { // exp part of numeric MUST contains only digits
-				find &= 2
+			if find&_exp != 0 { // exp part of numeric MUST contains only digits
+				return errorSymbol(b)
+			}
+			if find&_dot == 0 {
+				find |= _dot
 			} else {
-				if find&4 == 0 {
-					return errorSymbol(b)
-				}
-				return nil
+				return errorSymbol(b)
 			}
 		case c == '+' || c == '-':
-			if find == 0 || find == 8 {
-				find |= 1
+			if find == _none || find == _exp {
+				find |= _sign
 			} else {
-				if find&4 == 0 {
+				if find&_num == 0 {
 					return errorSymbol(b)
 				}
 				return nil
 			}
 		case c == 'e' || c == 'E':
-			if find&8 == 0 && find&4 != 0 { // exp without base part
-				find = 8
+			if find&_exp == 0 && find&_num != 0 { // exp without base part
+				find = _exp
 			} else {
 				return errorSymbol(b)
 			}
 		default:
-			if find&4 != 0 {
+			if find&_num != 0 {
 				return nil
 			}
 			return errorSymbol(b)
 		}
 	}
-	if find&4 != 0 {
+	if find&_num != 0 {
 		return io.EOF
 	}
 	return errorEOF(b)
@@ -226,22 +233,23 @@ tokenLoop:
 		switch {
 		case c == quote:
 			find = true
-			start = b.index
 			err = b.step()
 			if err != nil {
 				return b.errorEOF()
 			}
 			err = b.skip(quote)
-			if err == nil || err == io.EOF {
-				continue
+			if err == io.EOF {
+				return b.errorEOF()
 			}
-			b.index = start
 		case c == bracketL:
 			find = true
 			stack = append(stack, c)
 		case c == bracketR:
 			find = true
 			if len(stack) == 0 {
+				if first == b.index {
+					return b.errorSymbol()
+				}
 				break tokenLoop
 			}
 			if stack[len(stack)-1] != bracketL {
@@ -254,6 +262,9 @@ tokenLoop:
 		case c == parenthesesR:
 			find = true
 			if len(stack) == 0 {
+				if first == b.index {
+					return b.errorSymbol()
+				}
 				break tokenLoop
 			}
 			if stack[len(stack)-1] != parenthesesL {

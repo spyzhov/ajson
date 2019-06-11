@@ -66,6 +66,7 @@ func TestNode_Unpack(t *testing.T) {
 			root, err := Unmarshal([]byte(test.value))
 			if err != nil {
 				t.Errorf("Error on Unmarshal(): %s", err.Error())
+				return
 			}
 			unpacked, err := root.Unpack()
 			if err != nil {
@@ -93,6 +94,7 @@ func TestNode_Value(t *testing.T) {
       }`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	iValue, err := root.Value()
 	if err != nil {
@@ -119,6 +121,7 @@ func TestNode_Empty(t *testing.T) {
       }`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	iValue, err := root.Value()
 	if err != nil {
@@ -146,6 +149,7 @@ func TestNode_GetArray(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	array, err := root.GetArray()
 	if err != nil {
@@ -166,6 +170,7 @@ func TestNode_MustArray(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	array := root.MustArray()
 	if len(array) != 3 {
@@ -177,6 +182,7 @@ func TestNode_GetBool(t *testing.T) {
 	root, err := Unmarshal([]byte(`true`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetBool()
 	if err != nil {
@@ -197,6 +203,7 @@ func TestNode_MustBool(t *testing.T) {
 	root, err := Unmarshal([]byte(`true`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustBool()
 	if !value {
@@ -208,10 +215,12 @@ func TestNode_GetIndex(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetIndex(1)
 	if err != nil {
 		t.Errorf("Error on root.GetIndex(): %s", err.Error())
+		return
 	}
 	if value.MustNumeric() != 2 {
 		t.Errorf("root.GetIndex() is corrupted")
@@ -229,6 +238,7 @@ func TestNode_MustIndex(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustIndex(1)
 	if value.MustNumeric() != 2 {
@@ -240,10 +250,12 @@ func TestNode_GetKey(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":2,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetKey("foo")
 	if err != nil {
 		t.Errorf("Error on root.GetKey(): %s", err.Error())
+		return
 	}
 	if value.MustNumeric() != 2 {
 		t.Errorf("root.GetKey() is corrupted")
@@ -261,6 +273,7 @@ func TestNode_MustKey(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":2,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustKey("foo")
 	if value.MustNumeric() != 2 {
@@ -272,6 +285,7 @@ func TestNode_GetNull(t *testing.T) {
 	root, err := Unmarshal([]byte(`null`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetNull()
 	if err != nil {
@@ -292,6 +306,7 @@ func TestNode_MustNull(t *testing.T) {
 	root, err := Unmarshal([]byte(`null`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustNull()
 	if value != nil {
@@ -303,6 +318,7 @@ func TestNode_GetNumeric(t *testing.T) {
 	root, err := Unmarshal([]byte(`123`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetNumeric()
 	if err != nil {
@@ -329,6 +345,7 @@ func TestNode_MustNumeric(t *testing.T) {
 	root, err := Unmarshal([]byte(`123`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustNumeric()
 	if value != float64(123) {
@@ -340,6 +357,7 @@ func TestNode_GetObject(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetObject()
 	if err != nil {
@@ -363,6 +381,7 @@ func TestNode_MustObject(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustObject()
 	if _, ok := value["foo"]; !ok {
@@ -377,6 +396,7 @@ func TestNode_GetString(t *testing.T) {
 	root, err := Unmarshal([]byte(`"123"`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value, err := root.GetString()
 	if err != nil {
@@ -397,6 +417,7 @@ func TestNode_MustString(t *testing.T) {
 	root, err := Unmarshal([]byte(`"123"`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.MustString()
 	if value != "123" {
@@ -408,6 +429,7 @@ func TestNode_Index(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	array := root.MustArray()
 	for i, node := range array {
@@ -421,6 +443,7 @@ func TestNode_Key(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":"bar", "baz":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	object := root.MustObject()
 	for key, node := range object {
@@ -434,6 +457,7 @@ func TestNode_IsArray(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1, 2, 3]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if !root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -459,6 +483,7 @@ func TestNode_IsObject(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -484,6 +509,7 @@ func TestNode_IsString(t *testing.T) {
 	root, err := Unmarshal([]byte(`"123"`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -509,6 +535,7 @@ func TestNode_IsNumeric(t *testing.T) {
 	root, err := Unmarshal([]byte(`+1.23e-2`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -534,6 +561,7 @@ func TestNode_IsBool(t *testing.T) {
 	root, err := Unmarshal([]byte(`true`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -559,6 +587,7 @@ func TestNode_IsNull(t *testing.T) {
 	root, err := Unmarshal([]byte(`null`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
@@ -584,6 +613,7 @@ func TestNode_Keys(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.Keys()
 	if len(value) != 2 {
@@ -601,6 +631,7 @@ func TestNode_Size(t *testing.T) {
 	root, err := Unmarshal([]byte(`[1,2,3,4]`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.Size()
 	if value != 4 {
@@ -612,6 +643,7 @@ func TestNode_Parent(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.Parent()
 	if value != nil {
@@ -627,6 +659,7 @@ func TestNode_Source(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.Source()
 	if !bytes.Equal(value, []byte(`{"foo":true,"bar":null}`)) {
@@ -638,6 +671,7 @@ func TestNode_String(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	value := root.String()
 	if value != `{"foo":true,"bar":null}` {
@@ -689,6 +723,7 @@ func TestNode_HasKey(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if !root.HasKey("foo") {
 		t.Errorf("Wrong root.HasKey('foo')")
@@ -719,6 +754,7 @@ func TestNode_Path(t *testing.T) {
 	root, err := Unmarshal(data)
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
+		return
 	}
 	if root.Path() != "$" {
 		t.Errorf("Wrong root.Path()")
@@ -830,10 +866,12 @@ func TestNode_Eq(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual, err := test.left.Eq(test.right)
-			if err != nil {
-				if !test.error {
-					t.Errorf("Error on node.Eq(): %s", err.Error())
+			if test.error {
+				if err == nil {
+					t.Errorf("Error expected: nil given")
 				}
+			} else if err != nil {
+				t.Errorf("Error on node.Eq(): %s", err.Error())
 			} else if actual != test.expected {
 				t.Errorf("Failed node.Eq()")
 			}

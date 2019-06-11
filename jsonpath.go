@@ -159,7 +159,7 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 	return deReference(node, commands)
 }
 
-//Paths returns calculated paths of underlying nodes
+// Paths returns calculated paths of underlying nodes
 func Paths(array []*Node) []string {
 	result := make([]string, 0, len(array))
 	for _, element := range array {
@@ -187,8 +187,8 @@ func recursiveChildren(node *Node) (result []*Node) {
 // ParseJSONPath will parse current path and return all commands tobe run.
 // Example:
 //
-//	result, _ := ParseJSONPath("$.store.book[?(@.price < 10)].title")
-//	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
+// 	result, _ := ParseJSONPath("$.store.book[?(@.price < 10)].title")
+// 	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
 //
 func ParseJSONPath(path string) (result []string, err error) {
 	buf := newBuffer([]byte(path))
@@ -473,7 +473,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 
 			temporary = make([]*Node, 0)
-			for _, key = range keys {
+			for _, key = range keys { // fixme
 				for _, element := range result {
 					if element.IsArray() {
 						if key == "length" || key == "'length'" {
@@ -544,7 +544,7 @@ func Eval(node *Node, cmd string) (result *Node, err error) {
 
 func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 	var (
-		stack    []*Node
+		stack    = make([]*Node, 0)
 		slice    []*Node
 		temp     *Node
 		fn       Function

@@ -96,7 +96,7 @@ var (
 			if err != nil {
 				return
 			}
-			rnum, err := left.getInteger()
+			rnum, err := right.getInteger()
 			if err != nil {
 				return
 			}
@@ -107,7 +107,7 @@ var (
 			if err != nil {
 				return
 			}
-			rnum, err := left.getUInteger()
+			rnum, err := right.getUInteger()
 			if err != nil {
 				return
 			}
@@ -118,7 +118,7 @@ var (
 			if err != nil {
 				return
 			}
-			rnum, err := left.getUInteger()
+			rnum, err := right.getUInteger()
 			if err != nil {
 				return
 			}
@@ -136,7 +136,7 @@ var (
 			if err != nil {
 				return
 			}
-			return valueNode(nil, "bit clear (AND NOT)", Numeric, float64(lnum&rnum)), nil
+			return valueNode(nil, "bit clear (AND NOT)", Numeric, float64(lnum&^rnum)), nil
 		},
 		"+": func(left *Node, right *Node) (result *Node, err error) {
 			if left.IsString() {
@@ -160,24 +160,18 @@ var (
 			return valueNode(nil, "sub", Numeric, float64(lnum-rnum)), nil
 		},
 		"|": func(left *Node, right *Node) (result *Node, err error) {
-			if left.IsNumeric() && right.IsNumeric() {
-				lnum, rnum, err := _ints(left, right)
-				if err != nil {
-					return nil, err
-				}
-				return valueNode(nil, "bitwise OR", Numeric, float64(lnum|rnum)), nil
+			lnum, rnum, err := _ints(left, right)
+			if err != nil {
+				return
 			}
-			return nil, errorRequest("function 'bitwise OR' was called from non numeric node")
+			return valueNode(nil, "bitwise OR", Numeric, float64(lnum|rnum)), nil
 		},
 		"^": func(left *Node, right *Node) (result *Node, err error) {
-			if left.IsNumeric() && right.IsNumeric() {
-				lnum, rnum, err := _ints(left, right)
-				if err != nil {
-					return nil, err
-				}
-				return valueNode(nil, "bitwise XOR", Numeric, float64(lnum^rnum)), nil
+			lnum, rnum, err := _ints(left, right)
+			if err != nil {
+				return nil, err
 			}
-			return nil, errorRequest("function 'bitwise XOR' was called from non numeric node")
+			return valueNode(nil, "bitwise XOR", Numeric, float64(lnum^rnum)), nil
 		},
 		"==": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Eq(right)
