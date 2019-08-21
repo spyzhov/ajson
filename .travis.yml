@@ -30,7 +30,6 @@ notifications:
 # Make sure golangci-lint is vendored.
 before_script:
   - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.17.0
-  - go get -u github.com/kisielk/errcheck
   - go get golang.org/x/tools/cmd/cover # coveralls.io
   - go get github.com/mattn/goveralls   # coveralls.io
 
@@ -38,7 +37,6 @@ before_script:
 # failing test, we want to see both. Configure golangci-lint with a
 # .golangci.yml file at the top level of your repo.
 script:
-  - errcheck .
   - golangci-lint run       # run a bunch of code checkers/linters in parallel
   - go test -v -race ./...  # Run all the tests with the race detector enabled
   - go test -v -covermode=count -coverprofile=coverage.out # coveralls.io

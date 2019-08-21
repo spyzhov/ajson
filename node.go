@@ -11,14 +11,14 @@ import (
 // Node is a main struct, presents any type of JSON node.
 // Available types are:
 //
-//	const (
-//		Null NodeType = iota
-//		Numeric
-//		String
-//		Bool
-//		Array
-//		Object
-//	)
+// 	const (
+// 		Null NodeType = iota
+// 		Numeric
+// 		String
+// 		Bool
+// 		Array
+// 		Object
+// 	)
 //
 // Every type has its own methods to be called.
 // Every Node contains link to a byte data, parent and children, also calculated type of value, atomic value and internal information.
@@ -31,6 +31,7 @@ type Node struct {
 	data     *[]byte
 	borders  [2]int
 	value    atomic.Value
+	dirty    bool
 }
 
 // NodeType is a kind of reflection of JSON type to a type of golang
@@ -38,12 +39,12 @@ type NodeType int
 
 // Reflections:
 //
-//	Null    = nil.(interface{})
-//	Numeric = float64
-//	String  = string
-//	Bool    = bool
-//	Array   = []*Node
-//	Object  = map[string]*Node
+// 	Null    = nil.(interface{})
+// 	Numeric = float64
+// 	String  = string
+// 	Bool    = bool
+// 	Array   = []*Node
+// 	Object  = map[string]*Node
 //
 const (
 	// Null is reflection of nil.(interface{})
@@ -65,6 +66,7 @@ func NullNode(key string) *Node {
 	return &Node{
 		_type: Null,
 		key:   &key,
+		dirty: true,
 	}
 }
 
@@ -73,6 +75,7 @@ func NumericNode(key string, value float64) (current *Node) {
 	current = &Node{
 		_type: Numeric,
 		key:   &key,
+		dirty: true,
 	}
 	current.value.Store(value)
 	return
@@ -83,6 +86,7 @@ func StringNode(key string, value string) (current *Node) {
 	current = &Node{
 		_type: String,
 		key:   &key,
+		dirty: true,
 	}
 	current.value.Store(value)
 	return
@@ -93,6 +97,7 @@ func BoolNode(key string, value bool) (current *Node) {
 	current = &Node{
 		_type: Bool,
 		key:   &key,
+		dirty: true,
 	}
 	current.value.Store(value)
 	return
@@ -104,6 +109,7 @@ func ArrayNode(key string, value []*Node) (current *Node) {
 		data:  nil,
 		_type: Array,
 		key:   &key,
+		dirty: true,
 	}
 	current.children = make(map[string]*Node, len(value))
 	if value != nil {
@@ -124,6 +130,7 @@ func ObjectNode(key string, value map[string]*Node) (current *Node) {
 		_type:    Object,
 		key:      &key,
 		children: value,
+		dirty:    true,
 	}
 	if value != nil {
 		current.value.Store(value)
@@ -142,6 +149,7 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 		borders: [2]int{buf.index, 0},
 		_type:   _type,
 		key:     *key,
+		dirty:   false,
 	}
 	if _type == Object || _type == Array {
 		current.children = make(map[string]*Node)
@@ -172,6 +180,7 @@ func valueNode(parent *Node, key string, _type NodeType, value interface{}) (cur
 		borders: [2]int{0, 0},
 		_type:   _type,
 		key:     &key,
+		dirty:   true,
 	}
 	if value != nil {
 		current.value.Store(value)
@@ -797,4 +806,19 @@ func (n *Node) JSONPath(path string) (result []*Node, err error) {
 		return nil, err
 	}
 	return deReference(n, commands)
+}
+
+// IsDirty is the flag that shows, was node changed or not
+func (n *Node) IsDirty() bool {
+	return n.dirty
+}
+
+// update stored value, without validations.
+func (n *Node) update(value interface{}) {
+	n.value.Store(value)
+	node := n
+	for node != nil {
+		node.dirty = true
+		node = node.parent
+	}
 }
