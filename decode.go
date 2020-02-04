@@ -171,6 +171,14 @@ func Unmarshal(data []byte) (root *Node, err error) {
 	return
 }
 
+// Must returns a Node if there was no error. Else - panic with error as the value.
+func Must(root *Node, err error) *Node {
+	if err != nil {
+		panic(err)
+	}
+	return root
+}
+
 func previous(current *Node) *Node {
 	if current.parent != nil {
 		return current.parent

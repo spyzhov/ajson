@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -229,12 +230,57 @@ func ExampleJSONPath() {
 		panic(err)
 	}
 	for _, author := range authors {
-		println(author.MustString())
+		fmt.Println(author.MustString())
 	}
-	//Nigel Rees
-	//Evelyn Waugh
-	//Herman Melville
-	//J. R. R. Tolkien
+	// Output:
+	// Nigel Rees
+	// Evelyn Waugh
+	// Herman Melville
+	// J. R. R. Tolkien
+}
+func ExampleJSONPath_array() {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`)
+	authors, err := JSONPath(json, "$.store.book[*].author")
+	if err != nil {
+		panic(err)
+	}
+	result, err := Marshal(ArrayNode("", authors))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(result))
+	// Output:
+	// ["Nigel Rees","Evelyn Waugh","Herman Melville","J. R. R. Tolkien"]
 }
 
 func ExampleEval() {
@@ -279,8 +325,9 @@ func ExampleEval() {
 	if err != nil {
 		panic(err)
 	}
-	println(result.MustNumeric())
-	//14.774000000000001
+	fmt.Print(result.MustNumeric())
+	// Output:
+	// 14.774000000000001
 }
 
 func TestEval(t *testing.T) {

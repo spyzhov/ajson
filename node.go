@@ -35,7 +35,7 @@ type Node struct {
 }
 
 // NodeType is a kind of reflection of JSON type to a type of golang
-type NodeType int
+type NodeType int32
 
 // Reflections:
 //
@@ -195,7 +195,7 @@ func (n *Node) Parent() *Node {
 
 // Source returns slice of bytes, which was identified to be current node
 func (n *Node) Source() []byte {
-	if n.ready() {
+	if n.ready() && !n.dirty {
 		return (*n.data)[n.borders[0]:n.borders[1]]
 	}
 	return nil
@@ -808,17 +808,11 @@ func (n *Node) JSONPath(path string) (result []*Node, err error) {
 	return deReference(n, commands)
 }
 
-// IsDirty is the flag that shows, was node changed or not
-func (n *Node) IsDirty() bool {
-	return n.dirty
-}
-
-// update stored value, without validations.
-func (n *Node) update(value interface{}) {
-	n.value.Store(value)
-	node := n
-	for node != nil {
-		node.dirty = true
+// root returns the root node
+func (n *Node) root() (node *Node) {
+	node = n
+	for node.parent != nil {
 		node = node.parent
 	}
+	return node
 }
