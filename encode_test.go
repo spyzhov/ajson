@@ -4,9 +4,8 @@ import "testing"
 
 func TestMarshal_Primitive(t *testing.T) {
 	tests := []struct {
-		name   string
-		node   *Node
-		result string
+		name string
+		node *Node
 	}{
 		{
 			name: "null",
