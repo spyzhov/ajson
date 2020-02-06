@@ -297,7 +297,7 @@ func TestFunctions2(t *testing.T) {
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "avg error 2", fname: "avg", value: _e, fail: true},
+		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NullNode("")},
 		{name: "avg array 1", fname: "avg", value: ArrayNode("test", []*Node{
 			NumericNode("", 1),
 			NumericNode("", 1),

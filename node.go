@@ -138,6 +138,8 @@ func ObjectNode(key string, value map[string]*Node) (current *Node) {
 			val.parent = current
 			val.key = &key
 		}
+	} else {
+		current.children = make(map[string]*Node)
 	}
 	return
 }
@@ -513,6 +515,9 @@ func (n *Node) Unpack() (value interface{}, err error) {
 func (n *Node) GetIndex(index int) (*Node, error) {
 	if n._type != Array {
 		return nil, errorType()
+	}
+	if index < 0 {
+		index += len(n.children)
 	}
 	child, ok := n.children[strconv.Itoa(index)]
 	if !ok {

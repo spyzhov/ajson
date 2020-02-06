@@ -46,7 +46,7 @@ func (n *Node) AppendArray(value ...*Node) error {
 		return errorType()
 	}
 	for _, val := range value {
-		if err := n.appendArray(val); err != nil {
+		if err := n.appendNode(nil, val); err != nil {
 			return err
 		}
 	}
@@ -55,33 +55,66 @@ func (n *Node) AppendArray(value ...*Node) error {
 }
 
 // AppendObject append current Object node value with key:value
-// TODO
-// func (n *Node) AppendObject(key string, value *Node) error {
-// 	n.mark()
-// 	if !n.IsObject() {
-// 		return errorType()
-// 	}
-// 	if old, ok := n.children[key]; ok {
-// 		old.parent = nil
-// 	}
-// 	value.parent = n
-// 	value.key = &key
-// 	value.index = nil
-// 	n.children[key] = value
-// 	return nil
-// }
+func (n *Node) AppendObject(key string, value *Node) error {
+	if !n.IsObject() {
+		return errorType()
+	}
+	err := n.appendNode(&key, value)
+	if err != nil {
+		return err
+	}
+	n.mark()
+	return nil
+}
 
-// TODO
-// func (n *Node) DeleteNode(value *Node) error {
-// }
+// DeleteNode removes element child
+func (n *Node) DeleteNode(value *Node) error {
+	return n.remove(value)
+}
 
-// TODO
-// func (n *Node) DeleteKey(key string) error {
-// }
+// DeleteKey removes element from Object, by it's key
+func (n *Node) DeleteKey(key string) error {
+	node, err := n.GetKey(key)
+	if err != nil {
+		return err
+	}
+	return n.remove(node)
+}
 
-// TODO
-// func (n *Node) DeleteIndex(index int) error {
-// }
+// PopKey removes element from Object, by it's key and return it
+func (n *Node) PopKey(key string) (node *Node, err error) {
+	node, err = n.GetKey(key)
+	if err != nil {
+		return
+	}
+	return node, n.remove(node)
+}
+
+// DeleteIndex removes element from Array, by it's index
+func (n *Node) DeleteIndex(index int) error {
+	node, err := n.GetIndex(index)
+	if err != nil {
+		return err
+	}
+	return n.remove(node)
+}
+
+// PopIndex removes element from Array, by it's index and return it
+func (n *Node) PopIndex(index int) (node *Node, err error) {
+	node, err = n.GetIndex(index)
+	if err != nil {
+		return
+	}
+	return node, n.remove(node)
+}
+
+// Delete removes element from parent. For root - do nothing.
+func (n *Node) Delete() error {
+	if n.parent == nil {
+		return nil
+	}
+	return n.parent.remove(n)
+}
 
 // update stored value, without validations
 func (n *Node) update(_type NodeType, value interface{}) {
@@ -110,6 +143,7 @@ func (n *Node) remove(value *Node) error {
 	} else {
 		delete(n.children, *value.key)
 	}
+	value.parent = nil
 	return nil
 }
 
@@ -125,8 +159,8 @@ func (n *Node) dropindex(index int) {
 	}
 }
 
-// appendArray append current Array node value with Node value
-func (n *Node) appendArray(value *Node) error {
+// appendNode append current Node node value with new Node value, by key or index
+func (n *Node) appendNode(key *string, value *Node) error {
 	if n.isParentNode(value) {
 		return errorRequest("try to create infinite loop")
 	}
@@ -136,10 +170,21 @@ func (n *Node) appendArray(value *Node) error {
 		}
 	}
 	value.parent = n
-	size := len(n.children)
-	value.key = nil
-	value.index = &size
-	n.children[strconv.Itoa(size)] = value
+	value.key = key
+	if key != nil {
+		if old, ok := n.children[*key]; ok {
+			if old != value {
+				if err := n.remove(old); err != nil {
+					return err
+				}
+			}
+		}
+		n.children[*key] = value
+	} else {
+		index := len(n.children)
+		value.index = &index
+		n.children[strconv.Itoa(index)] = value
+	}
 	return nil
 }
 

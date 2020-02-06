@@ -1502,7 +1502,7 @@ func TestNode_Inheritors(t *testing.T) {
 }
 
 func TestNode_JSONPath(t *testing.T) {
-	root, err := Unmarshal(jsonpathTestData)
+	root, err := Unmarshal(jsonPathTestData)
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())
 		return
@@ -1518,7 +1518,7 @@ func TestNode_JSONPath(t *testing.T) {
 }
 
 func TestNode_IsDirty(t *testing.T) {
-	root, err := Unmarshal(jsonpathTestData)
+	root, err := Unmarshal(jsonPathTestData)
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())
 		return

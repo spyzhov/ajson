@@ -5,7 +5,14 @@ import (
 	"testing"
 )
 
-// Add test: [{"foo":"bar"}], get "bar", parent=nil => get value/path/etc.
+func testEqObject(str []byte, variants []string) bool {
+	for _, val := range variants {
+		if string(str) == val {
+			return true
+		}
+	}
+	return false
+}
 
 func TestNode_SetNull(t *testing.T) {
 	tests := []struct {
@@ -600,6 +607,9 @@ func TestNode_AppendArray_self(t *testing.T) {
 	if err := root.AppendArray(root); err == nil {
 		t.Errorf("AppendArray must returns error")
 	}
+	if err := root.MustIndex(0).AppendArray(NullNode("")); err == nil {
+		t.Errorf("AppendArray must returns error")
+	}
 
 	nodes, err := root.JSONPath(`$..foo`)
 	if err != nil {
@@ -667,6 +677,351 @@ func TestNode_AppendArray_self(t *testing.T) {
 	if value, err := Marshal(root); err != nil {
 		t.Errorf("Marshal returns error: %v", err)
 	} else if string(value) != `[[],null,"bar",{}]` {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+}
+
+func TestNode_AppendObject(t *testing.T) {
+	if err := Must(Unmarshal([]byte(`{"foo":"bar","baz":null}`))).AppendObject("biz", NullNode("")); err != nil {
+		t.Errorf("AppendArray should return error")
+	}
+
+	root := Must(Unmarshal([]byte(`{"foo":"bar"}`)))
+
+	if err := root.AppendObject("biz", NullNode("")); err != nil {
+		t.Errorf("AppendArray returns error: %v", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if !testEqObject(value, []string{`{"foo":"bar","biz":null}`, `{"biz":null,"foo":"bar"}`}) {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+
+	if err := root.AppendObject("foo", NumericNode("", 1)); err != nil {
+		t.Errorf("AppendArray returns error: %v", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if !testEqObject(value, []string{`{"foo":1,"biz":null}`, `{"biz":null,"foo":1}`}) {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+}
+
+func TestNode_AppendObject_self(t *testing.T) {
+	root := Must(Unmarshal([]byte(`{"foo":{"bar":"baz"},"fiz":null}`)))
+
+	if err := root.AppendObject("foo", root); err == nil {
+		t.Errorf("AppendArray must returns error")
+	}
+	if err := root.MustKey("fiz").AppendObject("fiz", NullNode("")); err == nil {
+		t.Errorf("AppendArray must returns error: not object")
+	}
+
+	if err := root.MustKey("foo").AppendObject("bar", root); err == nil {
+		t.Errorf("AppendArray must returns error: self")
+	}
+
+	nodes, err := root.JSONPath(`$..bar`)
+	if err != nil {
+		t.Errorf("JSONPath returns error: %s", err)
+	}
+	if err := root.AppendObject("bar", nodes[0]); err != nil {
+		t.Errorf("AppendArray returns error: %s", err)
+	}
+
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if !testEqObject(value, []string{
+		`{"bar":"baz","foo":{},"fiz":null}`,
+		`{"bar":"baz","fiz":null,"foo":{}}`,
+		`{"fiz":null,"bar":"baz","foo":{}}`,
+		`{"fiz":null,"foo":{},"bar":"baz"}`,
+		`{"foo":{},"bar":"baz","fiz":null}`,
+		`{"foo":{},"fiz":null,"bar":"baz"}`,
+	}) {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+
+	object := root.MustKey("foo")
+	if value, err := Marshal(object); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if string(value) != `{}` {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+
+	err = root.AppendObject("bar", object)
+	if err != nil {
+		t.Errorf("AppendArray returns error: %s", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if !testEqObject(value, []string{
+		`{"bar":{},"fiz":null}`,
+		`{"fiz":null,"bar":{}}`,
+	}) {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+}
+
+func TestNode_Delete(t *testing.T) {
+	root := Must(Unmarshal([]byte(`{"foo":"bar"}`)))
+	if err := root.Delete(); err != nil {
+		t.Errorf("root.Delete returns error: %v", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if string(value) != `{"foo":"bar"}` {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+
+	foo := root.MustKey("foo")
+	if err := foo.Delete(); err != nil {
+		t.Errorf("foo.Delete returns error: %v", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if string(value) != `{}` {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+	if value, err := Marshal(foo); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if string(value) != `"bar"` {
+		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+	if foo.Parent() != nil {
+		t.Errorf("Delete didn't remove parent")
+	}
+}
+
+func TestNode_DeleteIndex(t *testing.T) {
+	tests := []struct {
+		json     string
+		expected string
+		index    int
+		fail     bool
+	}{
+		{`null`, ``, 0, true},
+		{`1`, ``, 0, true},
+		{`{}`, ``, 0, true},
+		{`{"foo":"bar"}`, ``, 0, true},
+		{`true`, ``, 0, true},
+		{`[]`, ``, 0, true},
+		{`[]`, ``, -1, true},
+		{`[1]`, `[]`, 0, false},
+		{`[{}]`, `[]`, 0, false},
+		{`[{}]`, `[]`, -1, false},
+		{`[{},[],1]`, `[{},[]]`, -1, false},
+		{`[{},[],1]`, `[{},1]`, 1, false},
+		{`[{},[],1]`, ``, 10, true},
+		{`[{},[],1]`, ``, -10, true},
+	}
+	for _, test := range tests {
+		t.Run(test.json, func(t *testing.T) {
+			root := Must(Unmarshal([]byte(test.json)))
+			err := root.DeleteIndex(test.index)
+			if test.fail {
+				if err == nil {
+					t.Errorf("Expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				result, err := Marshal(root)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if string(result) != test.expected {
+					t.Errorf("Unexpected result: %s", result)
+				}
+			}
+		})
+	}
+}
+
+func TestNode_PopIndex(t *testing.T) {
+	tests := []struct {
+		json     string
+		expected string
+		index    int
+		fail     bool
+	}{
+		{`null`, ``, 0, true},
+		{`1`, ``, 0, true},
+		{`{}`, ``, 0, true},
+		{`{"foo":"bar"}`, ``, 0, true},
+		{`true`, ``, 0, true},
+		{`[]`, ``, 0, true},
+		{`[]`, ``, -1, true},
+		{`[1]`, `[]`, 0, false},
+		{`[{}]`, `[]`, 0, false},
+		{`[{}]`, `[]`, -1, false},
+		{`[{},[],1]`, `[{},[]]`, -1, false},
+		{`[{},[],1]`, `[{},1]`, 1, false},
+		{`[{},[],1]`, ``, 10, true},
+		{`[{},[],1]`, ``, -10, true},
+	}
+	for _, test := range tests {
+		t.Run(test.json, func(t *testing.T) {
+			if test.fail {
+				root := Must(Unmarshal([]byte(test.json)))
+				_, err := root.PopIndex(test.index)
+				if err == nil {
+					t.Errorf("Expected error")
+				}
+			} else {
+				root := Must(Unmarshal([]byte(test.json)))
+				expected := root.MustIndex(test.index)
+				node, err := root.PopIndex(test.index)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if node == nil {
+					t.Errorf("Unexpected node")
+				}
+				if node.Parent() != nil {
+					t.Errorf("node.Parent is not nil")
+				}
+				if node != expected {
+					t.Errorf("node is not expected")
+				}
+				result, err := Marshal(root)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if string(result) != test.expected {
+					t.Errorf("Unexpected result: %s", result)
+				}
+			}
+		})
+	}
+}
+
+func TestNode_DeleteKey(t *testing.T) {
+	tests := []struct {
+		json     string
+		expected string
+		key      string
+		fail     bool
+	}{
+		{`null`, ``, "", true},
+		{`1`, ``, "", true},
+		{`[]`, ``, "", true},
+		{`[1,2,3]`, ``, "", true},
+		{`true`, ``, "", true},
+		{`{}`, ``, "", true},
+		{`{}`, ``, "foo", true},
+		{`{"foo":"bar"}`, ``, "bar", true},
+		{`{"foo":"bar"}`, `{}`, "foo", false},
+		{`{"foo":"bar","baz":1}`, `{"baz":1}`, "foo", false},
+		{`{"foo":"bar","baz":1}`, `{"foo":"bar"}`, "baz", false},
+		{`{"foo":"bar","baz":1}`, ``, "fiz", true},
+	}
+	for _, test := range tests {
+		t.Run(test.json, func(t *testing.T) {
+			root := Must(Unmarshal([]byte(test.json)))
+			err := root.DeleteKey(test.key)
+			if test.fail {
+				if err == nil {
+					t.Errorf("Expected error")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				result, err := Marshal(root)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if string(result) != test.expected {
+					t.Errorf("Unexpected result: %s", result)
+				}
+			}
+		})
+	}
+}
+
+func TestNode_PopKey(t *testing.T) {
+	tests := []struct {
+		json     string
+		expected string
+		key      string
+		fail     bool
+	}{
+		{`null`, ``, "", true},
+		{`1`, ``, "", true},
+		{`[]`, ``, "", true},
+		{`[1,2,3]`, ``, "", true},
+		{`true`, ``, "", true},
+		{`{}`, ``, "", true},
+		{`{}`, ``, "foo", true},
+		{`{"foo":"bar"}`, ``, "bar", true},
+		{`{"foo":"bar"}`, `{}`, "foo", false},
+		{`{"foo":"bar","baz":1}`, `{"baz":1}`, "foo", false},
+		{`{"foo":"bar","baz":1}`, `{"foo":"bar"}`, "baz", false},
+		{`{"foo":"bar","baz":1}`, ``, "fiz", true},
+	}
+	for _, test := range tests {
+		t.Run(test.json, func(t *testing.T) {
+			root := Must(Unmarshal([]byte(test.json)))
+			if test.fail {
+				_, err := root.PopKey(test.key)
+				if err == nil {
+					t.Errorf("Expected error")
+				}
+			} else {
+				expected := root.MustKey(test.key)
+				node, err := root.PopKey(test.key)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if node == nil {
+					t.Errorf("Unexpected node")
+				}
+				if node.Parent() != nil {
+					t.Errorf("node.Parent is not nil")
+				}
+				if node != expected {
+					t.Errorf("node is not expected")
+				}
+				result, err := Marshal(root)
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				} else if string(result) != test.expected {
+					t.Errorf("Unexpected result: %s", result)
+				}
+			}
+		})
+	}
+}
+
+func TestNode_DeleteNode(t *testing.T) {
+	initial := `{"foo":{"bar":["baz",1,null]},"biz":"zip"}`
+	root := Must(Unmarshal([]byte(initial)))
+
+	if err := root.DeleteNode(NullNode("")); err == nil {
+		t.Errorf("Expected error")
+	}
+	if err := root.DeleteNode(StringNode("biz", "zip")); err == nil {
+		t.Errorf("Expected error")
+	}
+	if err := root.MustKey("biz").DeleteNode(root.MustKey("biz")); err == nil {
+		t.Errorf("Expected error")
+	}
+	if err := root.MustKey("foo").DeleteNode(root.MustKey("foo")); err == nil {
+		t.Errorf("Expected error")
+	}
+
+	node := NullNode("")
+	if err := root.AppendObject("key", node); err != nil {
+		t.Errorf("UnExpected error: %v", err)
+	}
+	if err := root.DeleteNode(node); err != nil {
+		t.Errorf("UnExpected error: %v", err)
+	}
+	if value, err := Marshal(root); err != nil {
+		t.Errorf("Marshal returns error: %v", err)
+	} else if !testEqObject(value, []string{
+		`{"foo":{"bar":["baz",1,null]},"biz":"zip"}`,
+		`{"biz":"zip","foo":{"bar":["baz",1,null]}}`,
+	}) {
 		t.Errorf("Marshal returns wrong value: %s", string(value))
 	}
 }

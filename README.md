@@ -9,6 +9,8 @@ Abstract [JSON](https://www.json.org/) is a small golang package that provide a 
 
 Method `Unmarshal` will scan all the byte slice to create a root node of JSON structure, with all it behaviors.
 
+Method `Marshal` will serialize current `Node` object to JSON structure.
+
 Each `Node` has it's own type and calculated value, which will be calculated on demand. 
 Calculated value saves in `atomic.Value`, so it's thread safe.
 
@@ -210,6 +212,97 @@ func main() {
 }
 ```
 
+### Marshal
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": [
+      {
+        "color": "red",
+        "price": 19.95
+      }
+    ]
+  }
+}`)
+	root := ajson.Must(ajson.Unmarshal(json))
+	result := ajson.Must(ajson.Eval(root, "avg($..price)"))
+	err := root.AppendObject("price(avg)", result)
+	if err != nil {
+		panic(err)
+	}
+	marshalled, err := ajson.Marshal(root)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s", marshalled)
+	// Output:
+	// {"store":{
+	//    "book": [
+	//      { "category": "reference",
+	//        "author": "Nigel Rees",
+	//        "title": "Sayings of the Century",
+	//        "price": 8.95
+	//      },
+	//      { "category": "fiction",
+	//        "author": "Evelyn Waugh",
+	//        "title": "Sword of Honour",
+	//        "price": 12.99
+	//      },
+	//      { "category": "fiction",
+	//        "author": "Herman Melville",
+	//        "title": "Moby Dick",
+	//        "isbn": "0-553-21311-3",
+	//        "price": 8.99
+	//      },
+	//      { "category": "fiction",
+	//        "author": "J. R. R. Tolkien",
+	//        "title": "The Lord of the Rings",
+	//        "isbn": "0-395-19395-8",
+	//        "price": 22.99
+	//      }
+	//    ],
+	//    "bicycle": [
+	//      {
+	//        "color": "red",
+	//        "price": 19.95
+	//      }
+	//    ]
+	//  },"price(avg)":14.774000000000001}
+}
+```
+
 # JSONPath
 
 Current package supports JSONPath selection described at [http://goessner.net/articles/JsonPath/](http://goessner.net/articles/JsonPath/).
@@ -397,7 +490,7 @@ $ go test -bench=. -cpu=1 -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
-BenchmarkUnmarshal_AJSON          200000              6245 ns/op            4896 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON           200000             10318 ns/op             840 B/op         28 allocs/op
-BenchmarkJSONPath_all_prices      200000             10829 ns/op            6920 B/op        161 allocs/op
+BenchmarkUnmarshal_AJSON           87807             13668 ns/op            5344 B/op         95 allocs/op
+BenchmarkUnmarshal_JSON            64012             17560 ns/op             968 B/op         31 allocs/op
+BenchmarkJSONPath_all_prices       56743             26049 ns/op            7368 B/op        161 allocs/op
 ```

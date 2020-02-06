@@ -295,7 +295,7 @@ var (
 		},
 		"length": func(node *Node) (result *Node, err error) {
 			if node.IsArray() {
-				return valueNode(node, "length", Numeric, float64(node.Size())), nil
+				return valueNode(nil, "length", Numeric, float64(node.Size())), nil
 			}
 			return nil, errorRequest("function 'length' was called from non array node")
 		},
@@ -310,7 +310,7 @@ var (
 			if node.isContainer() {
 				sum := float64(0)
 				if node.Size() == 0 {
-					return valueNode(node, "avg", Numeric, sum), nil
+					return valueNode(nil, "avg", Numeric, sum), nil
 				}
 				var value float64
 				for _, temp := range node.Inheritors() {
@@ -320,9 +320,9 @@ var (
 					}
 					sum += value
 				}
-				return valueNode(node, "avg", Numeric, sum/float64(node.Size())), nil
+				return valueNode(nil, "avg", Numeric, sum/float64(node.Size())), nil
 			}
-			return nil, errorRequest("function 'avg' was called from non container node")
+			return valueNode(nil, "avg", Null, nil), nil
 		},
 	}
 	constants = map[string]*Node{

@@ -47,8 +47,8 @@ func Marshal(node *Node) (result []byte, err error) {
 				if i != 0 {
 					result = append(result, coma)
 				}
-				child := node.children[strconv.Itoa(i)]
-				if child == nil {
+				child, ok := node.children[strconv.Itoa(i)]
+				if !ok {
 					return nil, errorRequest("wrong length of array")
 				}
 				oValue, err = Marshal(child)

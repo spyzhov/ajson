@@ -7,7 +7,7 @@ import (
 )
 
 // JSON from example https://goessner.net/articles/JsonPath/index.html#e3
-var jsonpathTestData = []byte(`{ "store": {
+var jsonPathTestData = []byte(`{ "store": {
     "book": [ 
       { "category": "reference",
         "author": "Nigel Rees",
@@ -92,8 +92,6 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
 		{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
 
-		{name: "length", path: "$['store']['book'].length", expected: "[$['store']['book']['length']]"},
-
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
@@ -105,7 +103,7 @@ func TestJsonPath(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := JSONPath(jsonpathTestData, test.path)
+			result, err := JSONPath(jsonPathTestData, test.path)
 			if err != nil {
 				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if fullPath(result) != test.expected {
@@ -126,7 +124,7 @@ func TestJsonPath_value(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := JSONPath(jsonpathTestData, test.path)
+			result, err := JSONPath(jsonPathTestData, test.path)
 			if err != nil {
 				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if len(result) != 1 {
@@ -238,6 +236,7 @@ func ExampleJSONPath() {
 	// Herman Melville
 	// J. R. R. Tolkien
 }
+
 func ExampleJSONPath_array() {
 	json := []byte(`{ "store": {
     "book": [ 
@@ -385,7 +384,7 @@ func TestEval(t *testing.T) {
 func BenchmarkJSONPath_all_prices(b *testing.B) {
 	var err error
 	for i := 0; i < b.N; i++ {
-		_, err = JSONPath(jsonpathTestData, "$.store..price")
+		_, err = JSONPath(jsonPathTestData, "$.store..price")
 		if err != nil {
 			b.Error()
 		}

@@ -297,7 +297,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 		switch {
 		case cmd == "$": // root element
 			if i == 0 {
-				result = append(result, root(node))
+				result = append(result, node.root())
 			}
 		case cmd == "@": // current element
 			if i == 0 {
@@ -594,7 +594,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
-					return nil, nil
+					return NullNode(""), nil
 				}
 			} else {
 				bstr = []byte(exp)
@@ -617,13 +617,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		return stack[0], nil
 	}
 	if len(stack) == 0 {
-		return nil, nil
+		return NullNode(""), nil
 	}
 	return nil, errorRequest("wrong request: %s", cmd)
-}
-
-func root(node *Node) (result *Node) {
-	for result = node; result.parent != nil; result = result.parent {
-	}
-	return
 }
