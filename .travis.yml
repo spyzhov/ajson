@@ -13,7 +13,6 @@ go:
 
 env:
   - GO111MODULE=on
-  - GOLANGCI_VERSION='v1.18.0'
 
 # Only clone the most recent commit.
 git:
@@ -31,7 +30,7 @@ notifications:
 # build and immediately stop. It's sorta like having set -e enabled in bash.
 # Make sure golangci-lint is vendored.
 before_script:
-  - wget -O - -q https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s ${GOLANGCI_VERSION}
+  - wget -O - -q https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s 'v1.18.0'
   - go get golang.org/x/tools/cmd/cover # coveralls.io
   - go get github.com/mattn/goveralls   # coveralls.io
 
@@ -39,7 +38,7 @@ before_script:
 # failing test, we want to see both. Configure golangci-lint with a
 # .golangci.yml file at the top level of your repo.
 script:
-  - golangci-lint run       # run a bunch of code checkers/linters in parallel
-  - go test -v -race ./...  # Run all the tests with the race detector enabled
-  - go test -v -covermode=count -coverprofile=coverage.out # coveralls.io
+  - golangci-lint run   # run a bunch of code checkers/linters in parallel
+  - go test -race ./... # Run all the tests with the race detector enabled
+  - go test -covermode=count -coverprofile=coverage.out # coveralls.io
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # coveralls.io
