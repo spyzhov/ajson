@@ -1,6 +1,40 @@
 package ajson
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
+
+func ExampleMarshal() {
+	data := []byte(`[{"latitude":1,"longitude":2},{"other":"value"},null,{"internal":{"name": "unknown", "longitude":22, "latitude":11}}]`)
+	root := Must(Unmarshal(data))
+	locations, _ := root.JSONPath("$..[?(@.latitude && @.longitude)]")
+	for _, location := range locations {
+		name := fmt.Sprintf("At [%v, %v]", location.MustKey("latitude").MustNumeric(), location.MustKey("longitude").MustNumeric())
+		_ = location.AppendObject("name", StringNode("", name))
+	}
+	result, _ := Marshal(root)
+	fmt.Printf("%s", result)
+	// JSON Output:
+	// [
+	// 	{
+	// 		"latitude":1,
+	// 		"longitude":2,
+	// 		"name":"At [1, 2]"
+	// 	},
+	// 	{
+	// 		"other":"value"
+	// 	},
+	// 	null,
+	// 	{
+	// 		"internal":{
+	// 			"name":"At [11, 22]",
+	// 			"longitude":22,
+	// 			"latitude":11
+	// 		}
+	// 	}
+	// ]
+}
 
 func TestMarshal_Primitive(t *testing.T) {
 	tests := []struct {
