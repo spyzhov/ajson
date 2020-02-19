@@ -14,7 +14,9 @@ func Marshal(node *Node) (result []byte, err error) {
 		oValue []byte
 	)
 
-	if node.dirty {
+	if node == nil {
+		return nil, errorUnparsed()
+	} else if node.dirty {
 		switch node._type {
 		case Null:
 			result = append(result, _null...)
