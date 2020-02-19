@@ -22,6 +22,8 @@ const (
 	WrongType
 	// WrongRequest means that wrong range requested
 	WrongRequest
+	// Unparsed means that json structure wasn't parsed yet
+	Unparsed
 )
 
 func errorSymbol(b *buffer) error {
@@ -29,23 +31,27 @@ func errorSymbol(b *buffer) error {
 	if err != nil {
 		c = 0
 	}
-	return &Error{Type: WrongSymbol, Index: b.index, Char: c}
+	return Error{Type: WrongSymbol, Index: b.index, Char: c}
 }
 
 func errorEOF(b *buffer) error {
-	return &Error{Type: UnexpectedEOF, Index: b.index}
+	return Error{Type: UnexpectedEOF, Index: b.index}
 }
 
 func errorType() error {
-	return &Error{Type: WrongType}
+	return Error{Type: WrongType}
+}
+
+func errorUnparsed() error {
+	return Error{Type: Unparsed}
 }
 
 func errorRequest(format string, args ...interface{}) error {
-	return &Error{Type: WrongRequest, Message: fmt.Sprintf(format, args...)}
+	return Error{Type: WrongRequest, Message: fmt.Sprintf(format, args...)}
 }
 
 // Error interface implementation
-func (err *Error) Error() string {
+func (err Error) Error() string {
 	switch err.Type {
 	case WrongSymbol:
 		return fmt.Sprintf("wrong symbol '%s' at %d", []byte{err.Char}, err.Index)
@@ -53,6 +59,8 @@ func (err *Error) Error() string {
 		return "unexpected end of file"
 	case WrongType:
 		return "wrong type of Node"
+	case Unparsed:
+		return "not parsed yet"
 	case WrongRequest:
 		return fmt.Sprintf("wrong request: %s", err.Message)
 	}

@@ -1,12 +1,13 @@
 package ajson
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
 
 // JSON from example https://goessner.net/articles/JsonPath/index.html#e3
-var jsonpathTestData = []byte(`{ "store": {
+var jsonPathTestData = []byte(`{ "store": {
     "book": [ 
       { "category": "reference",
         "author": "Nigel Rees",
@@ -91,8 +92,6 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
 		{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
 
-		{name: "length", path: "$['store']['book'].length", expected: "[$['store']['book']['length']]"},
-
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
@@ -104,7 +103,7 @@ func TestJsonPath(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := JSONPath(jsonpathTestData, test.path)
+			result, err := JSONPath(jsonPathTestData, test.path)
 			if err != nil {
 				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if fullPath(result) != test.expected {
@@ -125,7 +124,7 @@ func TestJsonPath_value(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := JSONPath(jsonpathTestData, test.path)
+			result, err := JSONPath(jsonPathTestData, test.path)
 			if err != nil {
 				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if len(result) != 1 {
@@ -229,12 +228,58 @@ func ExampleJSONPath() {
 		panic(err)
 	}
 	for _, author := range authors {
-		println(author.MustString())
+		fmt.Println(author.MustString())
 	}
-	//Nigel Rees
-	//Evelyn Waugh
-	//Herman Melville
-	//J. R. R. Tolkien
+	// Output:
+	// Nigel Rees
+	// Evelyn Waugh
+	// Herman Melville
+	// J. R. R. Tolkien
+}
+
+func ExampleJSONPath_array() {
+	json := []byte(`{ "store": {
+    "book": [ 
+      { "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      { "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      { "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      { "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    }
+  }
+}`)
+	authors, err := JSONPath(json, "$.store.book[*].author")
+	if err != nil {
+		panic(err)
+	}
+	result, err := Marshal(ArrayNode("", authors))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(result))
+	// Output:
+	// ["Nigel Rees","Evelyn Waugh","Herman Melville","J. R. R. Tolkien"]
 }
 
 func ExampleEval() {
@@ -279,8 +324,9 @@ func ExampleEval() {
 	if err != nil {
 		panic(err)
 	}
-	println(result.MustNumeric())
-	//14.774000000000001
+	fmt.Print(result.MustNumeric())
+	// Output:
+	// 14.774000000000001
 }
 
 func TestEval(t *testing.T) {
@@ -338,7 +384,7 @@ func TestEval(t *testing.T) {
 func BenchmarkJSONPath_all_prices(b *testing.B) {
 	var err error
 	for i := 0; i < b.N; i++ {
-		_, err = JSONPath(jsonpathTestData, "$.store..price")
+		_, err = JSONPath(jsonPathTestData, "$.store..price")
 		if err != nil {
 			b.Error()
 		}

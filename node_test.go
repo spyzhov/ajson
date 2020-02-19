@@ -1502,7 +1502,7 @@ func TestNode_Inheritors(t *testing.T) {
 }
 
 func TestNode_JSONPath(t *testing.T) {
-	root, err := Unmarshal(jsonpathTestData)
+	root, err := Unmarshal(jsonPathTestData)
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())
 		return
@@ -1514,5 +1514,81 @@ func TestNode_JSONPath(t *testing.T) {
 	}
 	if len(result) != 4 {
 		t.Errorf("Error: JSONPath")
+	}
+}
+
+func TestNode_IsDirty(t *testing.T) {
+	root, err := Unmarshal(jsonPathTestData)
+	if err != nil {
+		t.Errorf("Error: %s", err.Error())
+		return
+	}
+	tests := []struct {
+		name     string
+		node     *Node
+		expected bool
+	}{
+		{
+			name:     "simple",
+			node:     valueNode(nil, "bool", Bool, true),
+			expected: true,
+		},
+		{
+			name:     "null",
+			node:     valueNode(nil, "null", Null, nil),
+			expected: true,
+		},
+		{
+			name:     "float",
+			node:     valueNode(nil, "123.5", Numeric, float64(123.5)),
+			expected: true,
+		},
+		{
+			name:     "blank array",
+			node:     valueNode(nil, "[]", Array, []*Node{}),
+			expected: true,
+		},
+		{
+			name:     "blank map",
+			node:     valueNode(nil, "{}", Object, map[string]*Node{}),
+			expected: true,
+		},
+		{
+			name:     "NumericNode",
+			node:     NumericNode("", 1.1),
+			expected: true,
+		},
+		{
+			name:     "NullNode",
+			node:     NullNode(""),
+			expected: true,
+		},
+		{
+			name:     "ArrayNode",
+			node:     ArrayNode("", nil),
+			expected: true,
+		},
+		{
+			name:     "StringNode",
+			node:     StringNode("", ""),
+			expected: true,
+		},
+		{
+			name:     "BoolNode",
+			node:     BoolNode("", false),
+			expected: true,
+		},
+		{
+			name:     "Unmarshal",
+			node:     root,
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.node.dirty != test.expected {
+				t.Errorf("Node dirty is not correct")
+			}
+		})
 	}
 }
