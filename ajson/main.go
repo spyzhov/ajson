@@ -126,7 +126,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error preparing JSON: %s", err)
 	}
-	fmt.Printf("%s", res)
+	fmt.Printf("%s\n", res)
 }
 
 func getAction() string {
