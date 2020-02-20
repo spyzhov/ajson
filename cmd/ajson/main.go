@@ -15,16 +15,6 @@ import (
 func usage(force bool) {
 	text := ``
 	if force || inArgs("-h", "-help") {
-		// 		if inArgs("update") {
-		// 			text = `
-		// Usage: ajson [-input=...] update "what" "how"
-		//   Update some fields with evaluated data. NB! This method couldn't create new fields, only update existing.
-		// Options:
-		//   -input     Path to the JSON file. Leave it blank to use STDIN.
-		// Examples:
-		// 	ajson -input=input.json update "$..price" "@ * 1.13"
-		// `
-		// 		} else
 		if inArgs("jsonpath") {
 			text = `
 Usage: ajson [-input=...] jsonpath "..."
@@ -48,16 +38,6 @@ Examples:
 	cat "filename.json" | ajson eval "round(avg($..price))"
 `
 		} else {
-			// 			text = `
-			// Usage: ajson [-input=...] action ...
-			//   Read JSON and evaluate it with JSONPath.
-			// Actions:
-			//   jsonpath   Evaluate JSONPath and print the result (Example: "$..price").
-			//   eval       Evaluate JSONPath as only value and print the result (Example: "avg($..price)").
-			//   update     Update some fields with evaluated data (Example: "$..price" "@ * 1.13").
-			// Options:
-			//   -input     Path to the JSON file. Leave it blank to use STDIN.
-			// `
 			text = `
 Usage: ajson [-input=...] action ...
   Read JSON and evaluate it with JSONPath.
@@ -133,7 +113,6 @@ func getAction() string {
 	actions := map[string]bool{
 		"jsonpath": inArgs("jsonpath"),
 		"eval":     inArgs("eval"),
-		// "update":   inArgs("update"),
 	}
 	action := ""
 	for current, ok := range actions {
