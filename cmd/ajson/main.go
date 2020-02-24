@@ -12,42 +12,17 @@ import (
 	"strings"
 )
 
-func usage(force bool) {
+func usage() {
 	text := ``
-	if force || inArgs("-h", "-help") {
-		if inArgs("jsonpath") {
-			text = `
-Usage: ajson [-input=...] jsonpath "..."
-  Evaluate JSONPath and print the result.
-Options:
-  -input     Path to the JSON file. Leave it blank to use STDIN.
-Examples:
-	ajson -input=input.json jsonpath "$..price"
-	ajson -input=http://example.com/file.json jsonpath "$..success"
-	cat "filename.json" | ajson jsonpath "$..[?(@.price)]"
-`
-		} else if inArgs("eval") {
-			text = `
-Usage: ajson [-input=...] eval "..."
-  Evaluate JSONPath as only value and print the result. 
-Options:
-  -input     Path to the JSON file. Leave it blank to use STDIN.
-Examples:
-	ajson -input=input.json eval "avg($..price)"
-	ajson -input=http://example.com/file.json eval "$.result.length"
-	cat "filename.json" | ajson eval "round(avg($..price))"
-`
-		} else {
-			text = `
-Usage: ajson [-input=...] action ...
+	if inArgs("-h", "-help", "--help", "help") {
+		text = `Usage: ajson [-input=...] [-eval] "jsonpath"
   Read JSON and evaluate it with JSONPath.
-Actions:
-  jsonpath   Evaluate JSONPath and print the result (Example: "$..price"). 
-  eval       Evaluate JSONPath as only value and print the result (Example: "avg($..price)"). 
 Options:
   -input     Path to the JSON file. Leave it blank to use STDIN.
+  -eval      Evaluate JSONPath as only value and print the result (Example: "avg($..price)").
+Argument:
+  jsonpath   Valid JSONPath or evaluate string (Examples: "$..[?(@.price)]", "$..price", "avg($..price)")
 `
-		}
 	}
 	if text != "" {
 		fmt.Println(text)
@@ -56,8 +31,13 @@ Options:
 }
 
 func main() {
-	usage(false)
-	action := getAction()
+	log.SetFlags(0)
+	usage()
+	path := os.Args[len(os.Args)-1]
+	if len(os.Args) < 2 || path == "" || strings.HasPrefix(path, "-") {
+		log.Fatalf("JSONPath was not set")
+	}
+	isEval := inArgs("-eval")
 	input := getInput()
 	data, err := ioutil.ReadAll(input)
 	_ = input.Close()
@@ -65,41 +45,20 @@ func main() {
 		log.Fatalf("error reading source: %s", err)
 	}
 	var result *ajson.Node
-	switch action {
-	case "jsonpath":
-		root, err := ajson.Unmarshal(data)
-		if err != nil {
-			log.Fatalf("error parsing JSON: %s", err)
-		}
 
-		paths := fromArgs("jsonpath", 1)
-		if paths[0] == "" {
-			usage(true)
-		}
-
-		nodes, err := root.JSONPath(paths[0])
-		if err != nil {
-			log.Fatalf("error: %s", err)
-		}
-
+	root, err := ajson.Unmarshal(data)
+	if err != nil {
+		log.Fatalf("error parsing JSON: %s", err)
+	}
+	if isEval {
+		result, err = ajson.Eval(root, path)
+	} else {
+		var nodes []*ajson.Node
+		nodes, err = root.JSONPath(path)
 		result = ajson.ArrayNode("", nodes)
-	case "eval":
-		root, err := ajson.Unmarshal(data)
-		if err != nil {
-			log.Fatalf("error parsing JSON: %s", err)
-		}
-
-		paths := fromArgs("eval", 1)
-		if paths[0] == "" {
-			usage(true)
-		}
-
-		result, err = ajson.Eval(root, paths[0])
-		if err != nil {
-			log.Fatalf("error: %s", err)
-		}
-	default:
-		usage(true)
+	}
+	if err != nil {
+		log.Fatalf("error: %s", err)
 	}
 
 	res, err := ajson.Marshal(result)
@@ -109,30 +68,10 @@ func main() {
 	fmt.Printf("%s\n", res)
 }
 
-func getAction() string {
-	actions := map[string]bool{
-		"jsonpath": inArgs("jsonpath"),
-		"eval":     inArgs("eval"),
-	}
-	action := ""
-	for current, ok := range actions {
-		if ok {
-			if action == "" {
-				action = current
-			} else {
-				log.Fatal("selected more than one action")
-			}
-		}
-	}
-	if action == "" {
-		usage(true)
-	}
-	return action
-}
-
 func getInput() io.ReadCloser {
 	input := ""
-	flag.StringVar(&input, "input", "", "")
+	flag.StringVar(&input, "input", "", "Path to the JSON file. Leave it blank to use STDIN")
+	flag.Bool("eval", false, "Evaluate JSONPath as only value and print the result (Example: \"avg($..price)\")")
 	flag.Parse()
 	if input == "" {
 		return os.Stdin
@@ -165,16 +104,4 @@ func inArgs(value ...string) bool {
 		}
 	}
 	return false
-}
-
-func fromArgs(action string, count int) []string {
-	result := make([]string, count)
-	for i, val := range os.Args {
-		if action == val {
-			for j := i + 1; j < len(os.Args) && j < i+1+count; j++ {
-				result[j-(i+1)] = os.Args[j]
-			}
-		}
-	}
-	return result
 }
