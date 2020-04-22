@@ -304,8 +304,11 @@ func (n *Node) Value() (value interface{}, err error) {
 			}
 			n.value.Store(value)
 		case String:
-			size := len(n.Source())
-			value = string(n.Source()[1 : size-1])
+			var ok bool
+			value, ok = unquote(n.Source())
+			if !ok {
+				return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
+			}
 			n.value.Store(value)
 		case Bool:
 			b := n.Source()[0]
@@ -483,8 +486,11 @@ func (n *Node) Unpack() (value interface{}, err error) {
 			return
 		}
 	case String:
-		size := len(n.Source())
-		value = string(n.Source()[1 : size-1])
+		var ok bool
+		value, ok = unquote(n.Source())
+		if !ok {
+			return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
+		}
 	case Bool:
 		b := n.Source()[0]
 		value = b == 't' || b == 'T'

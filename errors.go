@@ -34,6 +34,10 @@ func errorSymbol(b *buffer) error {
 	return Error{Type: WrongSymbol, Index: b.index, Char: c}
 }
 
+func errorAt(index int, symbol byte) error {
+	return Error{Type: WrongSymbol, Index: index, Char: symbol}
+}
+
 func errorEOF(b *buffer) error {
 	return Error{Type: UnexpectedEOF, Index: b.index}
 }
