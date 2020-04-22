@@ -123,13 +123,18 @@ func (b *buffer) numeric() error {
 		_dot  = 1 << 1 // 2
 		_num  = 1 << 2 // 4
 		_exp  = 1 << 3 // 8
+		_frac = 1 << 4 // 16
 	)
 	find := 0
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		switch true {
 		case c >= '0' && c <= '9':
-			find |= _num
+			if find&_dot == 0 {
+				find |= _num
+			} else {
+				find |= _frac
+			}
 		case c == '.':
 			if find&_exp != 0 { // exp part of numeric MUST contains only digits
 				return errorSymbol(b)
@@ -149,20 +154,25 @@ func (b *buffer) numeric() error {
 				return nil
 			}
 		case c == 'e' || c == 'E':
-			if find&_exp == 0 && find&_num != 0 { // exp without base part
-				find = _exp
-			} else {
+			if find&_exp != 0 || find&_num == 0 { // exp without base part
 				return errorSymbol(b)
 			}
-		default:
-			if find&_num != 0 {
-				return nil
+			if find&_dot != 0 && find&_frac == 0 { // dot without fractional part
+				return errorSymbol(b)
 			}
-			return errorSymbol(b)
+			find = _exp
+		default:
+			if find&_num == 0 || (find&_dot != 0 && find&_frac == 0) {
+				return errorSymbol(b)
+			}
+			return nil
 		}
 	}
 	if find&_num != 0 {
 		return io.EOF
+	}
+	if find&_dot != 0 && find&_frac == 0 {
+		return errorSymbol(b)
 	}
 	return errorEOF(b)
 }

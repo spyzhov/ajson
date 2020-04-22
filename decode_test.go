@@ -813,489 +813,489 @@ func TestUnmarshal_main(t *testing.T) {
 		want    interface{}
 		wantErr bool
 	}{
-		// region Custom
-		{
-			name:    `[]`,
-			args:    args{[]byte(`[]`)},
-			want:    []interface{}{},
-			wantErr: false,
-		},
-		{
-			name:    `{}`,
-			args:    args{[]byte(`{}`)},
-			want:    map[string]interface{}{},
-			wantErr: false,
-		},
-		{
-			name:    `[1,2,3]`,
-			args:    args{[]byte(`[1,2,3]`)},
-			want:    []interface{}{float64(1), float64(2), float64(3)},
-			wantErr: false,
-		},
-		{
-			name:    `"string"`,
-			args:    args{[]byte(`"string"`)},
-			want:    "string",
-			wantErr: false,
-		},
-		{
-			name:    `"string\""`,
-			args:    args{[]byte(`"string\""`)},
-			want:    "string\"",
-			wantErr: false,
-		},
-		{
-			name:    `"UTF-8 ßtring"`,
-			args:    args{[]byte(`"UTF-8 \u00dftring"`)},
-			want:    "UTF-8 ßtring",
-			wantErr: false,
-		},
-		{
-			name:    `[{"null":null}]`,
-			args:    args{[]byte(`[{"null":null}]`)},
-			want:    []interface{}{map[string]interface{}{"null": nil}},
-			wantErr: false,
-		},
-		{
-			name:    `{"key"}`,
-			args:    args{[]byte(`{"key"}`)},
-			wantErr: true,
-		},
-		// endregion
-		// region From https://json.org/example.html
-		{
-			name: "example#glossary",
-			args: args{[]byte(`{
-				"glossary": {
-					"title": "example glossary",
-					"GlossDiv": {
-						"title": "S",
-						"GlossList": {
-							"GlossEntry": {
-								"ID": "SGML",
-								"SortAs": "SGML",
-								"GlossTerm": "Standard Generalized Markup Language",
-								"Acronym": "SGML",
-								"Abbrev": "ISO 8879:1986",
-								"GlossDef": {
-									"para": "A meta-markup language, used to create markup languages such as DocBook.",
-									"GlossSeeAlso": ["GML", "XML"]
-								},
-								"GlossSee": "markup"
-							}
-						}
-					}
-				}
-			}`)},
-			want: map[string]interface{}{
-				"glossary": map[string]interface{}{
-					"title": "example glossary",
-					"GlossDiv": map[string]interface{}{
-						"title": "S",
-						"GlossList": map[string]interface{}{
-							"GlossEntry": map[string]interface{}{
-								"ID":        "SGML",
-								"SortAs":    "SGML",
-								"GlossTerm": "Standard Generalized Markup Language",
-								"Acronym":   "SGML",
-								"Abbrev":    "ISO 8879:1986",
-								"GlossDef": map[string]interface{}{
-									"para":         "A meta-markup language, used to create markup languages such as DocBook.",
-									"GlossSeeAlso": []interface{}{"GML", "XML"},
-								},
-								"GlossSee": "markup",
-							},
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: `example#menu`,
-			args: args{[]byte(`{"menu": {
-			  "id": "file",
-			  "value": "File",
-			  "popup": {
-				"menuitem": [
-				  {"value": "New", "onclick": "CreateNewDoc()"},
-				  {"value": "Open", "onclick": "OpenDoc()"},
-				  {"value": "Close", "onclick": "CloseDoc()"}
-				]
-			  }
-			}}`)},
-			want: map[string]interface{}{"menu": map[string]interface{}{
-				"id":    "file",
-				"value": "File",
-				"popup": map[string]interface{}{
-					"menuitem": []interface{}{
-						map[string]interface{}{"value": "New", "onclick": "CreateNewDoc()"},
-						map[string]interface{}{"value": "Open", "onclick": "OpenDoc()"},
-						map[string]interface{}{"value": "Close", "onclick": "CloseDoc()"},
-					},
-				},
-			}},
-			wantErr: false,
-		},
-		{
-			name: `example#widget`,
-			args: args{[]byte(`{"widget": {
-				"debug": "on",
-				"window": {
-					"title": "Sample Konfabulator Widget",
-					"name": "main_window",
-					"width": 500,
-					"height": 500
-				},
-				"image": {
-					"src": "Images/Sun.png",
-					"name": "sun1",
-					"hOffset": 250,
-					"vOffset": 250,
-					"alignment": "center"
-				},
-				"text": {
-					"data": "Click Here",
-					"size": 36,
-					"style": "bold",
-					"name": "text1",
-					"hOffset": 250,
-					"vOffset": 100,
-					"alignment": "center",
-					"onMouseUp": "sun1.opacity = (sun1.opacity / 100) * 90;"
-				}
-			}}`)},
-			want: map[string]interface{}{"widget": map[string]interface{}{
-				"debug": "on",
-				"window": map[string]interface{}{
-					"title":  "Sample Konfabulator Widget",
-					"name":   "main_window",
-					"width":  float64(500),
-					"height": float64(500),
-				},
-				"image": map[string]interface{}{
-					"src":       "Images/Sun.png",
-					"name":      "sun1",
-					"hOffset":   float64(250),
-					"vOffset":   float64(250),
-					"alignment": "center",
-				},
-				"text": map[string]interface{}{
-					"data":      "Click Here",
-					"size":      float64(36),
-					"style":     "bold",
-					"name":      "text1",
-					"hOffset":   float64(250),
-					"vOffset":   float64(100),
-					"alignment": "center",
-					"onMouseUp": "sun1.opacity = (sun1.opacity / 100) * 90;",
-				},
-			}},
-			wantErr: false,
-		},
-		{
-			name: `example#web-app`,
-			args: args{[]byte(`{"web-app": {
-			  "servlet": [
-				{
-				  "servlet-name": "cofaxCDS",
-				  "servlet-class": "org.cofax.cds.CDSServlet",
-				  "init-param": {
-					"configGlossary:installationAt": "Philadelphia, PA",
-					"configGlossary:adminEmail": "ksm@pobox.com",
-					"configGlossary:poweredBy": "Cofax",
-					"configGlossary:poweredByIcon": "/images/cofax.gif",
-					"configGlossary:staticPath": "/content/static",
-					"templateProcessorClass": "org.cofax.WysiwygTemplate",
-					"templateLoaderClass": "org.cofax.FilesTemplateLoader",
-					"templatePath": "templates",
-					"templateOverridePath": "",
-					"defaultListTemplate": "listTemplate.htm",
-					"defaultFileTemplate": "articleTemplate.htm",
-					"useJSP": false,
-					"jspListTemplate": "listTemplate.jsp",
-					"jspFileTemplate": "articleTemplate.jsp",
-					"cachePackageTagsTrack": 200,
-					"cachePackageTagsStore": 200,
-					"cachePackageTagsRefresh": 60,
-					"cacheTemplatesTrack": 100,
-					"cacheTemplatesStore": 50,
-					"cacheTemplatesRefresh": 15,
-					"cachePagesTrack": 200,
-					"cachePagesStore": 100,
-					"cachePagesRefresh": 10,
-					"cachePagesDirtyRead": 10,
-					"searchEngineListTemplate": "forSearchEnginesList.htm",
-					"searchEngineFileTemplate": "forSearchEngines.htm",
-					"searchEngineRobotsDb": "WEB-INF/robots.db",
-					"useDataStore": true,
-					"dataStoreClass": "org.cofax.SqlDataStore",
-					"redirectionClass": "org.cofax.SqlRedirection",
-					"dataStoreName": "cofax",
-					"dataStoreDriver": "com.microsoft.jdbc.sqlserver.SQLServerDriver",
-					"dataStoreUrl": "jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon",
-					"dataStoreUser": "sa",
-					"dataStorePassword": "dataStoreTestQuery",
-					"dataStoreTestQuery": "SET NOCOUNT ON;select test='test';",
-					"dataStoreLogFile": "/usr/local/tomcat/logs/datastore.log",
-					"dataStoreInitConns": 10,
-					"dataStoreMaxConns": 100,
-					"dataStoreConnUsageLimit": 100,
-					"dataStoreLogLevel": "debug",
-					"maxUrlLength": 500}},
-				{
-				  "servlet-name": "cofaxEmail",
-				  "servlet-class": "org.cofax.cds.EmailServlet",
-				  "init-param": {
-				  "mailHost": "mail1",
-				  "mailHostOverride": "mail2"}},
-				{
-				  "servlet-name": "cofaxAdmin",
-				  "servlet-class": "org.cofax.cds.AdminServlet"},
-
-				{
-				  "servlet-name": "fileServlet",
-				  "servlet-class": "org.cofax.cds.FileServlet"},
-				{
-				  "servlet-name": "cofaxTools",
-				  "servlet-class": "org.cofax.cms.CofaxToolsServlet",
-				  "init-param": {
-					"templatePath": "toolstemplates/",
-					"log": 1,
-					"logLocation": "/usr/local/tomcat/logs/CofaxTools.log",
-					"logMaxSize": "",
-					"dataLog": 1,
-					"dataLogLocation": "/usr/local/tomcat/logs/dataLog.log",
-					"dataLogMaxSize": "",
-					"removePageCache": "/content/admin/remove?cache=pages&id=",
-					"removeTemplateCache": "/content/admin/remove?cache=templates&id=",
-					"fileTransferFolder": "/usr/local/tomcat/webapps/content/fileTransferFolder",
-					"lookInContext": 1,
-					"adminGroupID": 4,
-					"betaServer": true}}],
-			  "servlet-mapping": {
-				"cofaxCDS": "/",
-				"cofaxEmail": "/cofaxutil/aemail/*",
-				"cofaxAdmin": "/admin/*",
-				"fileServlet": "/static/*",
-				"cofaxTools": "/tools/*"},
-
-			  "taglib": {
-				"taglib-uri": "cofax.tld",
-				"taglib-location": "/WEB-INF/tlds/cofax.tld"}}}`)},
-			want: map[string]interface{}{"web-app": map[string]interface{}{
-				"servlet": []interface{}{
-					map[string]interface{}{
-						"servlet-name":  "cofaxCDS",
-						"servlet-class": "org.cofax.cds.CDSServlet",
-						"init-param": map[string]interface{}{
-							"configGlossary:installationAt": "Philadelphia, PA",
-							"configGlossary:adminEmail":     "ksm@pobox.com",
-							"configGlossary:poweredBy":      "Cofax",
-							"configGlossary:poweredByIcon":  "/images/cofax.gif",
-							"configGlossary:staticPath":     "/content/static",
-							"templateProcessorClass":        "org.cofax.WysiwygTemplate",
-							"templateLoaderClass":           "org.cofax.FilesTemplateLoader",
-							"templatePath":                  "templates",
-							"templateOverridePath":          "",
-							"defaultListTemplate":           "listTemplate.htm",
-							"defaultFileTemplate":           "articleTemplate.htm",
-							"useJSP":                        false,
-							"jspListTemplate":               "listTemplate.jsp",
-							"jspFileTemplate":               "articleTemplate.jsp",
-							"cachePackageTagsTrack":         float64(200),
-							"cachePackageTagsStore":         float64(200),
-							"cachePackageTagsRefresh":       float64(60),
-							"cacheTemplatesTrack":           float64(100),
-							"cacheTemplatesStore":           float64(50),
-							"cacheTemplatesRefresh":         float64(15),
-							"cachePagesTrack":               float64(200),
-							"cachePagesStore":               float64(100),
-							"cachePagesRefresh":             float64(10),
-							"cachePagesDirtyRead":           float64(10),
-							"searchEngineListTemplate":      "forSearchEnginesList.htm",
-							"searchEngineFileTemplate":      "forSearchEngines.htm",
-							"searchEngineRobotsDb":          "WEB-INF/robots.db",
-							"useDataStore":                  true,
-							"dataStoreClass":                "org.cofax.SqlDataStore",
-							"redirectionClass":              "org.cofax.SqlRedirection",
-							"dataStoreName":                 "cofax",
-							"dataStoreDriver":               "com.microsoft.jdbc.sqlserver.SQLServerDriver",
-							"dataStoreUrl":                  "jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon",
-							"dataStoreUser":                 "sa",
-							"dataStorePassword":             "dataStoreTestQuery",
-							"dataStoreTestQuery":            "SET NOCOUNT ON;select test='test';",
-							"dataStoreLogFile":              "/usr/local/tomcat/logs/datastore.log",
-							"dataStoreInitConns":            float64(10),
-							"dataStoreMaxConns":             float64(100),
-							"dataStoreConnUsageLimit":       float64(100),
-							"dataStoreLogLevel":             "debug",
-							"maxUrlLength":                  float64(500)}},
-					map[string]interface{}{
-						"servlet-name":  "cofaxEmail",
-						"servlet-class": "org.cofax.cds.EmailServlet",
-						"init-param": map[string]interface{}{
-							"mailHost":         "mail1",
-							"mailHostOverride": "mail2"}},
-					map[string]interface{}{
-						"servlet-name":  "cofaxAdmin",
-						"servlet-class": "org.cofax.cds.AdminServlet"},
-
-					map[string]interface{}{
-						"servlet-name":  "fileServlet",
-						"servlet-class": "org.cofax.cds.FileServlet"},
-					map[string]interface{}{
-						"servlet-name":  "cofaxTools",
-						"servlet-class": "org.cofax.cms.CofaxToolsServlet",
-						"init-param": map[string]interface{}{
-							"templatePath":        "toolstemplates/",
-							"log":                 float64(1),
-							"logLocation":         "/usr/local/tomcat/logs/CofaxTools.log",
-							"logMaxSize":          "",
-							"dataLog":             float64(1),
-							"dataLogLocation":     "/usr/local/tomcat/logs/dataLog.log",
-							"dataLogMaxSize":      "",
-							"removePageCache":     "/content/admin/remove?cache=pages&id=",
-							"removeTemplateCache": "/content/admin/remove?cache=templates&id=",
-							"fileTransferFolder":  "/usr/local/tomcat/webapps/content/fileTransferFolder",
-							"lookInContext":       float64(1),
-							"adminGroupID":        float64(4),
-							"betaServer":          true}}},
-				"servlet-mapping": map[string]interface{}{
-					"cofaxCDS":    "/",
-					"cofaxEmail":  "/cofaxutil/aemail/*",
-					"cofaxAdmin":  "/admin/*",
-					"fileServlet": "/static/*",
-					"cofaxTools":  "/tools/*"},
-
-				"taglib": map[string]interface{}{
-					"taglib-uri":      "cofax.tld",
-					"taglib-location": "/WEB-INF/tlds/cofax.tld"}}},
-			wantErr: false,
-		},
-		{
-			name: "example#menu2",
-			args: args{[]byte(`{"menu": {
-				"header": "SVG Viewer",
-				"items": [
-					{"id": "Open"},
-					{"id": "OpenNew", "label": "Open New"},
-					null,
-					{"id": "ZoomIn", "label": "Zoom In"},
-					{"id": "ZoomOut", "label": "Zoom Out"},
-					{"id": "OriginalView", "label": "Original View"},
-					null,
-					{"id": "Quality"},
-					{"id": "Pause"},
-					{"id": "Mute"},
-					null,
-					{"id": "Find", "label": "Find..."},
-					{"id": "FindAgain", "label": "Find Again"},
-					{"id": "Copy"},
-					{"id": "CopyAgain", "label": "Copy Again"},
-					{"id": "CopySVG", "label": "Copy SVG"},
-					{"id": "ViewSVG", "label": "View SVG"},
-					{"id": "ViewSource", "label": "View Source"},
-					{"id": "SaveAs", "label": "Save As"},
-					null,
-					{"id": "Help"},
-					{"id": "About", "label": "About Adobe CVG Viewer..."}
-				]
-			}}`)},
-			want: map[string]interface{}{"menu": map[string]interface{}{
-				"header": "SVG Viewer",
-				"items": []interface{}{
-					map[string]interface{}{"id": "Open"},
-					map[string]interface{}{"id": "OpenNew", "label": "Open New"},
-					nil,
-					map[string]interface{}{"id": "ZoomIn", "label": "Zoom In"},
-					map[string]interface{}{"id": "ZoomOut", "label": "Zoom Out"},
-					map[string]interface{}{"id": "OriginalView", "label": "Original View"},
-					nil,
-					map[string]interface{}{"id": "Quality"},
-					map[string]interface{}{"id": "Pause"},
-					map[string]interface{}{"id": "Mute"},
-					nil,
-					map[string]interface{}{"id": "Find", "label": "Find..."},
-					map[string]interface{}{"id": "FindAgain", "label": "Find Again"},
-					map[string]interface{}{"id": "Copy"},
-					map[string]interface{}{"id": "CopyAgain", "label": "Copy Again"},
-					map[string]interface{}{"id": "CopySVG", "label": "Copy SVG"},
-					map[string]interface{}{"id": "ViewSVG", "label": "View SVG"},
-					map[string]interface{}{"id": "ViewSource", "label": "View Source"},
-					map[string]interface{}{"id": "SaveAs", "label": "Save As"},
-					nil,
-					map[string]interface{}{"id": "Help"},
-					map[string]interface{}{"id": "About", "label": "About Adobe CVG Viewer..."},
-				},
-			}},
-			wantErr: false,
-		},
-		// endregion
-		// region TestSuite from https://github.com/nst/JSONTestSuite/blob/master/test_parsing/
-		{
-			name:    `i_number_double_huge_neg_exp.json`,
-			args:    args{[]byte(`[123.456e-789]`)},
-			want:    []interface{}{float64(123.456e-789)},
-			wantErr: false,
-		},
-		{
-			name:    `n_number_.-1`,
-			args:    args{[]byte(`[.-1]`)},
-			wantErr: true,
-		},
-		{
-			name:    `n_array_double_extra_comma`,
-			args:    args{[]byte(`["x",,]`)},
-			wantErr: true,
-		},
-		{
-			name:    `y_number_simple_real`,
-			args:    args{[]byte(`[123.456789]`)},
-			want:    []interface{}{float64(123.456789)},
-			wantErr: false,
-		},
-		{
-			name:    `n_object_non_string_key_but_huge_number_instead`,
-			args:    args{[]byte(`{9999E9999:1}`)},
-			wantErr: true,
-		},
-		{
-			name:    `y_array_empty-string`,
-			args:    args{[]byte(`[""]`)},
-			want:    []interface{}{""},
-			wantErr: false,
-		},
-		{
-			name:    `y_number_0e1`,
-			args:    args{[]byte(`[0e1]`)},
-			want:    []interface{}{float64(0)},
-			wantErr: false,
-		},
-		{
-			name:    `n_number_expression`,
-			args:    args{[]byte(`[1+2]`)},
-			wantErr: true,
-		},
-		{
-			name:    `y_structure_string_empty`,
-			args:    args{[]byte(`""`)},
-			want:    "",
-			wantErr: false,
-		},
-		{
-			name:    `y_string_unicode_U+200B_ZERO_WIDTH_SPACE`,
-			args:    args{[]byte(`["\u200B"]`)},
-			want:    []interface{}{"​"},
-			wantErr: false,
-		},
-		{
-			name: `y_number_double_close_to_zero`,
-			args: args{[]byte(`[-0.000000000000000000000000000000000000000000000000000000000000000000000000000001]
-`)},
-			want:    []interface{}{float64(-0.000000000000000000000000000000000000000000000000000000000000000000000000000001)},
-			wantErr: false,
-		},
+		// 		// region Custom
+		// 		{
+		// 			name:    `[]`,
+		// 			args:    args{[]byte(`[]`)},
+		// 			want:    []interface{}{},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `{}`,
+		// 			args:    args{[]byte(`{}`)},
+		// 			want:    map[string]interface{}{},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `[1,2,3]`,
+		// 			args:    args{[]byte(`[1,2,3]`)},
+		// 			want:    []interface{}{float64(1), float64(2), float64(3)},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `"string"`,
+		// 			args:    args{[]byte(`"string"`)},
+		// 			want:    "string",
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `"string\""`,
+		// 			args:    args{[]byte(`"string\""`)},
+		// 			want:    "string\"",
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `"UTF-8 ßtring"`,
+		// 			args:    args{[]byte(`"UTF-8 \u00dftring"`)},
+		// 			want:    "UTF-8 ßtring",
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `[{"null":null}]`,
+		// 			args:    args{[]byte(`[{"null":null}]`)},
+		// 			want:    []interface{}{map[string]interface{}{"null": nil}},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `{"key"}`,
+		// 			args:    args{[]byte(`{"key"}`)},
+		// 			wantErr: true,
+		// 		},
+		// 		// endregion
+		// 		// region From https://json.org/example.html
+		// 		{
+		// 			name: "example#glossary",
+		// 			args: args{[]byte(`{
+		// 				"glossary": {
+		// 					"title": "example glossary",
+		// 					"GlossDiv": {
+		// 						"title": "S",
+		// 						"GlossList": {
+		// 							"GlossEntry": {
+		// 								"ID": "SGML",
+		// 								"SortAs": "SGML",
+		// 								"GlossTerm": "Standard Generalized Markup Language",
+		// 								"Acronym": "SGML",
+		// 								"Abbrev": "ISO 8879:1986",
+		// 								"GlossDef": {
+		// 									"para": "A meta-markup language, used to create markup languages such as DocBook.",
+		// 									"GlossSeeAlso": ["GML", "XML"]
+		// 								},
+		// 								"GlossSee": "markup"
+		// 							}
+		// 						}
+		// 					}
+		// 				}
+		// 			}`)},
+		// 			want: map[string]interface{}{
+		// 				"glossary": map[string]interface{}{
+		// 					"title": "example glossary",
+		// 					"GlossDiv": map[string]interface{}{
+		// 						"title": "S",
+		// 						"GlossList": map[string]interface{}{
+		// 							"GlossEntry": map[string]interface{}{
+		// 								"ID":        "SGML",
+		// 								"SortAs":    "SGML",
+		// 								"GlossTerm": "Standard Generalized Markup Language",
+		// 								"Acronym":   "SGML",
+		// 								"Abbrev":    "ISO 8879:1986",
+		// 								"GlossDef": map[string]interface{}{
+		// 									"para":         "A meta-markup language, used to create markup languages such as DocBook.",
+		// 									"GlossSeeAlso": []interface{}{"GML", "XML"},
+		// 								},
+		// 								"GlossSee": "markup",
+		// 							},
+		// 						},
+		// 					},
+		// 				},
+		// 			},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name: `example#menu`,
+		// 			args: args{[]byte(`{"menu": {
+		// 			  "id": "file",
+		// 			  "value": "File",
+		// 			  "popup": {
+		// 				"menuitem": [
+		// 				  {"value": "New", "onclick": "CreateNewDoc()"},
+		// 				  {"value": "Open", "onclick": "OpenDoc()"},
+		// 				  {"value": "Close", "onclick": "CloseDoc()"}
+		// 				]
+		// 			  }
+		// 			}}`)},
+		// 			want: map[string]interface{}{"menu": map[string]interface{}{
+		// 				"id":    "file",
+		// 				"value": "File",
+		// 				"popup": map[string]interface{}{
+		// 					"menuitem": []interface{}{
+		// 						map[string]interface{}{"value": "New", "onclick": "CreateNewDoc()"},
+		// 						map[string]interface{}{"value": "Open", "onclick": "OpenDoc()"},
+		// 						map[string]interface{}{"value": "Close", "onclick": "CloseDoc()"},
+		// 					},
+		// 				},
+		// 			}},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name: `example#widget`,
+		// 			args: args{[]byte(`{"widget": {
+		// 				"debug": "on",
+		// 				"window": {
+		// 					"title": "Sample Konfabulator Widget",
+		// 					"name": "main_window",
+		// 					"width": 500,
+		// 					"height": 500
+		// 				},
+		// 				"image": {
+		// 					"src": "Images/Sun.png",
+		// 					"name": "sun1",
+		// 					"hOffset": 250,
+		// 					"vOffset": 250,
+		// 					"alignment": "center"
+		// 				},
+		// 				"text": {
+		// 					"data": "Click Here",
+		// 					"size": 36,
+		// 					"style": "bold",
+		// 					"name": "text1",
+		// 					"hOffset": 250,
+		// 					"vOffset": 100,
+		// 					"alignment": "center",
+		// 					"onMouseUp": "sun1.opacity = (sun1.opacity / 100) * 90;"
+		// 				}
+		// 			}}`)},
+		// 			want: map[string]interface{}{"widget": map[string]interface{}{
+		// 				"debug": "on",
+		// 				"window": map[string]interface{}{
+		// 					"title":  "Sample Konfabulator Widget",
+		// 					"name":   "main_window",
+		// 					"width":  float64(500),
+		// 					"height": float64(500),
+		// 				},
+		// 				"image": map[string]interface{}{
+		// 					"src":       "Images/Sun.png",
+		// 					"name":      "sun1",
+		// 					"hOffset":   float64(250),
+		// 					"vOffset":   float64(250),
+		// 					"alignment": "center",
+		// 				},
+		// 				"text": map[string]interface{}{
+		// 					"data":      "Click Here",
+		// 					"size":      float64(36),
+		// 					"style":     "bold",
+		// 					"name":      "text1",
+		// 					"hOffset":   float64(250),
+		// 					"vOffset":   float64(100),
+		// 					"alignment": "center",
+		// 					"onMouseUp": "sun1.opacity = (sun1.opacity / 100) * 90;",
+		// 				},
+		// 			}},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name: `example#web-app`,
+		// 			args: args{[]byte(`{"web-app": {
+		// 			  "servlet": [
+		// 				{
+		// 				  "servlet-name": "cofaxCDS",
+		// 				  "servlet-class": "org.cofax.cds.CDSServlet",
+		// 				  "init-param": {
+		// 					"configGlossary:installationAt": "Philadelphia, PA",
+		// 					"configGlossary:adminEmail": "ksm@pobox.com",
+		// 					"configGlossary:poweredBy": "Cofax",
+		// 					"configGlossary:poweredByIcon": "/images/cofax.gif",
+		// 					"configGlossary:staticPath": "/content/static",
+		// 					"templateProcessorClass": "org.cofax.WysiwygTemplate",
+		// 					"templateLoaderClass": "org.cofax.FilesTemplateLoader",
+		// 					"templatePath": "templates",
+		// 					"templateOverridePath": "",
+		// 					"defaultListTemplate": "listTemplate.htm",
+		// 					"defaultFileTemplate": "articleTemplate.htm",
+		// 					"useJSP": false,
+		// 					"jspListTemplate": "listTemplate.jsp",
+		// 					"jspFileTemplate": "articleTemplate.jsp",
+		// 					"cachePackageTagsTrack": 200,
+		// 					"cachePackageTagsStore": 200,
+		// 					"cachePackageTagsRefresh": 60,
+		// 					"cacheTemplatesTrack": 100,
+		// 					"cacheTemplatesStore": 50,
+		// 					"cacheTemplatesRefresh": 15,
+		// 					"cachePagesTrack": 200,
+		// 					"cachePagesStore": 100,
+		// 					"cachePagesRefresh": 10,
+		// 					"cachePagesDirtyRead": 10,
+		// 					"searchEngineListTemplate": "forSearchEnginesList.htm",
+		// 					"searchEngineFileTemplate": "forSearchEngines.htm",
+		// 					"searchEngineRobotsDb": "WEB-INF/robots.db",
+		// 					"useDataStore": true,
+		// 					"dataStoreClass": "org.cofax.SqlDataStore",
+		// 					"redirectionClass": "org.cofax.SqlRedirection",
+		// 					"dataStoreName": "cofax",
+		// 					"dataStoreDriver": "com.microsoft.jdbc.sqlserver.SQLServerDriver",
+		// 					"dataStoreUrl": "jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon",
+		// 					"dataStoreUser": "sa",
+		// 					"dataStorePassword": "dataStoreTestQuery",
+		// 					"dataStoreTestQuery": "SET NOCOUNT ON;select test='test';",
+		// 					"dataStoreLogFile": "/usr/local/tomcat/logs/datastore.log",
+		// 					"dataStoreInitConns": 10,
+		// 					"dataStoreMaxConns": 100,
+		// 					"dataStoreConnUsageLimit": 100,
+		// 					"dataStoreLogLevel": "debug",
+		// 					"maxUrlLength": 500}},
+		// 				{
+		// 				  "servlet-name": "cofaxEmail",
+		// 				  "servlet-class": "org.cofax.cds.EmailServlet",
+		// 				  "init-param": {
+		// 				  "mailHost": "mail1",
+		// 				  "mailHostOverride": "mail2"}},
+		// 				{
+		// 				  "servlet-name": "cofaxAdmin",
+		// 				  "servlet-class": "org.cofax.cds.AdminServlet"},
+		//
+		// 				{
+		// 				  "servlet-name": "fileServlet",
+		// 				  "servlet-class": "org.cofax.cds.FileServlet"},
+		// 				{
+		// 				  "servlet-name": "cofaxTools",
+		// 				  "servlet-class": "org.cofax.cms.CofaxToolsServlet",
+		// 				  "init-param": {
+		// 					"templatePath": "toolstemplates/",
+		// 					"log": 1,
+		// 					"logLocation": "/usr/local/tomcat/logs/CofaxTools.log",
+		// 					"logMaxSize": "",
+		// 					"dataLog": 1,
+		// 					"dataLogLocation": "/usr/local/tomcat/logs/dataLog.log",
+		// 					"dataLogMaxSize": "",
+		// 					"removePageCache": "/content/admin/remove?cache=pages&id=",
+		// 					"removeTemplateCache": "/content/admin/remove?cache=templates&id=",
+		// 					"fileTransferFolder": "/usr/local/tomcat/webapps/content/fileTransferFolder",
+		// 					"lookInContext": 1,
+		// 					"adminGroupID": 4,
+		// 					"betaServer": true}}],
+		// 			  "servlet-mapping": {
+		// 				"cofaxCDS": "/",
+		// 				"cofaxEmail": "/cofaxutil/aemail/*",
+		// 				"cofaxAdmin": "/admin/*",
+		// 				"fileServlet": "/static/*",
+		// 				"cofaxTools": "/tools/*"},
+		//
+		// 			  "taglib": {
+		// 				"taglib-uri": "cofax.tld",
+		// 				"taglib-location": "/WEB-INF/tlds/cofax.tld"}}}`)},
+		// 			want: map[string]interface{}{"web-app": map[string]interface{}{
+		// 				"servlet": []interface{}{
+		// 					map[string]interface{}{
+		// 						"servlet-name":  "cofaxCDS",
+		// 						"servlet-class": "org.cofax.cds.CDSServlet",
+		// 						"init-param": map[string]interface{}{
+		// 							"configGlossary:installationAt": "Philadelphia, PA",
+		// 							"configGlossary:adminEmail":     "ksm@pobox.com",
+		// 							"configGlossary:poweredBy":      "Cofax",
+		// 							"configGlossary:poweredByIcon":  "/images/cofax.gif",
+		// 							"configGlossary:staticPath":     "/content/static",
+		// 							"templateProcessorClass":        "org.cofax.WysiwygTemplate",
+		// 							"templateLoaderClass":           "org.cofax.FilesTemplateLoader",
+		// 							"templatePath":                  "templates",
+		// 							"templateOverridePath":          "",
+		// 							"defaultListTemplate":           "listTemplate.htm",
+		// 							"defaultFileTemplate":           "articleTemplate.htm",
+		// 							"useJSP":                        false,
+		// 							"jspListTemplate":               "listTemplate.jsp",
+		// 							"jspFileTemplate":               "articleTemplate.jsp",
+		// 							"cachePackageTagsTrack":         float64(200),
+		// 							"cachePackageTagsStore":         float64(200),
+		// 							"cachePackageTagsRefresh":       float64(60),
+		// 							"cacheTemplatesTrack":           float64(100),
+		// 							"cacheTemplatesStore":           float64(50),
+		// 							"cacheTemplatesRefresh":         float64(15),
+		// 							"cachePagesTrack":               float64(200),
+		// 							"cachePagesStore":               float64(100),
+		// 							"cachePagesRefresh":             float64(10),
+		// 							"cachePagesDirtyRead":           float64(10),
+		// 							"searchEngineListTemplate":      "forSearchEnginesList.htm",
+		// 							"searchEngineFileTemplate":      "forSearchEngines.htm",
+		// 							"searchEngineRobotsDb":          "WEB-INF/robots.db",
+		// 							"useDataStore":                  true,
+		// 							"dataStoreClass":                "org.cofax.SqlDataStore",
+		// 							"redirectionClass":              "org.cofax.SqlRedirection",
+		// 							"dataStoreName":                 "cofax",
+		// 							"dataStoreDriver":               "com.microsoft.jdbc.sqlserver.SQLServerDriver",
+		// 							"dataStoreUrl":                  "jdbc:microsoft:sqlserver://LOCALHOST:1433;DatabaseName=goon",
+		// 							"dataStoreUser":                 "sa",
+		// 							"dataStorePassword":             "dataStoreTestQuery",
+		// 							"dataStoreTestQuery":            "SET NOCOUNT ON;select test='test';",
+		// 							"dataStoreLogFile":              "/usr/local/tomcat/logs/datastore.log",
+		// 							"dataStoreInitConns":            float64(10),
+		// 							"dataStoreMaxConns":             float64(100),
+		// 							"dataStoreConnUsageLimit":       float64(100),
+		// 							"dataStoreLogLevel":             "debug",
+		// 							"maxUrlLength":                  float64(500)}},
+		// 					map[string]interface{}{
+		// 						"servlet-name":  "cofaxEmail",
+		// 						"servlet-class": "org.cofax.cds.EmailServlet",
+		// 						"init-param": map[string]interface{}{
+		// 							"mailHost":         "mail1",
+		// 							"mailHostOverride": "mail2"}},
+		// 					map[string]interface{}{
+		// 						"servlet-name":  "cofaxAdmin",
+		// 						"servlet-class": "org.cofax.cds.AdminServlet"},
+		//
+		// 					map[string]interface{}{
+		// 						"servlet-name":  "fileServlet",
+		// 						"servlet-class": "org.cofax.cds.FileServlet"},
+		// 					map[string]interface{}{
+		// 						"servlet-name":  "cofaxTools",
+		// 						"servlet-class": "org.cofax.cms.CofaxToolsServlet",
+		// 						"init-param": map[string]interface{}{
+		// 							"templatePath":        "toolstemplates/",
+		// 							"log":                 float64(1),
+		// 							"logLocation":         "/usr/local/tomcat/logs/CofaxTools.log",
+		// 							"logMaxSize":          "",
+		// 							"dataLog":             float64(1),
+		// 							"dataLogLocation":     "/usr/local/tomcat/logs/dataLog.log",
+		// 							"dataLogMaxSize":      "",
+		// 							"removePageCache":     "/content/admin/remove?cache=pages&id=",
+		// 							"removeTemplateCache": "/content/admin/remove?cache=templates&id=",
+		// 							"fileTransferFolder":  "/usr/local/tomcat/webapps/content/fileTransferFolder",
+		// 							"lookInContext":       float64(1),
+		// 							"adminGroupID":        float64(4),
+		// 							"betaServer":          true}}},
+		// 				"servlet-mapping": map[string]interface{}{
+		// 					"cofaxCDS":    "/",
+		// 					"cofaxEmail":  "/cofaxutil/aemail/*",
+		// 					"cofaxAdmin":  "/admin/*",
+		// 					"fileServlet": "/static/*",
+		// 					"cofaxTools":  "/tools/*"},
+		//
+		// 				"taglib": map[string]interface{}{
+		// 					"taglib-uri":      "cofax.tld",
+		// 					"taglib-location": "/WEB-INF/tlds/cofax.tld"}}},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name: "example#menu2",
+		// 			args: args{[]byte(`{"menu": {
+		// 				"header": "SVG Viewer",
+		// 				"items": [
+		// 					{"id": "Open"},
+		// 					{"id": "OpenNew", "label": "Open New"},
+		// 					null,
+		// 					{"id": "ZoomIn", "label": "Zoom In"},
+		// 					{"id": "ZoomOut", "label": "Zoom Out"},
+		// 					{"id": "OriginalView", "label": "Original View"},
+		// 					null,
+		// 					{"id": "Quality"},
+		// 					{"id": "Pause"},
+		// 					{"id": "Mute"},
+		// 					null,
+		// 					{"id": "Find", "label": "Find..."},
+		// 					{"id": "FindAgain", "label": "Find Again"},
+		// 					{"id": "Copy"},
+		// 					{"id": "CopyAgain", "label": "Copy Again"},
+		// 					{"id": "CopySVG", "label": "Copy SVG"},
+		// 					{"id": "ViewSVG", "label": "View SVG"},
+		// 					{"id": "ViewSource", "label": "View Source"},
+		// 					{"id": "SaveAs", "label": "Save As"},
+		// 					null,
+		// 					{"id": "Help"},
+		// 					{"id": "About", "label": "About Adobe CVG Viewer..."}
+		// 				]
+		// 			}}`)},
+		// 			want: map[string]interface{}{"menu": map[string]interface{}{
+		// 				"header": "SVG Viewer",
+		// 				"items": []interface{}{
+		// 					map[string]interface{}{"id": "Open"},
+		// 					map[string]interface{}{"id": "OpenNew", "label": "Open New"},
+		// 					nil,
+		// 					map[string]interface{}{"id": "ZoomIn", "label": "Zoom In"},
+		// 					map[string]interface{}{"id": "ZoomOut", "label": "Zoom Out"},
+		// 					map[string]interface{}{"id": "OriginalView", "label": "Original View"},
+		// 					nil,
+		// 					map[string]interface{}{"id": "Quality"},
+		// 					map[string]interface{}{"id": "Pause"},
+		// 					map[string]interface{}{"id": "Mute"},
+		// 					nil,
+		// 					map[string]interface{}{"id": "Find", "label": "Find..."},
+		// 					map[string]interface{}{"id": "FindAgain", "label": "Find Again"},
+		// 					map[string]interface{}{"id": "Copy"},
+		// 					map[string]interface{}{"id": "CopyAgain", "label": "Copy Again"},
+		// 					map[string]interface{}{"id": "CopySVG", "label": "Copy SVG"},
+		// 					map[string]interface{}{"id": "ViewSVG", "label": "View SVG"},
+		// 					map[string]interface{}{"id": "ViewSource", "label": "View Source"},
+		// 					map[string]interface{}{"id": "SaveAs", "label": "Save As"},
+		// 					nil,
+		// 					map[string]interface{}{"id": "Help"},
+		// 					map[string]interface{}{"id": "About", "label": "About Adobe CVG Viewer..."},
+		// 				},
+		// 			}},
+		// 			wantErr: false,
+		// 		},
+		// 		// endregion
+		// 		// region TestSuite from https://github.com/nst/JSONTestSuite/blob/master/test_parsing/
+		// 		{
+		// 			name:    `i_number_double_huge_neg_exp.json`,
+		// 			args:    args{[]byte(`[123.456e-789]`)},
+		// 			want:    []interface{}{float64(123.456e-789)},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `n_number_.-1`,
+		// 			args:    args{[]byte(`[.-1]`)},
+		// 			wantErr: true,
+		// 		},
+		// 		{
+		// 			name:    `n_array_double_extra_comma`,
+		// 			args:    args{[]byte(`["x",,]`)},
+		// 			wantErr: true,
+		// 		},
+		// 		{
+		// 			name:    `y_number_simple_real`,
+		// 			args:    args{[]byte(`[123.456789]`)},
+		// 			want:    []interface{}{float64(123.456789)},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `n_object_non_string_key_but_huge_number_instead`,
+		// 			args:    args{[]byte(`{9999E9999:1}`)},
+		// 			wantErr: true,
+		// 		},
+		// 		{
+		// 			name:    `y_array_empty-string`,
+		// 			args:    args{[]byte(`[""]`)},
+		// 			want:    []interface{}{""},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `y_number_0e1`,
+		// 			args:    args{[]byte(`[0e1]`)},
+		// 			want:    []interface{}{float64(0)},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `n_number_expression`,
+		// 			args:    args{[]byte(`[1+2]`)},
+		// 			wantErr: true,
+		// 		},
+		// 		{
+		// 			name:    `y_structure_string_empty`,
+		// 			args:    args{[]byte(`""`)},
+		// 			want:    "",
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name:    `y_string_unicode_U+200B_ZERO_WIDTH_SPACE`,
+		// 			args:    args{[]byte(`["\u200B"]`)},
+		// 			want:    []interface{}{"​"},
+		// 			wantErr: false,
+		// 		},
+		// 		{
+		// 			name: `y_number_double_close_to_zero`,
+		// 			args: args{[]byte(`[-0.000000000000000000000000000000000000000000000000000000000000000000000000000001]
+		// `)},
+		// 			want:    []interface{}{float64(-0.000000000000000000000000000000000000000000000000000000000000000000000000000001)},
+		// 			wantErr: false,
+		// 		},
 		{
 			name:    `n_number_real_without_fractional_part`,
 			args:    args{[]byte(`[1.]`)},
