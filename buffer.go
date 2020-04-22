@@ -206,7 +206,8 @@ func (b *buffer) word(word []byte) error {
 	index := 0
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
-		if c != word[index] && c != (word[index]-32) {
+		// if c != word[index] && c != (word[index]-32) {
+		if c != word[index] {
 			return errorSymbol(b)
 		}
 		index++
