@@ -861,6 +861,21 @@ func TestUnmarshal_main(t *testing.T) {
 			args:    args{[]byte(`{"key"}`)},
 			wantErr: true,
 		},
+		{
+			name:    `1e`,
+			args:    args{[]byte(`1e`)},
+			wantErr: true,
+		},
+		{
+			name:    `1e+`,
+			args:    args{[]byte(`1e+`)},
+			wantErr: true,
+		},
+		{
+			name:    `1e-`,
+			args:    args{[]byte(`1e-`)},
+			wantErr: true,
+		},
 		// endregion
 		// region From https://json.org/example.html
 		{

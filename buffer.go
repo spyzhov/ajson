@@ -44,8 +44,10 @@ const (
 	question     byte = '?'
 )
 
-type rpn []string
-type tokens []string
+type (
+	rpn    []string
+	tokens []string
+)
 
 var (
 	_null  = []byte("null")
@@ -116,65 +118,39 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 }
 
 func (b *buffer) numeric() error {
-	var c byte
-	const (
-		_none = 0      // 0
-		_sign = 1 << 0 // 1
-		_dot  = 1 << 1 // 2
-		_num  = 1 << 2 // 4
-		_exp  = 1 << 3 // 8
-		_frac = 1 << 4 // 16
+	var (
+		last          = GO
+		state states  = __
+		class classes = __
 	)
-	find := 0
 	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
-		switch true {
-		case c >= '0' && c <= '9':
-			if find&_dot == 0 {
-				find |= _num
-			} else {
-				find |= _frac
-			}
-		case c == '.':
-			if find&_exp != 0 { // exp part of numeric MUST contains only digits
-				return errorSymbol(b)
-			}
-			if find&_dot == 0 {
-				find |= _dot
-			} else {
-				return errorSymbol(b)
-			}
-		case c == '+' || c == '-':
-			if find == _none || find == _exp {
-				find |= _sign
-			} else {
-				if find&_num == 0 {
-					return errorSymbol(b)
-				}
-				return nil
-			}
-		case c == 'e' || c == 'E':
-			if find&_exp != 0 || find&_num == 0 { // exp without base part
-				return errorSymbol(b)
-			}
-			if find&_dot != 0 && find&_frac == 0 { // dot without fractional part
-				return errorSymbol(b)
-			}
-			find = _exp
-		default:
-			if find&_num == 0 || (find&_dot != 0 && find&_frac == 0) {
-				return errorSymbol(b)
-			}
+		class = b.getClasses()
+		if class == __ {
+			return b.errorSymbol()
+		}
+		state = stateTransitionTable[last][class]
+		if state == __ {
+			return b.errorSymbol()
+		}
+		if state < __ {
 			return nil
 		}
+		if state < MI || state > E3 {
+			return nil
+		}
+		last = state
 	}
-	if find&_num != 0 {
-		return io.EOF
+	if last != ZE && last != IN && last != FR {
+		return b.errorSymbol()
 	}
-	if find&_dot != 0 && find&_frac == 0 {
-		return errorSymbol(b)
+	return nil
+}
+
+func (b *buffer) getClasses() classes {
+	if b.data[b.index] >= 128 {
+		return C_ETC
 	}
-	return errorEOF(b)
+	return asciiClasses[b.data[b.index]]
 }
 
 func (b *buffer) string(search byte) error {
