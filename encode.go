@@ -32,7 +32,7 @@ func Marshal(node *Node) (result []byte, err error) {
 				return nil, err
 			}
 			result = append(result, quotes)
-			result = append(result, escaping(sValue)...)
+			result = append(result, quoteString(sValue, true)...)
 			result = append(result, quotes)
 		case Bool:
 			bValue, err = node.GetBool()
@@ -70,7 +70,7 @@ func Marshal(node *Node) (result []byte, err error) {
 					bValue = true
 				}
 				result = append(result, quotes)
-				result = append(result, escaping(key)...)
+				result = append(result, quoteString(key, true)...)
 				result = append(result, quotes, colon)
 				oValue, err = Marshal(child)
 				if err != nil {
@@ -86,16 +86,5 @@ func Marshal(node *Node) (result []byte, err error) {
 		return nil, errorUnparsed()
 	}
 
-	return
-}
-
-func escaping(input string) (result []byte) {
-	result = make([]byte, 0, len(input))
-	for _, b := range []byte(input) {
-		if b == '\\' || b == '"' {
-			result = append(result, '\\')
-		}
-		result = append(result, b)
-	}
 	return
 }

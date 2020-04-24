@@ -44,8 +44,10 @@ const (
 	question     byte = '?'
 )
 
-type rpn []string
-type tokens []string
+type (
+	rpn    []string
+	tokens []string
+)
 
 var (
 	_null  = []byte("null")
@@ -115,67 +117,80 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 	return io.EOF
 }
 
-func (b *buffer) numeric() error {
-	var c byte
-	const (
-		_none = 0      // 0
-		_sign = 1 << 0 // 1
-		_dot  = 1 << 1 // 2
-		_num  = 1 << 2 // 4
-		_exp  = 1 << 3 // 8
+// if token is true - skip error from stateTransitionTable, just stop on unknown state
+func (b *buffer) numeric(token bool) error {
+	var (
+		last  = GO
+		state states
+		class classes
 	)
-	find := 0
 	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
-		switch true {
-		case c >= '0' && c <= '9':
-			find |= _num
-		case c == '.':
-			if find&_exp != 0 { // exp part of numeric MUST contains only digits
-				return errorSymbol(b)
-			}
-			if find&_dot == 0 {
-				find |= _dot
-			} else {
-				return errorSymbol(b)
-			}
-		case c == '+' || c == '-':
-			if find == _none || find == _exp {
-				find |= _sign
-			} else {
-				if find&_num == 0 {
-					return errorSymbol(b)
-				}
-				return nil
-			}
-		case c == 'e' || c == 'E':
-			if find&_exp == 0 && find&_num != 0 { // exp without base part
-				find = _exp
-			} else {
-				return errorSymbol(b)
-			}
-		default:
-			if find&_num != 0 {
-				return nil
-			}
-			return errorSymbol(b)
+		class = b.getClasses()
+		if class == __ {
+			return b.errorSymbol()
 		}
+		state = stateTransitionTable[last][class]
+		if state == __ {
+			if token {
+				break
+			}
+			return b.errorSymbol()
+		}
+		if state < __ {
+			return nil
+		}
+		if state < MI || state > E3 {
+			return nil
+		}
+		last = state
 	}
-	if find&_num != 0 {
-		return io.EOF
+	if last != ZE && last != IN && last != FR && last != E3 {
+		return b.errorSymbol()
 	}
-	return errorEOF(b)
+	return nil
+}
+
+func (b *buffer) getClasses() classes {
+	return b.classes(asciiClasses)
+}
+
+func (b *buffer) getQuoteClasses() classes {
+	return b.classes(quoteAsciiClasses)
+}
+
+func (b *buffer) classes(source [128]classes) classes {
+	if b.data[b.index] >= 128 {
+		return C_ETC
+	}
+	return source[b.data[b.index]]
 }
 
 func (b *buffer) string(search byte) error {
-	err := b.step()
-	if err != nil {
-		return errorEOF(b)
+	var (
+		last  = GO
+		state states
+		class classes
+	)
+	for ; b.index < b.length; b.index++ {
+		if search == quote {
+			class = b.getQuoteClasses()
+		} else {
+			class = b.getClasses()
+		}
+
+		if class == __ {
+			return b.errorSymbol()
+		}
+		state = stateTransitionTable[last][class]
+		if state == __ {
+			return b.errorSymbol()
+		}
+		if state < __ {
+			return nil
+		}
+		last = state
 	}
-	if b.skip(search) != nil {
-		return errorEOF(b)
-	}
-	return nil
+	return b.errorSymbol()
 }
 
 func (b *buffer) null() error {
@@ -196,7 +211,8 @@ func (b *buffer) word(word []byte) error {
 	index := 0
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
-		if c != word[index] && c != (word[index]-32) {
+		// if c != word[index] && c != (word[index]-32) {
+		if c != word[index] {
 			return errorSymbol(b)
 		}
 		index++
@@ -281,7 +297,7 @@ tokenLoop:
 			if !find {
 				find = true
 				start = b.index
-				err = b.numeric()
+				err = b.numeric(true)
 				if err == nil || err == io.EOF {
 					b.index--
 					continue
@@ -369,7 +385,7 @@ func (b *buffer) rpn() (result rpn, err error) {
 		case (c >= '0' && c <= '9') || c == '.': // numbers
 			variable = true
 			start = b.index
-			err = b.numeric()
+			err = b.numeric(true)
 			if err != nil && err != io.EOF {
 				return nil, err
 			}
@@ -515,7 +531,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		case (c >= '0' && c <= '9') || c == dot: // numbers
 			variable = true
 			start = b.index
-			err = b.numeric()
+			err = b.numeric(true)
 			if err != nil && err != io.EOF {
 				if c == dot {
 					err = nil
@@ -648,15 +664,6 @@ func _bools(left, right *Node) (lnum, rnum bool, err error) {
 		return
 	}
 	rnum, err = right.GetBool()
-	return
-}
-
-func _nulls(left, right *Node) (lnum, rnum interface{}, err error) {
-	lnum, err = left.GetNull()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetNull()
 	return
 }
 

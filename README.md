@@ -490,7 +490,11 @@ $ go test -bench=. -cpu=1 -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
-BenchmarkUnmarshal_AJSON           87807             13668 ns/op            5344 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON            64012             17560 ns/op             968 B/op         31 allocs/op
-BenchmarkJSONPath_all_prices       56743             26049 ns/op            7368 B/op        161 allocs/op
+BenchmarkUnmarshal_AJSON           91104             13756 ns/op            5344 B/op         95 allocs/op
+BenchmarkUnmarshal_JSON            67794             16851 ns/op             968 B/op         31 allocs/op
+BenchmarkJSONPath_all_prices       49650             25073 ns/op            7368 B/op        161 allocs/op
 ```
+
+# License
+
+MIT licensed. See the [LICENSE](LICENSE) file for details.

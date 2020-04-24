@@ -128,12 +128,39 @@ func TestOperations(t *testing.T) {
 		&operationTest{name: "error && false", operation: "&&", left: _e, right: _f, fail: true},
 		&operationTest{name: "false && error", operation: "&&", left: _f, right: _e, result: _false},
 		&operationTest{name: "true && error", operation: "&&", left: _t, right: _e, fail: true},
+		&operationTest{
+			name:      "[] && {} == false",
+			operation: "&&",
+			left:      ArrayNode("", []*Node{}),
+			right:     ObjectNode("", map[string]*Node{}),
+			result:    _false,
+		},
+		&operationTest{
+			name:      "{} || [] == false",
+			operation: "||",
+			left:      ObjectNode("", map[string]*Node{}),
+			right:     ArrayNode("", []*Node{}),
+			result:    _false,
+		},
+		&operationTest{
+			name:      `{"foo":"bar"} || [1] == true`,
+			operation: "&&",
+			left:      ObjectNode("", map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:     ArrayNode("", []*Node{NumericNode("0", 1)}),
+			result:    _true,
+		},
 
 		&operationTest{name: "error || true", operation: "||", left: _e, right: _t, fail: true},
 		&operationTest{name: "error || error", operation: "||", left: _e, right: _e, fail: true},
 		&operationTest{name: "error || false", operation: "||", left: _e, right: _f, fail: true},
 		&operationTest{name: "false || error", operation: "||", left: _f, right: _e, fail: true},
 		&operationTest{name: "true || error", operation: "||", left: _t, right: _e, result: _true},
+
+		&operationTest{name: "regexp true", operation: "=~", left: StringNode("", `123`), right: StringNode("", `\d+`), result: _true},
+		&operationTest{name: "regexp false", operation: "=~", left: StringNode("", `1 2 3`), right: StringNode("", `^\d+$`), result: _false},
+		&operationTest{name: "regexp pattern error", operation: "=~", left: StringNode("", `2`), right: StringNode("", `\2`), fail: true},
+		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: StringNode("", `123`), fail: true},
+		&operationTest{name: "regexp error 2", operation: "=~", left: StringNode("", `\d+`), right: _f, fail: true},
 	)
 
 	for _, test := range tests {

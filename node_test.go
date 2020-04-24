@@ -24,6 +24,7 @@ func TestNode_Value_Simple(t *testing.T) {
 		{name: "true", bytes: []byte("true"), _type: Bool, expected: true},
 		{name: "false", bytes: []byte("false"), _type: Bool, expected: false},
 		{name: "e1", bytes: []byte("e1"), _type: Numeric, error: true},
+		{name: "string error", bytes: []byte("\"foo\nbar\""), _type: String, error: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -532,7 +533,7 @@ func TestNode_IsString(t *testing.T) {
 }
 
 func TestNode_IsNumeric(t *testing.T) {
-	root, err := Unmarshal([]byte(`+1.23e-2`))
+	root, err := Unmarshal([]byte(`-1.23e-2`))
 	if err != nil {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
 		return
@@ -807,6 +808,48 @@ func TestNode_Eq(t *testing.T) {
 			left:     valueNode(nil, "{}", Object, map[string]*Node{}),
 			right:    valueNode(nil, "[]", Array, []*Node{}),
 			expected: false,
+		},
+		{
+			name:     "filled maps",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			expected: true,
+		},
+		{
+			name:     "filled arrays",
+			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			expected: true,
+		},
+		{
+			name:     "filled maps: different",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "baz")}),
+			expected: false,
+		},
+		{
+			name:     "filled maps: different keys",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"baz": StringNode("baz", "bar")}),
+			expected: false,
+		},
+		{
+			name:     "filled arrays: different",
+			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 2)}),
+			expected: false,
+		},
+		{
+			name:  "filled maps: errors",
+			left:  valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right: valueNode(nil, "{}", Object, map[string]*Node{"foo": valueNode(nil, "", String, 123)}),
+			error: true,
+		},
+		{
+			name:  "filled arrays: errors",
+			left:  valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right: valueNode(nil, "[]", Array, []*Node{valueNode(nil, "", Numeric, "foo")}),
+			error: true,
 		},
 		{
 			name:     "floats 1",
@@ -1514,6 +1557,18 @@ func TestNode_JSONPath(t *testing.T) {
 	}
 	if len(result) != 4 {
 		t.Errorf("Error: JSONPath")
+	}
+}
+
+func TestNode_JSONPath_error(t *testing.T) {
+	root, err := Unmarshal(jsonPathTestData)
+	if err != nil {
+		t.Errorf("Error: %s", err.Error())
+		return
+	}
+	_, err = root.MustKey("store").MustKey("book").JSONPath("XXX")
+	if err == nil {
+		t.Errorf("JSONPath() Expected error")
 	}
 }
 
