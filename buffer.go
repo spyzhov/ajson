@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	. "github.com/spyzhov/ajson/internal"
 	"io"
 	"strings"
 )
@@ -10,6 +11,8 @@ type buffer struct {
 	length int
 	index  int
 }
+
+const __ = -1
 
 const (
 	quotes       byte = '"'
@@ -117,19 +120,19 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 	return io.EOF
 }
 
-// if token is true - skip error from stateTransitionTable, just stop on unknown state
+// if token is true - skip error from StateTransitionTable, just stop on unknown state
 func (b *buffer) numeric(token bool) error {
 	var (
 		last  = GO
-		state states
-		class classes
+		state States
+		class Classes
 	)
 	for ; b.index < b.length; b.index++ {
 		class = b.getClasses()
 		if class == __ {
 			return b.errorSymbol()
 		}
-		state = stateTransitionTable[last][class]
+		state = StateTransitionTable[last][class]
 		if state == __ {
 			if token {
 				break
@@ -150,15 +153,15 @@ func (b *buffer) numeric(token bool) error {
 	return nil
 }
 
-func (b *buffer) getClasses() classes {
-	return b.classes(asciiClasses)
+func (b *buffer) getClasses() Classes {
+	return b.classes(AsciiClasses)
 }
 
-func (b *buffer) getQuoteClasses() classes {
-	return b.classes(quoteAsciiClasses)
+func (b *buffer) getQuoteClasses() Classes {
+	return b.classes(QuoteAsciiClasses)
 }
 
-func (b *buffer) classes(source [128]classes) classes {
+func (b *buffer) classes(source [128]Classes) Classes {
 	if b.data[b.index] >= 128 {
 		return C_ETC
 	}
@@ -168,8 +171,8 @@ func (b *buffer) classes(source [128]classes) classes {
 func (b *buffer) string(search byte) error {
 	var (
 		last  = GO
-		state states
-		class classes
+		state States
+		class Classes
 	)
 	for ; b.index < b.length; b.index++ {
 		if search == quote {
@@ -181,7 +184,7 @@ func (b *buffer) string(search byte) error {
 		if class == __ {
 			return b.errorSymbol()
 		}
-		state = stateTransitionTable[last][class]
+		state = StateTransitionTable[last][class]
 		if state == __ {
 			return b.errorSymbol()
 		}

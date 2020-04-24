@@ -1,19 +1,19 @@
-package ajson
+package internal
 
 /*
 Copy from https://github.com/freddierice/php_source/blob/467ed5d6edff72219afd3e644516f131118ef48e/ext/json/JSON_parser.c
 Base code: Copyright (c) 2005 JSON.org
 */
 type (
-	states  int8
-	classes int8
+	States  int8
+	Classes int8
 )
 
 const __ = -1
 
 // enum classes
 const (
-	C_SPACE classes = iota /* space */
+	C_SPACE Classes = iota /* space */
 	C_WHITE                /* other whitespace */
 	C_LCURB                /* {  */
 	C_RCURB                /* } */
@@ -46,7 +46,7 @@ const (
 	C_ETC                  /* everything else */
 )
 
-var asciiClasses = [128]classes{
+var AsciiClasses = [128]Classes{
 	/*
 	   This array maps the 128 ASCII characters into character classes.
 	   The remaining Unicode characters should be mapped to C_ETC.
@@ -74,7 +74,7 @@ var asciiClasses = [128]classes{
 }
 
 // HACK: for single quote
-var quoteAsciiClasses = [128]classes{
+var QuoteAsciiClasses = [128]Classes{
 	/*
 	   This array maps the 128 ASCII characters into character classes.
 	   The remaining Unicode characters should be mapped to C_ETC.
@@ -105,7 +105,7 @@ var quoteAsciiClasses = [128]classes{
    The state codes.
 */
 const (
-	GO states = iota /* start    */
+	GO States = iota /* start    */
 	OK               /* ok       */
 	OB               /* object   */
 	KE               /* key      */
@@ -142,17 +142,17 @@ const (
 	The action codes
 */
 const (
-	cl states = -2 /* colon           */
-	cm states = -3 /* comma           */
-	qt states = -4 /* quote           */
-	bo states = -5 /* bracket open    */
-	co states = -6 /* curly br. open  */
-	bc states = -7 /* bracket close   */
-	cc states = -8 /* curly br. close */
-	ec states = -9 /* curly br. empty */
+	cl States = -2 /* colon           */
+	cm States = -3 /* comma           */
+	qt States = -4 /* quote           */
+	bo States = -5 /* bracket open    */
+	co States = -6 /* curly br. open  */
+	bc States = -7 /* bracket close   */
+	cc States = -8 /* curly br. close */
+	ec States = -9 /* curly br. empty */
 )
 
-var stateTransitionTable = [31][31]states{
+var StateTransitionTable = [31][31]States{
 	/*
 	   The state transition table takes the current state and the current symbol,
 	   and returns either a new state or an action. An action is represented as a
