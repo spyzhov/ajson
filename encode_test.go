@@ -62,6 +62,10 @@ func TestMarshal_Primitive(t *testing.T) {
 			node: StringNode("", `one "encoded" string`),
 		},
 		{
+			name: `"spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \u0000"`,
+			node: StringNode("", "spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \000"),
+		},
+		{
 			name: "100500",
 			node: NumericNode("", 100500),
 		},
