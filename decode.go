@@ -219,6 +219,9 @@ func getString(b *buffer) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	value := string(b.data[start+1 : b.index])
+	value, ok := unquote(b.data[start : b.index+1])
+	if !ok {
+		return nil, errorSymbol(b)
+	}
 	return &value, nil
 }

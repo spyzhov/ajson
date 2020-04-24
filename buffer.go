@@ -157,15 +157,39 @@ func (b *buffer) getClasses() classes {
 	return asciiClasses[b.data[b.index]]
 }
 
+func (b *buffer) getQuoteClasses() classes {
+	if b.data[b.index] >= 128 {
+		return C_ETC
+	}
+	return quoteAsciiClasses[b.data[b.index]]
+}
+
 func (b *buffer) string(search byte) error {
-	err := b.step()
-	if err != nil {
-		return errorEOF(b)
+	var (
+		last          = GO
+		state states  = __
+		class classes = __
+	)
+	for ; b.index < b.length; b.index++ {
+		if search == quote {
+			class = b.getQuoteClasses()
+		} else {
+			class = b.getClasses()
+		}
+
+		if class == __ {
+			return b.errorSymbol()
+		}
+		state = stateTransitionTable[last][class]
+		if state == __ {
+			return b.errorSymbol()
+		}
+		if state < __ {
+			return nil
+		}
+		last = state
 	}
-	if b.skip(search) != nil {
-		return errorEOF(b)
-	}
-	return nil
+	return b.errorSymbol()
 }
 
 func (b *buffer) null() error {

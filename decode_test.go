@@ -165,7 +165,7 @@ func TestUnmarshal_StringSimpleSuccess(t *testing.T) {
 		{name: "blank", input: []byte("\"\""), _type: String, value: []byte("\"\"")},
 		{name: "char", input: []byte("\"c\""), _type: String, value: []byte("\"c\"")},
 		{name: "word", input: []byte("\"cat\""), _type: String, value: []byte("\"cat\"")},
-		{name: "spaces", input: []byte("  \"good cat\n\tor dog\"\r\n "), _type: String, value: []byte("\"good cat\n\tor dog\"")},
+		{name: "spaces", input: []byte("  \"good cat or dog\"\r\n "), _type: String, value: []byte("\"good cat or dog\"")},
 		{name: "backslash", input: []byte("\"good \\\"cat\\\"\""), _type: String, value: []byte("\"good \\\"cat\\\"\"")},
 		{name: "backslash 2", input: []byte("\"good \\\\\\\"cat\\\"\""), _type: String, value: []byte("\"good \\\\\\\"cat\\\"\"")},
 	}
@@ -179,6 +179,9 @@ func TestUnmarshal_StringSimpleSuccess(t *testing.T) {
 func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "one quote", input: []byte("\"")},
+		{name: "white NL", input: []byte("\"foo\nbar\"")},
+		{name: "white R", input: []byte("\"foo\rbar\"")},
+		{name: "white Tab", input: []byte("\"foo\tbar\"")},
 		{name: "one quote char", input: []byte("\"c")},
 		{name: "wrong quotes", input: []byte("'cat'")},
 		{name: "double string", input: []byte("\"Hello\" \"World\"")},
@@ -1537,11 +1540,11 @@ func TestUnmarshal_main(t *testing.T) {
 			want:    " ",
 			wantErr: false,
 		},
-		// { // fixme: error on parse.
-		// 	name:    `n_string_incomplete_surrogate_escape_invalid`,
-		// 	args:    args{[]byte(`["\uD800\uD800\x"]`)},
-		// 	wantErr: true,
-		// },
+		{
+			name:    `n_string_incomplete_surrogate_escape_invalid`,
+			args:    args{[]byte(`["\uD800\uD800\x"]`)},
+			wantErr: true,
+		},
 		{
 			name:    `n_array_items_separated_by_semicolon`,
 			args:    args{[]byte(`[1:2]`)},
@@ -1804,11 +1807,11 @@ func TestUnmarshal_main(t *testing.T) {
 			args:    args{[]byte(`[1eE2]`)},
 			wantErr: true,
 		},
-		// { // fixme: error on parse.
-		// 	name:    `n_string_unescaped_crtl_char`,
-		// 	args:    args{[]byte("[\"a\000a\"]")},
-		// 	wantErr: true,
-		// },
+		{
+			name:    `n_string_unescaped_crtl_char`,
+			args:    args{[]byte("[\"a\000a\"]")},
+			wantErr: true,
+		},
 		{
 			name:    `n_number_invalid-utf-8-in-int`,
 			args:    args{[]byte(`[0�]`)},
@@ -1861,11 +1864,11 @@ func TestUnmarshal_main(t *testing.T) {
 			args:    args{[]byte(`{"id":0,,,,,}`)},
 			wantErr: true,
 		},
-		// { // fixme: error on parse
-		// 	name:    `n_string_1_surrogate_then_escape_u1x`,
-		// 	args:    args{[]byte(`["\uD800\u1x"]`)},
-		// 	wantErr: true,
-		// },
+		{
+			name:    `n_string_1_surrogate_then_escape_u1x`,
+			args:    args{[]byte(`["\uD800\u1x"]`)},
+			wantErr: true,
+		},
 		{
 			name:    `y_string_surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF`,
 			args:    args{[]byte(`["\uD834\uDd1e"]`)},
@@ -1950,11 +1953,11 @@ func TestUnmarshal_main(t *testing.T) {
 			want:    []interface{}{float64(100)},
 			wantErr: false,
 		},
-		// { // fixme: error on parse
-		// 	name:    `n_string_invalid-utf-8-in-escape`,
-		// 	args:    args{[]byte(`["\u�"]`)},
-		// 	wantErr: true,
-		// },
+		{
+			name:    `n_string_invalid-utf-8-in-escape`,
+			args:    args{[]byte(`["\u�"]`)},
+			wantErr: true,
+		},
 		{
 			name: `y_structure_trailing_newline`,
 			args: args{[]byte(`["a"]
