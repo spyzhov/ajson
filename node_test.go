@@ -810,6 +810,48 @@ func TestNode_Eq(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "filled maps",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			expected: true,
+		},
+		{
+			name:     "filled arrays",
+			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			expected: true,
+		},
+		{
+			name:     "filled maps: different",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "baz")}),
+			expected: false,
+		},
+		{
+			name:     "filled maps: different keys",
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"baz": StringNode("baz", "bar")}),
+			expected: false,
+		},
+		{
+			name:     "filled arrays: different",
+			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 2)}),
+			expected: false,
+		},
+		{
+			name:  "filled maps: errors",
+			left:  valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			right: valueNode(nil, "{}", Object, map[string]*Node{"foo": valueNode(nil, "", String, 123)}),
+			error: true,
+		},
+		{
+			name:  "filled arrays: errors",
+			left:  valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			right: valueNode(nil, "[]", Array, []*Node{valueNode(nil, "", Numeric, "foo")}),
+			error: true,
+		},
+		{
 			name:     "floats 1",
 			left:     NumericNode("", 1.1),
 			right:    NumericNode("", 1.2),
@@ -1515,6 +1557,18 @@ func TestNode_JSONPath(t *testing.T) {
 	}
 	if len(result) != 4 {
 		t.Errorf("Error: JSONPath")
+	}
+}
+
+func TestNode_JSONPath_error(t *testing.T) {
+	root, err := Unmarshal(jsonPathTestData)
+	if err != nil {
+		t.Errorf("Error: %s", err.Error())
+		return
+	}
+	_, err = root.MustKey("store").MustKey("book").JSONPath("XXX")
+	if err == nil {
+		t.Errorf("JSONPath() Expected error")
 	}
 }
 

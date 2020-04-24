@@ -151,17 +151,18 @@ func (b *buffer) numeric(token bool) error {
 }
 
 func (b *buffer) getClasses() classes {
-	if b.data[b.index] >= 128 {
-		return C_ETC
-	}
-	return asciiClasses[b.data[b.index]]
+	return b.classes(asciiClasses)
 }
 
 func (b *buffer) getQuoteClasses() classes {
+	return b.classes(quoteAsciiClasses)
+}
+
+func (b *buffer) classes(source [128]classes) classes {
 	if b.data[b.index] >= 128 {
 		return C_ETC
 	}
-	return quoteAsciiClasses[b.data[b.index]]
+	return source[b.data[b.index]]
 }
 
 func (b *buffer) string(search byte) error {
@@ -663,15 +664,6 @@ func _bools(left, right *Node) (lnum, rnum bool, err error) {
 		return
 	}
 	rnum, err = right.GetBool()
-	return
-}
-
-func _nulls(left, right *Node) (lnum, rnum interface{}, err error) {
-	lnum, err = left.GetNull()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetNull()
 	return
 }
 

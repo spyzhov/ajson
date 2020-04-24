@@ -610,11 +610,8 @@ func (n *Node) Eq(node *Node) (result bool, err error) {
 			}
 			result = lnum == rnum
 		case Null:
-			lnum, rnum, err := _nulls(n, node)
-			if err != nil {
-				return false, err
-			}
-			result = lnum == rnum
+			// Null type always is the same
+			result = true
 		case Array:
 			lnum, rnum, err := _arrays(n, node)
 			if err != nil {
