@@ -134,6 +134,12 @@ func TestOperations(t *testing.T) {
 		&operationTest{name: "error || false", operation: "||", left: _e, right: _f, fail: true},
 		&operationTest{name: "false || error", operation: "||", left: _f, right: _e, fail: true},
 		&operationTest{name: "true || error", operation: "||", left: _t, right: _e, result: _true},
+
+		&operationTest{name: "regexp true", operation: "=~", left: StringNode("", `123`), right: StringNode("", `\d+`), result: _true},
+		&operationTest{name: "regexp false", operation: "=~", left: StringNode("", `1 2 3`), right: StringNode("", `^\d+$`), result: _false},
+		&operationTest{name: "regexp pattern error", operation: "=~", left: StringNode("", `2`), right: StringNode("", `\2`), fail: true},
+		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: StringNode("", `123`), fail: true},
+		&operationTest{name: "regexp error 2", operation: "=~", left: StringNode("", `\d+`), right: _f, fail: true},
 	)
 
 	for _, test := range tests {

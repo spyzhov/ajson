@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"math"
+	"regexp"
 	"strings"
 )
 
@@ -58,6 +59,7 @@ var (
 		"<=": 3,
 		">":  3,
 		">=": 3,
+		"=~": 3,
 		"&&": 2,
 		"||": 1,
 	}
@@ -178,14 +180,29 @@ var (
 			if err != nil {
 				return nil, err
 			}
-			return valueNode(nil, "eq", Bool, bool(res)), nil
+			return valueNode(nil, "eq", Bool, res), nil
 		},
 		"!=": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Eq(right)
 			if err != nil {
 				return nil, err
 			}
-			return valueNode(nil, "neq", Bool, bool(!res)), nil
+			return valueNode(nil, "neq", Bool, !res), nil
+		},
+		"=~": func(left *Node, right *Node) (node *Node, err error) {
+			pattern, err := right.GetString()
+			if err != nil {
+				return nil, err
+			}
+			val, err := left.GetString()
+			if err != nil {
+				return nil, err
+			}
+			res, err := regexp.MatchString(pattern, val)
+			if err != nil {
+				return nil, err
+			}
+			return valueNode(nil, "eq", Bool, res), nil
 		},
 		"<": func(left *Node, right *Node) (result *Node, err error) {
 			res, err := left.Le(right)
@@ -325,6 +342,7 @@ var (
 			return valueNode(nil, "avg", Null, nil), nil
 		},
 	}
+
 	constants = map[string]*Node{
 		"e":   valueNode(nil, "e", Numeric, float64(math.E)),
 		"pi":  valueNode(nil, "pi", Numeric, float64(math.Pi)),
