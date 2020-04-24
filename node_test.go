@@ -24,6 +24,7 @@ func TestNode_Value_Simple(t *testing.T) {
 		{name: "true", bytes: []byte("true"), _type: Bool, expected: true},
 		{name: "false", bytes: []byte("false"), _type: Bool, expected: false},
 		{name: "e1", bytes: []byte("e1"), _type: Numeric, error: true},
+		{name: "string error", bytes: []byte("\"foo\nbar\""), _type: String, error: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
