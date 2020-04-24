@@ -2067,7 +2067,7 @@ func TestUnmarshal_main(t *testing.T) {
 		{
 			name: `n_structure_100000_opening_arrays`,
 			args: args{func() []byte {
-				result := make([]byte, 100000, 100000)
+				result := make([]byte, 100000)
 				for i := 0; i < 100000; i++ {
 					result[i] = '['
 				}
@@ -2786,7 +2786,7 @@ line"]`)},
 		{
 			name: "[[[...500...]]]",
 			args: args{func() []byte {
-				result := make([]byte, 1000, 1000)
+				result := make([]byte, 1000)
 				for i := 0; i < 500; i++ {
 					result[i] = '['
 					result[999-i] = ']'
@@ -2810,7 +2810,7 @@ line"]`)},
 		{
 			name: "[[[...5000...]]]",
 			args: args{func() []byte {
-				result := make([]byte, 10000, 10000)
+				result := make([]byte, 10000)
 				for i := 0; i < 5000; i++ {
 					result[i] = '['
 					result[9999-i] = ']'

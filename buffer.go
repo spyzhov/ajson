@@ -120,9 +120,9 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 // if token is true - skip error from stateTransitionTable, just stop on unknown state
 func (b *buffer) numeric(token bool) error {
 	var (
-		last          = GO
-		state states  = __
-		class classes = __
+		last  = GO
+		state states
+		class classes
 	)
 	for ; b.index < b.length; b.index++ {
 		class = b.getClasses()
@@ -166,9 +166,9 @@ func (b *buffer) getQuoteClasses() classes {
 
 func (b *buffer) string(search byte) error {
 	var (
-		last          = GO
-		state states  = __
-		class classes = __
+		last  = GO
+		state states
+		class classes
 	)
 	for ; b.index < b.length; b.index++ {
 		if search == quote {
