@@ -117,7 +117,8 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 	return io.EOF
 }
 
-func (b *buffer) numeric() error {
+// if token is true - skip error from stateTransitionTable, just stop on unknown state
+func (b *buffer) numeric(token bool) error {
 	var (
 		last          = GO
 		state states  = __
@@ -130,6 +131,9 @@ func (b *buffer) numeric() error {
 		}
 		state = stateTransitionTable[last][class]
 		if state == __ {
+			if token {
+				break
+			}
 			return b.errorSymbol()
 		}
 		if state < __ {
@@ -140,7 +144,7 @@ func (b *buffer) numeric() error {
 		}
 		last = state
 	}
-	if last != ZE && last != IN && last != FR {
+	if last != ZE && last != IN && last != FR && last != E3 {
 		return b.errorSymbol()
 	}
 	return nil
@@ -268,7 +272,7 @@ tokenLoop:
 			if !find {
 				find = true
 				start = b.index
-				err = b.numeric()
+				err = b.numeric(true)
 				if err == nil || err == io.EOF {
 					b.index--
 					continue
@@ -356,7 +360,7 @@ func (b *buffer) rpn() (result rpn, err error) {
 		case (c >= '0' && c <= '9') || c == '.': // numbers
 			variable = true
 			start = b.index
-			err = b.numeric()
+			err = b.numeric(true)
 			if err != nil && err != io.EOF {
 				return nil, err
 			}
@@ -502,7 +506,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		case (c >= '0' && c <= '9') || c == dot: // numbers
 			variable = true
 			start = b.index
-			err = b.numeric()
+			err = b.numeric(true)
 			if err != nil && err != io.EOF {
 				if c == dot {
 					err = nil

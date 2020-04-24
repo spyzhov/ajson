@@ -110,7 +110,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 			if err != nil {
 				break
 			}
-			err = buf.numeric()
+			err = buf.numeric(false)
 			current.borders[1] = buf.index
 			found = true
 			current = previous(current)

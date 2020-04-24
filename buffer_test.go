@@ -210,9 +210,8 @@ func TestBuffer_Numeric(t *testing.T) {
 		{value: "..3", index: 0, fail: true},
 		{value: "e.", index: 0, fail: true},
 		{value: ".e.", index: 0, fail: true},
-		{value: "1.e1", index: 4, fail: false},
-		{value: "0.e0", index: 4, fail: false},
-		{value: "0.e0", index: 4, fail: false},
+		{value: "1.e1", index: 0, fail: true},
+		{value: "0.e0", index: 0, fail: true},
 		{value: "0+0", index: 1, fail: false},
 		{value: "0-1", index: 1, fail: false},
 		{value: "++1", index: 0, fail: true},
@@ -228,7 +227,7 @@ func TestBuffer_Numeric(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
 			buf := newBuffer([]byte(test.value))
-			err := buf.numeric()
+			err := buf.numeric(true)
 			if !test.fail && err != nil && err != io.EOF {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if test.fail && (err == nil || err == io.EOF) {

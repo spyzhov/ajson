@@ -94,59 +94,33 @@ func simpleInvalid(test *testCase, t *testing.T) {
 func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "1", input: []byte("1"), _type: Numeric, value: []byte("1")},
-		{name: "+1", input: []byte("+1"), _type: Numeric, value: []byte("+1")},
 		{name: "-1", input: []byte("-1"), _type: Numeric, value: []byte("-1")},
 
 		{name: "1234567890", input: []byte("1234567890"), _type: Numeric, value: []byte("1234567890")},
-		{name: "+123", input: []byte("+123"), _type: Numeric, value: []byte("+123")},
 		{name: "-123", input: []byte("-123"), _type: Numeric, value: []byte("-123")},
 
 		{name: "123.456", input: []byte("123.456"), _type: Numeric, value: []byte("123.456")},
-		{name: "+123.456", input: []byte("+123.456"), _type: Numeric, value: []byte("+123.456")},
 		{name: "-123.456", input: []byte("-123.456"), _type: Numeric, value: []byte("-123.456")},
-
-		{name: ".456", input: []byte(".456"), _type: Numeric, value: []byte(".456")},
-		{name: "+.456", input: []byte("+.456"), _type: Numeric, value: []byte("+.456")},
-		{name: "-.456", input: []byte("-.456"), _type: Numeric, value: []byte("-.456")},
 
 		{name: "1e3", input: []byte("1e3"), _type: Numeric, value: []byte("1e3")},
 		{name: "1e+3", input: []byte("1e+3"), _type: Numeric, value: []byte("1e+3")},
 		{name: "1e-3", input: []byte("1e-3"), _type: Numeric, value: []byte("1e-3")},
-		{name: "+1e3", input: []byte("+1e3"), _type: Numeric, value: []byte("+1e3")},
-		{name: "+1e+3", input: []byte("+1e+3"), _type: Numeric, value: []byte("+1e+3")},
-		{name: "+1e-3", input: []byte("+1e-3"), _type: Numeric, value: []byte("+1e-3")},
 		{name: "-1e3", input: []byte("-1e3"), _type: Numeric, value: []byte("-1e3")},
-		{name: "-1e+3", input: []byte("-1e+3"), _type: Numeric, value: []byte("-1e+3")},
 		{name: "-1e-3", input: []byte("-1e-3"), _type: Numeric, value: []byte("-1e-3")},
 
 		{name: "1.123e3456", input: []byte("1.123e3456"), _type: Numeric, value: []byte("1.123e3456")},
-		{name: "1.123e+3456", input: []byte("1.123e+3456"), _type: Numeric, value: []byte("1.123e+3456")},
 		{name: "1.123e-3456", input: []byte("1.123e-3456"), _type: Numeric, value: []byte("1.123e-3456")},
-		{name: "+1.123e3456", input: []byte("+1.123e3456"), _type: Numeric, value: []byte("+1.123e3456")},
-		{name: "+1.123e+3456", input: []byte("+1.123e+3456"), _type: Numeric, value: []byte("+1.123e+3456")},
-		{name: "+1.123e-3456", input: []byte("+1.123e-3456"), _type: Numeric, value: []byte("+1.123e-3456")},
 		{name: "-1.123e3456", input: []byte("-1.123e3456"), _type: Numeric, value: []byte("-1.123e3456")},
-		{name: "-1.123e+3456", input: []byte("-1.123e+3456"), _type: Numeric, value: []byte("-1.123e+3456")},
 		{name: "-1.123e-3456", input: []byte("-1.123e-3456"), _type: Numeric, value: []byte("-1.123e-3456")},
 
 		{name: "1E3", input: []byte("1E3"), _type: Numeric, value: []byte("1E3")},
-		{name: "1E+3", input: []byte("1E+3"), _type: Numeric, value: []byte("1E+3")},
 		{name: "1E-3", input: []byte("1E-3"), _type: Numeric, value: []byte("1E-3")},
-		{name: "+1E3", input: []byte("+1E3"), _type: Numeric, value: []byte("+1E3")},
-		{name: "+1E+3", input: []byte("+1E+3"), _type: Numeric, value: []byte("+1E+3")},
-		{name: "+1E-3", input: []byte("+1E-3"), _type: Numeric, value: []byte("+1E-3")},
 		{name: "-1E3", input: []byte("-1E3"), _type: Numeric, value: []byte("-1E3")},
-		{name: "-1E+3", input: []byte("-1E+3"), _type: Numeric, value: []byte("-1E+3")},
 		{name: "-1E-3", input: []byte("-1E-3"), _type: Numeric, value: []byte("-1E-3")},
 
 		{name: "1.123E3456", input: []byte("1.123E3456"), _type: Numeric, value: []byte("1.123E3456")},
-		{name: "1.123E+3456", input: []byte("1.123E+3456"), _type: Numeric, value: []byte("1.123E+3456")},
 		{name: "1.123E-3456", input: []byte("1.123E-3456"), _type: Numeric, value: []byte("1.123E-3456")},
-		{name: "+1.123E3456", input: []byte("+1.123E3456"), _type: Numeric, value: []byte("+1.123E3456")},
-		{name: "+1.123E+3456", input: []byte("+1.123E+3456"), _type: Numeric, value: []byte("+1.123E+3456")},
-		{name: "+1.123E-3456", input: []byte("+1.123E-3456"), _type: Numeric, value: []byte("+1.123E-3456")},
 		{name: "-1.123E3456", input: []byte("-1.123E3456"), _type: Numeric, value: []byte("-1.123E3456")},
-		{name: "-1.123E+3456", input: []byte("-1.123E+3456"), _type: Numeric, value: []byte("-1.123E+3456")},
 		{name: "-1.123E-3456", input: []byte("-1.123E-3456"), _type: Numeric, value: []byte("-1.123E-3456")},
 
 		{name: "-1.123E-3456 with spaces", input: []byte(" \r -1.123E-3456 \t\n"), _type: Numeric, value: []byte("-1.123E-3456")},
@@ -160,6 +134,10 @@ func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 
 func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
+		simpleCorrupted("+1"),
+		simpleCorrupted("+1.1"),
+		simpleCorrupted("+1e1"),
+		simpleCorrupted("+1E1"),
 		simpleCorrupted("x1"),
 		simpleCorrupted("1+1"),
 		simpleCorrupted("-1+"),
@@ -216,9 +194,7 @@ func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
 func TestUnmarshal_NullSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "lower", input: []byte("null"), _type: Null, value: []byte("null")},
-		{name: "upper", input: []byte("NULL"), _type: Null, value: []byte("NULL")},
-		{name: "CamelCase", input: []byte("NuLl"), _type: Null, value: []byte("NuLl")},
-		{name: "spaces", input: []byte("  Null\r\n "), _type: Null, value: []byte("Null")},
+		{name: "spaces", input: []byte("  null\r\n "), _type: Null, value: []byte("null")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -231,6 +207,8 @@ func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
 	tests := []testCase{
 		{name: "nul", input: []byte("nul")},
 		{name: "NILL", input: []byte("NILL")},
+		{name: "Null", input: []byte("Null")},
+		{name: "NULL", input: []byte("NULL")},
 		{name: "spaces", input: []byte("Nu ll")},
 		{name: "null1", input: []byte("null1")},
 		{name: "double", input: []byte("null null")},
@@ -246,12 +224,8 @@ func TestUnmarshal_BoolSimpleSuccess(t *testing.T) {
 	tests := []testCase{
 		{name: "lower true", input: []byte("true"), _type: Bool, value: []byte("true")},
 		{name: "lower false", input: []byte("false"), _type: Bool, value: []byte("false")},
-		{name: "upper true", input: []byte("TRUE"), _type: Bool, value: []byte("TRUE")},
-		{name: "upper false", input: []byte("FALSE"), _type: Bool, value: []byte("FALSE")},
-		{name: "CamelCase true", input: []byte("TrUe"), _type: Bool, value: []byte("TrUe")},
-		{name: "CamelCase false", input: []byte("FaLsE"), _type: Bool, value: []byte("FaLsE")},
-		{name: "spaces true", input: []byte("  True\r\n "), _type: Bool, value: []byte("True")},
-		{name: "spaces false", input: []byte("  False\r\n "), _type: Bool, value: []byte("False")},
+		{name: "spaces true", input: []byte("  true\r\n "), _type: Bool, value: []byte("true")},
+		{name: "spaces false", input: []byte("  false\r\n "), _type: Bool, value: []byte("false")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -267,6 +241,10 @@ func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 		simpleCorrupted("tre"),
 		simpleCorrupted("fal se"),
 		simpleCorrupted("true false"),
+		simpleCorrupted("True"),
+		simpleCorrupted("TRUE"),
+		simpleCorrupted("False"),
+		simpleCorrupted("FALSE"),
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -875,6 +853,12 @@ func TestUnmarshal_main(t *testing.T) {
 			name:    `1e-`,
 			args:    args{[]byte(`1e-`)},
 			wantErr: true,
+		},
+		{
+			name:    `-1.3e2`,
+			args:    args{[]byte(`-1.3e2`)},
+			want:    float64(-130),
+			wantErr: false,
 		},
 		// endregion
 		// region From https://json.org/example.html
