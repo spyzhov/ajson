@@ -80,6 +80,7 @@ func TestJsonPath(t *testing.T) {
 
 		{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
 		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+		{name: "union indexes calculate", path: "$['store']['book'][-2,(@.length-1)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
 
 		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 		{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
@@ -101,8 +102,8 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 18", path: "$..[(foobar(@.length))::]", wantErr: true},
 		{name: "slices 19", path: "$..[::0]", wantErr: true},
 		{name: "slices 20", path: "$..[:(1/0):]", wantErr: true},
-		{name: "slices 20", path: "$..[:(1/2):]", wantErr: true},
-		{name: "slices 20", path: "$..[:0.5:]", wantErr: true},
+		{name: "slices 21", path: "$..[:(1/2):]", wantErr: true},
+		{name: "slices 22", path: "$..[:0.5:]", wantErr: true},
 
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},

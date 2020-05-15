@@ -316,7 +316,6 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 		value, temp *Node
 		float       float64
 		tokens      tokens
-		rpn         rpn
 		buf         *buffer
 	)
 	for i, cmd := range commands {
@@ -521,36 +520,29 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							}
 							ok = true
 						} else if strings.HasPrefix(key, "(") && strings.HasSuffix(key, ")") {
-							buf = newBuffer([]byte(key[1 : len(key)-1]))
-							rpn, err = buf.rpn()
+							fkeys[0], err = getNumberIndex(element, key, math.NaN())
 							if err != nil {
 								return nil, err
 							}
-							temp, err = eval(element, rpn, key)
-							if err != nil {
-								err = nil
-								continue
+							if math.IsNaN(fkeys[0]) {
+								return nil, errorRequest("wrong request: %s", cmd)
 							}
-							num, err = temp.getInteger()
-							if err != nil {
+							if element.Size() == 0 {
 								ok = false
-								err = nil
 							} else {
-								if num < 0 {
-									key = strconv.Itoa(element.Size() + num)
-								}
+								num = getPositiveIndex(int(fkeys[0]), element.Size())
+								key = strconv.Itoa(num)
 								value, ok = element.children[key]
 							}
 						} else {
 							key, _ = str(key)
 							num, err = strconv.Atoi(key)
-							if err != nil {
+							if err != nil || element.Size() == 0 {
 								ok = false
 								err = nil
 							} else {
-								if num < 0 {
-									key = strconv.Itoa(element.Size() + num)
-								}
+								num = getPositiveIndex(num, element.Size())
+								key = strconv.Itoa(num)
 								value, ok = element.children[key]
 							}
 						}
