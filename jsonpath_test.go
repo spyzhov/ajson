@@ -65,6 +65,7 @@ func TestJsonPath(t *testing.T) {
 		name     string
 		path     string
 		expected string
+		wantErr  bool
 	}{
 		{name: "root", path: "$", expected: "[$]"},
 		{name: "roots", path: "$.", expected: "[$]"},
@@ -95,6 +96,13 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 13", path: "$..[::-1]", expected: "[$['store']['book'][3], $['store']['book'][2], $['store']['book'][1], $['store']['book'][0]]"},
 		{name: "slices 14", path: "$..[::-2]", expected: "[$['store']['book'][3], $['store']['book'][1]]"},
 		{name: "slices 15", path: "$..[::2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "slices 16", path: "$..[-3:(@.length)]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 17", path: "$..[(-3*@.length + 1):(@.length - 1)]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+		{name: "slices 18", path: "$..[(foobar(@.length))::]", wantErr: true},
+		{name: "slices 19", path: "$..[::0]", wantErr: true},
+		{name: "slices 20", path: "$..[:(1/0):]", wantErr: true},
+		{name: "slices 20", path: "$..[:(1/2):]", wantErr: true},
+		{name: "slices 20", path: "$..[:0.5:]", wantErr: true},
 
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
@@ -108,9 +116,14 @@ func TestJsonPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := JSONPath(jsonPathTestData, test.path)
-			if err != nil {
-				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
-			} else if fullPath(result) != test.expected {
+			if (err != nil) != test.wantErr {
+				t.Errorf("JSONPath() error = %v, wantErr %v. got = %v", err, test.wantErr, result)
+				return
+			}
+			if test.wantErr {
+				return
+			}
+			if fullPath(result) != test.expected {
 				t.Errorf("Error on JsonPath(json, %s) as %s: path doesn't match\nExpected: %s\nActual:   %s", test.path, test.name, test.expected, fullPath(result))
 			}
 		})

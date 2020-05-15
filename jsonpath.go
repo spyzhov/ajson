@@ -514,7 +514,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			for _, key = range keys { // fixme
 				for _, element := range result {
 					if element.IsArray() {
-						if key == "length" || key == "'length'" {
+						if key == "length" || key == "'length'" || key == "\"length\"" {
 							value, err = functions["length"](element)
 							if err != nil {
 								return
@@ -670,7 +670,6 @@ func getNumberIndex(element *Node, input string, Default float64) (result float6
 		}
 		temp, err = eval(element, rpn, input)
 		if err != nil {
-			err = nil
 			return
 		}
 		integer, err = temp.getInteger()
