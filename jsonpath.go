@@ -677,6 +677,7 @@ func getNumberIndex(element *Node, input string, Default float64) (result float6
 		if err != nil {
 			return
 		}
+		result = float64(integer)
 	} else {
 		integer, err = strconv.Atoi(input)
 		if err != nil {
