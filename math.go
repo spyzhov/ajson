@@ -19,7 +19,7 @@ var (
 	//	Precedence    Operator
 	//	    5             *  /  %  <<  >>  &  &^
 	//	    4             +  -  |  ^
-	//	    3             ==  !=  <  <=  >  >=
+	//	    3             ==  !=  <  <=  >  >= =~
 	//	    2             &&
 	//	    1             ||
 	//
@@ -39,6 +39,14 @@ var (
 	//
 	//	<<   left shift             integer << unsigned integer
 	//	>>   right shift            integer >> unsigned integer
+	//
+	//	==  equals                  any
+	//	!=  not equals              any
+	//	<   less                    any
+	//	<=  less or equals          any
+	//	>   larger                  any
+	//	>=  larger or equals        any
+	//	=~  equals regex string     strings
 	//
 	priority = map[string]uint8{
 		"**": 6, // additional: power
@@ -340,6 +348,13 @@ var (
 				return valueNode(nil, "avg", Numeric, sum/float64(node.Size())), nil
 			}
 			return valueNode(nil, "avg", Null, nil), nil
+		},
+		"not": func(node *Node) (result *Node, err error) {
+			if value, err := boolean(node); err != nil {
+				return nil, err
+			} else {
+				return valueNode(nil, "not", Bool, !value), nil
+			}
 		},
 	}
 
