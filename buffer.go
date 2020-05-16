@@ -250,13 +250,15 @@ tokenLoop:
 	for ; b.index < b.length; b.index++ {
 		c = b.data[b.index]
 		switch {
+		case c == quotes:
+			fallthrough
 		case c == quote:
 			find = true
 			err = b.step()
 			if err != nil {
 				return b.errorEOF()
 			}
-			err = b.skip(quote)
+			err = b.skip(c)
 			if err == io.EOF {
 				return b.errorEOF()
 			}
@@ -399,10 +401,12 @@ func (b *buffer) rpn() (result rpn, err error) {
 			} else {
 				b.index--
 			}
+		case c == quotes: // string
+			fallthrough
 		case c == quote: // string
 			variable = true
 			start = b.index
-			err = b.string(quote)
+			err = b.string(c)
 			if err != nil {
 				return nil, b.errorEOF()
 			}
@@ -551,10 +555,12 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			} else {
 				b.index--
 			}
+		case c == quotes: // string
+			fallthrough
 		case c == quote: // string
 			variable = true
 			start = b.index
-			err = b.string(quote)
+			err = b.string(c)
 			if err != nil {
 				return nil, b.errorEOF()
 			}
@@ -756,9 +762,14 @@ func (t tokens) slice(find string) []string {
 }
 
 func str(key string) (string, bool) {
-	from := len(key)
-	if from > 1 && key[0] == quote && key[from-1] == quote {
-		return key[1 : from-1], true
+	bString := []byte(key)
+	from := len(bString)
+	if from > 1 && ((bString[0] == quote && bString[from-1] == quote) || (bString[0] == quotes && bString[from-1] == quotes)) {
+		bString[0] = quotes
+		bString[from-1] = quotes
+	} else {
+		bString = append([]byte{quotes}, bString...)
+		bString = append(bString, quotes)
 	}
-	return key, false
+	return unquote(bString)
 }

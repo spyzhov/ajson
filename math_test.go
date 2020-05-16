@@ -224,7 +224,7 @@ func TestFunctions(t *testing.T) {
 		name   string
 		fname  string
 		value  float64
-		result float64
+		result interface{}
 	}{
 		{name: "abs 1", fname: "abs", value: float64(-100), result: 100},
 		{name: "abs 2", fname: "abs", value: float64(100), result: 100},
@@ -280,12 +280,25 @@ func TestFunctions(t *testing.T) {
 
 		{name: "pow10", fname: "pow10", value: float64(10), result: math.Pow10(10)},
 		{name: "factorial", fname: "factorial", value: float64(10), result: 3628800},
+
+		{name: "not_1", fname: "not", value: float64(1), result: false},
+		{name: "not_0", fname: "not", value: float64(0), result: true},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			node := NumericNode(test.name, test.value)
-			expected := NumericNode(test.fname, test.result)
+			var expected *Node
+			switch test.result.(type) {
+			case int:
+				expected = NumericNode(test.fname, float64(test.result.(int)))
+			case float64:
+				expected = NumericNode(test.fname, test.result.(float64))
+			case bool:
+				expected = BoolNode(test.fname, test.result.(bool))
+			default:
+				panic("wrong type")
+			}
 			result, err := functions[test.fname](node)
 			if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())

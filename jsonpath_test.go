@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -64,6 +65,7 @@ func TestJsonPath(t *testing.T) {
 		name     string
 		path     string
 		expected string
+		wantErr  bool
 	}{
 		{name: "root", path: "$", expected: "[$]"},
 		{name: "roots", path: "$.", expected: "[$]"},
@@ -78,6 +80,8 @@ func TestJsonPath(t *testing.T) {
 
 		{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
 		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+		{name: "union indexes calculate", path: "$['store']['book'][-2,(@.length-1)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
+		{name: "union indexes position", path: "$['store']['book'][-1,-3]", expected: "[$['store']['book'][3], $['store']['book'][1]]"},
 
 		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 		{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
@@ -91,11 +95,22 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 10", path: "$['store']['book'][1:4:3]", expected: "[$['store']['book'][1]]"},
 		{name: "slices 11", path: "$['store']['book'][:-1]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2]]"},
 		{name: "slices 12", path: "$['store']['book'][-1:]", expected: "[$['store']['book'][3]]"},
+		{name: "slices 13", path: "$..[::-1]", expected: "[$['store']['book'][3], $['store']['book'][2], $['store']['book'][1], $['store']['book'][0]]"},
+		{name: "slices 14", path: "$..[::-2]", expected: "[$['store']['book'][3], $['store']['book'][1]]"},
+		{name: "slices 15", path: "$..[::2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "slices 16", path: "$..[-3:(@.length)]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "slices 17", path: "$..[(-3*@.length + 1):(@.length - 1)]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+		{name: "slices 18", path: "$..[(foobar(@.length))::]", wantErr: true},
+		{name: "slices 19", path: "$..[::0]", wantErr: true},
+		{name: "slices 20", path: "$..[:(1/0):]", wantErr: true},
+		{name: "slices 21", path: "$..[:(1/2):]", wantErr: true},
+		{name: "slices 22", path: "$..[:0.5:]", wantErr: true},
 
 		{name: "calculated 1", path: "$['store']['book'][(@.length-1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
 		{name: "calculated 4", path: "$..[?(@.price < factorial(3) + 3)]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "calculated 5", path: "$..[(1/0)]", wantErr: true},
 
 		{name: "$.store.book[*].author", path: "$.store.book[*].author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
 		{name: "$..author", path: "$..author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
@@ -104,9 +119,14 @@ func TestJsonPath(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := JSONPath(jsonPathTestData, test.path)
-			if err != nil {
-				t.Errorf("Error on JsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
-			} else if fullPath(result) != test.expected {
+			if (err != nil) != test.wantErr {
+				t.Errorf("JSONPath() error = %v, wantErr %v. got = %v", err, test.wantErr, result)
+				return
+			}
+			if test.wantErr {
+				return
+			}
+			if fullPath(result) != test.expected {
 				t.Errorf("Error on JsonPath(json, %s) as %s: path doesn't match\nExpected: %s\nActual:   %s", test.path, test.name, test.expected, fullPath(result))
 			}
 		})
@@ -186,6 +206,137 @@ func TestParseJSONPath(t *testing.T) {
 				t.Errorf("Error on parseJsonPath(json, %s) as %s: %s", test.path, test.name, err.Error())
 			} else if !sliceEqual(result, test.expected) {
 				t.Errorf("Error on parseJsonPath(%s) as %s: path doesn't match\nExpected: %s\nActual: %s", test.path, test.name, sliceString(test.expected), sliceString(result))
+			}
+		})
+	}
+}
+
+// Test suites from cburgmer/json-path-comparison
+func TestJSONPath_suite(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		path     string
+		expected []interface{}
+		wantErr  bool
+	}{
+		{
+			name:     "Bracket notation with double quotes",
+			input:    `{"key": "value"}`,
+			path:     `$["key"]`,
+			expected: []interface{}{"value"}, // ["value"]
+		},
+		{
+			name:     "Filter expression with bracket notation",
+			input:    `[{"key": 0}, {"key": 42}, {"key": -1}, {"key": 41}, {"key": 43}, {"key": 42.0001}, {"key": 41.9999}, {"key": 100}, {"some": "value"}]`,
+			path:     `$[?(@['key']==42)]`,
+			expected: []interface{}{map[string]interface{}{"key": float64(42)}}, // [{"key": 42}]
+		},
+		{
+			name:     "Filter expression with equals string with dot literal",
+			input:    `[{"key": "some"}, {"key": "value"}, {"key": "some.value"}]`,
+			path:     `$[?(@.key=="some.value")]`,
+			expected: []interface{}{map[string]interface{}{"key": "some.value"}}, // [{"key": "some.value"}]
+		},
+		{
+			name:     "Array slice with negative step only",
+			input:    `["first", "second", "third", "forth", "fifth"]`,
+			path:     `$[::-2]`,
+			expected: []interface{}{"fifth", "third", "first"}, // ["fifth", "third", "first"]
+		},
+		{
+			name:     "Filter expression with bracket notation with -1",
+			input:    `[[2, 3], ["a"], [0, 2], [2]]`,
+			path:     `$[?(@[-1]==2)]`,
+			expected: []interface{}{[]interface{}{float64(0), float64(2)}, []interface{}{float64(2)}}, // [[0, 2], [2]]
+		},
+		{
+			name:     "Filter expression with bracket notation with number",
+			input:    `[["a", "b"], ["x", "y"]]`,
+			path:     `$[?(@[1]=='b')]`,
+			expected: []interface{}{[]interface{}{"a", "b"}}, // [["a", "b"]]
+		},
+		{
+			name:     "Filter expression with equals string with current object literal",
+			input:    `[{"key": "some"}, {"key": "value"}, {"key": "hi@example.com"}]`,
+			path:     `$[?(@.key=="hi@example.com")]`,
+			expected: []interface{}{map[string]interface{}{"key": "hi@example.com"}}, // [{"key": "hi@example.com"}]
+		},
+		// 		{
+		// 			name:     "Filter expression with negation and equals",
+		// 			input:    `[
+		//     {"key": 0},
+		//     {"key": 42},
+		//     {"key": -1},
+		//     {"key": 41},
+		//     {"key": 43},
+		//     {"key": 42.0001},
+		//     {"key": 41.9999},
+		//     {"key": 100},
+		//     {"key": "43"},
+		//     {"key": "42"},
+		//     {"key": "41"},
+		//     {"key": "value"},
+		//     {"some": "value"}
+		// ]`,
+		// 			path:     `$[?(!(@.key==42))]`,
+		// 			expected: []interface{}{
+		// 				map[string]interface{}{"key": float64(0)},
+		// 				map[string]interface{}{"key": float64(-1)},
+		// 				map[string]interface{}{"key": float64(41)},
+		// 				map[string]interface{}{"key": float64(43)},
+		// 				map[string]interface{}{"key": float64(42.0001)},
+		// 				map[string]interface{}{"key": float64(41.9999)},
+		// 				map[string]interface{}{"key": float64(100)},
+		// 				map[string]interface{}{"key": "43"},
+		// 				map[string]interface{}{"key": "42"},
+		// 				map[string]interface{}{"key": "41"},
+		// 				map[string]interface{}{"key": "value"},
+		// 				map[string]interface{}{"some": "value"},
+		// 			},
+		// 		},
+		{
+			name:     "Filter expression with bracket notation with number on object",
+			input:    `{"1": ["a", "b"], "2": ["x", "y"]}`,
+			path:     `$[?(@[1]=='b')]`,
+			expected: []interface{}{[]interface{}{"a", "b"}}, // [["a", "b"]]
+		},
+		// {
+		// 	name:     "Dot notation with single quotes and dot",
+		// 	input:    `{"some.key": 42, "some": {"key": "value"}}`,
+		// 	path:     `$.'some.key'`,
+		// 	expected: []interface{}{float64(42)}, // [42]
+		// },
+		{
+			name:    "Array slice with step 0",
+			input:   `["first", "second", "third", "forth", "fifth"]`,
+			path:    `$[0:3:0]`,
+			wantErr: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			nodes, err := JSONPath([]byte(test.input), test.path)
+			if (err != nil) != test.wantErr {
+				t.Errorf("JSONPath() error = %v, wantErr %v. got = %v", err, test.wantErr, nodes)
+				return
+			}
+			if test.wantErr {
+				return
+			}
+
+			results := make([]interface{}, 0)
+			for _, node := range nodes {
+				value, err := node.Unpack()
+				if err != nil {
+					t.Errorf("node.Unpack(): unexpected error: %v", err)
+					return
+				}
+				results = append(results, value)
+			}
+
+			if !reflect.DeepEqual(results, test.expected) {
+				t.Errorf("JSONPath(): wrong result:\nExpected: %#+v\nActual:   %#+v", test.expected, results)
 			}
 		})
 	}
@@ -363,21 +514,57 @@ func TestEval(t *testing.T) {
     ]
   }
 }`)
-	root, err := Unmarshal(json)
-	if err != nil {
-		t.Errorf("Unmarshal error: %s", err.Error())
-	} else {
-		result, err := Eval(root, "avg($..price)")
-		if err != nil {
-			t.Errorf("Eval error: %s", err.Error())
-		} else {
-			value, err := result.GetNumeric()
-			if err != nil {
-				t.Errorf("GetNumeric error: %s", err.Error())
-			} else if value-14.774 > 0.0000001 {
-				t.Errorf("avg error '%f' != '14.774000000000001'", value)
+	tests := []struct {
+		name     string
+		root     *Node
+		eval     string
+		expected *Node
+		wantErr  bool
+	}{
+		{
+			name:     "avg($..price)",
+			root:     Must(Unmarshal(json)),
+			eval:     "avg($..price)",
+			expected: NumericNode("", 14.774000000000001),
+			wantErr:  false,
+		},
+		{
+			name:     "avg($..price)",
+			root:     Must(Unmarshal(json)),
+			eval:     "avg()",
+			expected: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "avg($..price)",
+			root:     Must(Unmarshal(json)),
+			eval:     "($..price+)",
+			expected: nil,
+			wantErr:  true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := Eval(test.root, test.eval)
+			if (err != nil) != test.wantErr {
+				t.Errorf("Eval() error = %v, wantErr %v. got = %v", err, test.wantErr, result)
+				return
 			}
-		}
+			if test.wantErr {
+				return
+			}
+			if result == nil {
+				t.Errorf("Eval() result in nil")
+				return
+			}
+
+			if ok, err := result.Eq(test.expected); !ok {
+				t.Errorf("result.Eq(): wrong result:\nExpected: %#+v\nActual: %#+v", test.expected, result.value.Load())
+			} else if err != nil {
+				t.Errorf("result.Eq() error = %v", err)
+			}
+
+		})
 	}
 }
 

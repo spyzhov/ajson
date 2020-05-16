@@ -378,7 +378,7 @@ Package has several predefined operators. You are free to add new one with `AddO
 	    6	    	  **
 	    5             *  /  %  <<  >>  &  &^
 	    4             +  -  |  ^
-	    3             ==  !=  <  <=  >  >=
+	    3             ==  !=  <  <=  >  >= =~
 	    2             &&
 	    1             ||
 
@@ -398,6 +398,14 @@ Package has several predefined operators. You are free to add new one with `AddO
 
 	<<   left shift             integer << unsigned integer
 	>>   right shift            integer >> unsigned integer
+
+	==  equals                  any
+	!=  not equals              any
+	<   less                    any
+	<=  less or equals          any
+	>   larger                  any
+	>=  larger or equals        any
+	=~  equals regex string     strings
 
 ### Supported functions
 
@@ -433,6 +441,7 @@ Package has several predefined functions. You are free to add new one with `AddF
     log1p        math.Log1p        integers, floats
     log2         math.Log2         integers, floats
     logb         math.Logb         integers, floats
+    not          not               any
     pow10        math.Pow10        integer
     round        math.Round        integers, floats
     roundtoeven  math.RoundToEven  integers, floats

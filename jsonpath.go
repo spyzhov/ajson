@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"io"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -77,10 +78,10 @@ import (
 // Operator precedence: https://golang.org/ref/spec#Operator_precedence
 //
 //     Precedence    Operator
-//     6	    	  **
-//     5             *  /  %  <<  >>  &  &^
-//     4             +  -  |  ^
-//     3             ==  !=  <  <=  >  >=
+//     6             **
+//     5             *   /   %  <<  >>  &  &^
+//     4             +   -   |  ^
+//     3             ==  !=  <  <=  >  >=  =~
 //     2             &&
 //     1             ||
 //
@@ -100,6 +101,14 @@ import (
 //
 //     <<   left shift             integer << unsigned integer
 //     >>   right shift            integer >> unsigned integer
+//
+//     ==  equals                  any
+//     !=  not equals              any
+//     <   less                    any
+//     <=  less or equals          any
+//     >   larger                  any
+//     >=  larger or equals        any
+//     =~  equals regex string     strings
 //
 // Supported functions
 //
@@ -135,6 +144,7 @@ import (
 //     log1p        math.Log1p        integers, floats
 //     log2         math.Log2         integers, floats
 //     logb         math.Logb         integers, floats
+//     not          not               any
 //     pow10        math.Pow10        integer
 //     round        math.Round        integers, floats
 //     roundtoeven  math.RoundToEven  integers, floats
@@ -193,11 +203,16 @@ func recursiveChildren(node *Node) (result []*Node) {
 func ParseJSONPath(path string) (result []string, err error) {
 	buf := newBuffer([]byte(path))
 	result = make([]string, 0)
+	const (
+		fQuote  = 1 << 0
+		fQuotes = 1 << 1
+	)
 	var (
 		c           byte
 		start, stop int
 		childEnd    = map[byte]bool{dot: true, bracketL: true}
-		str         bool
+		flag        int
+		brackets    int
 	)
 	for {
 		c, err = buf.current()
@@ -242,17 +257,32 @@ func ParseJSONPath(path string) (result []string, err error) {
 			if err != nil {
 				return nil, buf.errorEOF()
 			}
+			brackets = 1
 			start = buf.index
 			for ; buf.index < buf.length; buf.index++ {
 				c = buf.data[buf.index]
-				if c == quote {
-					if str {
-						str = buf.backslash()
-					} else {
-						str = true
+				switch c {
+				case quote:
+					if flag&fQuote == 0 {
+						flag &= fQuote
+					} else if !buf.backslash() {
+						flag ^= fQuote
 					}
-				} else if c == bracketR {
-					if !str {
+				case quotes:
+					if flag&fQuotes == 0 {
+						flag &= fQuotes
+					} else if !buf.backslash() {
+						flag ^= fQuotes
+					}
+				case bracketL:
+					if flag == 0 && !buf.backslash() {
+						brackets++
+					}
+				case bracketR:
+					if flag == 0 && !buf.backslash() {
+						brackets--
+					}
+					if brackets == 0 {
 						result = append(result, string(buf.data[start:buf.index]))
 						break parseSwitch
 					}
@@ -277,15 +307,15 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 	result = make([]*Node, 0)
 	var (
 		temporary   []*Node
-		keys, skeys []string
-		ikeys       []int
+		keys        []string
+		ikeys       [3]int
+		fkeys       [3]float64
 		num         int
 		key         string
 		ok          bool
 		value, temp *Node
 		float       float64
 		tokens      tokens
-		rpn         rpn
 		buf         *buffer
 	)
 	for i, cmd := range commands {
@@ -320,60 +350,67 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
 			}
 			keys = tokens.slice(":")
-			skeys = make([]string, 3)
-			ikeys = make([]int, 3)
-			if keys[0] == "" {
-				skeys[0] = "0"
-			} else {
-				skeys[0] = keys[0]
-			}
-			if keys[1] == "" {
-				skeys[1] = "(@.length)"
-			} else {
-				skeys[1] = keys[1]
-			}
-			if len(keys) < 3 || keys[2] == "" {
-				skeys[2] = "1"
-			} else {
-				skeys[2] = keys[2]
-			}
 
 			temporary = make([]*Node, 0)
 			for _, element := range result {
-				if element.IsArray() {
-					for num, key = range skeys {
-						if key == "(@.length)" {
-							ikeys[num] = element.Size()
-						} else if strings.HasPrefix(key, "(") && strings.HasSuffix(key, ")") {
-							buf = newBuffer([]byte(key[1 : len(key)-1]))
-							rpn, err = buf.rpn()
-							if err != nil {
-								return nil, err
-							}
-							temp, err = eval(element, rpn, key)
-							if err != nil {
-								err = nil
-								continue
-							}
-							ikeys[num], err = temp.getInteger()
-							if err != nil {
-								continue
-							}
-						} else {
-							ikeys[num], err = strconv.Atoi(key)
-							if err != nil {
-								return nil, errorRequest("wrong request: %s", cmd)
-							}
-						}
-						if num != 2 && ikeys[num] < 0 {
-							ikeys[num] += element.Size()
-						}
+				if element.IsArray() && element.Size() > 0 {
+					if fkeys[0], err = getNumberIndex(element, keys[0], math.NaN()); err != nil {
+						return nil, errorRequest("wrong request: %s", cmd)
+					}
+					if fkeys[1], err = getNumberIndex(element, keys[1], math.NaN()); err != nil {
+						return nil, errorRequest("wrong request: %s", cmd)
+					}
+					if len(keys) < 3 {
+						fkeys[2] = 1
+					} else if fkeys[2], err = getNumberIndex(element, keys[2], 1); err != nil {
+						return nil, errorRequest("wrong request: %s", cmd)
 					}
 
-					for i := ikeys[0]; i < ikeys[1]; i += ikeys[2] {
-						value, ok := element.children[strconv.Itoa(i)]
-						if ok {
-							temporary = append(temporary, value)
+					ikeys[2] = int(fkeys[2])
+					if ikeys[2] == 0 {
+						return nil, errorRequest("wrong request: %s", cmd)
+					}
+
+					if math.IsNaN(fkeys[0]) {
+						if ikeys[2] > 0 {
+							ikeys[0] = 0
+						} else {
+							ikeys[0] = element.Size() - 1
+						}
+					} else {
+						ikeys[0] = getPositiveIndex(int(fkeys[0]), element.Size())
+					}
+					if math.IsNaN(fkeys[1]) {
+						if ikeys[2] > 0 {
+							ikeys[1] = element.Size()
+						} else {
+							ikeys[1] = -1
+						}
+					} else {
+						ikeys[1] = getPositiveIndex(int(fkeys[1]), element.Size())
+					}
+
+					if ikeys[2] > 0 {
+						if ikeys[0] > ikeys[1] {
+							ikeys[0], ikeys[1] = ikeys[1], ikeys[0]
+						}
+
+						for i := ikeys[0]; i < ikeys[1]; i += ikeys[2] {
+							value, ok := element.children[strconv.Itoa(i)]
+							if ok {
+								temporary = append(temporary, value)
+							}
+						}
+					} else if ikeys[2] < 0 {
+						if ikeys[0] < ikeys[1] {
+							ikeys[0], ikeys[1] = ikeys[1], ikeys[0]
+						}
+
+						for i := ikeys[0]; i > ikeys[1]; i += ikeys[2] {
+							value, ok := element.children[strconv.Itoa(i)]
+							if ok {
+								temporary = append(temporary, value)
+							}
 						}
 					}
 				}
@@ -476,43 +513,36 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			for _, key = range keys { // fixme
 				for _, element := range result {
 					if element.IsArray() {
-						if key == "length" || key == "'length'" {
+						if key == "length" || key == "'length'" || key == "\"length\"" {
 							value, err = functions["length"](element)
 							if err != nil {
 								return
 							}
 							ok = true
 						} else if strings.HasPrefix(key, "(") && strings.HasSuffix(key, ")") {
-							buf = newBuffer([]byte(key[1 : len(key)-1]))
-							rpn, err = buf.rpn()
+							fkeys[0], err = getNumberIndex(element, key, math.NaN())
 							if err != nil {
 								return nil, err
 							}
-							temp, err = eval(element, rpn, key)
-							if err != nil {
-								err = nil
-								continue
+							if math.IsNaN(fkeys[0]) {
+								return nil, errorRequest("wrong request: %s", cmd)
 							}
-							num, err = temp.getInteger()
-							if err != nil {
+							if element.Size() == 0 {
 								ok = false
-								err = nil
 							} else {
-								if num < 0 {
-									key = strconv.Itoa(element.Size() + num)
-								}
+								num = getPositiveIndex(int(fkeys[0]), element.Size())
+								key = strconv.Itoa(num)
 								value, ok = element.children[key]
 							}
 						} else {
 							key, _ = str(key)
 							num, err = strconv.Atoi(key)
-							if err != nil {
+							if err != nil || element.Size() == 0 {
 								ok = false
 								err = nil
 							} else {
-								if num < 0 {
-									key = strconv.Itoa(element.Size() + num)
-								}
+								num = getPositiveIndex(num, element.Size())
+								key = strconv.Itoa(num)
 								value, ok = element.children[key]
 							}
 						}
@@ -556,8 +586,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 	)
 	for _, exp := range expression {
 		size = len(stack)
-		fn, ok = functions[exp]
-		if ok {
+		if fn, ok = functions[exp]; ok {
 			if size < 1 {
 				return nil, errorRequest("wrong request: %s", cmd)
 			}
@@ -565,10 +594,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 			if err != nil {
 				return
 			}
-			continue
-		}
-		op, ok = operations[exp]
-		if ok {
+		} else if op, ok = operations[exp]; ok {
 			if size < 2 {
 				return nil, errorRequest("wrong request: %s", cmd)
 			}
@@ -577,9 +603,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				return
 			}
 			stack = stack[:size-1]
-			continue
-		}
-		if len(exp) > 0 {
+		} else if len(exp) > 0 {
 			if exp[0] == dollar || exp[0] == at {
 				commands, err = ParseJSONPath(exp)
 				if err != nil {
@@ -594,6 +618,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
+					// stack = append(stack, NullNode(""))
 					return NullNode(""), nil
 				}
 			} else {
@@ -620,4 +645,43 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		return NullNode(""), nil
 	}
 	return nil, errorRequest("wrong request: %s", cmd)
+}
+
+func getNumberIndex(element *Node, input string, Default float64) (result float64, err error) {
+	var integer int
+	if input == "" {
+		result = Default
+	} else if input == "(@.length)" {
+		result = float64(element.Size())
+	} else if strings.HasPrefix(input, "(") && strings.HasSuffix(input, ")") {
+		var rpn rpn
+		var temp *Node
+		rpn, err = newBuffer([]byte(input[1 : len(input)-1])).rpn()
+		if err != nil {
+			return 0, err
+		}
+		temp, err = eval(element, rpn, input)
+		if err != nil {
+			return
+		}
+		integer, err = temp.getInteger()
+		if err != nil {
+			return
+		}
+		result = float64(integer)
+	} else {
+		integer, err = strconv.Atoi(input)
+		if err != nil {
+			return 0, err
+		}
+		result = float64(integer)
+	}
+	return
+}
+
+func getPositiveIndex(index int, count int) int {
+	for index < 0 {
+		index += count
+	}
+	return index
 }
