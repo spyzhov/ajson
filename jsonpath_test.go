@@ -81,6 +81,7 @@ func TestJsonPath(t *testing.T) {
 		{name: "union fields", path: "$['store']['book'][2]['author','price','title']", expected: "[$['store']['book'][2]['author'], $['store']['book'][2]['price'], $['store']['book'][2]['title']]"},
 		{name: "union indexes", path: "$['store']['book'][1,2]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
 		{name: "union indexes calculate", path: "$['store']['book'][-2,(@.length-1)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
+		{name: "union indexes position", path: "$['store']['book'][-1,-3]", expected: "[$['store']['book'][3], $['store']['book'][1]]"},
 
 		{name: "slices 1", path: "$..[1:4]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 		{name: "slices 2", path: "$..[1:4:]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
@@ -109,6 +110,7 @@ func TestJsonPath(t *testing.T) {
 		{name: "calculated 2", path: "$['store']['book'][(3.5 - 3/2)]", expected: "[$['store']['book'][2]]"},
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
 		{name: "calculated 4", path: "$..[?(@.price < factorial(3) + 3)]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
+		{name: "calculated 5", path: "$..[(1/0)]", wantErr: true},
 
 		{name: "$.store.book[*].author", path: "$.store.book[*].author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
 		{name: "$..author", path: "$..author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
