@@ -154,7 +154,7 @@ var (
 				if err != nil {
 					return nil, err
 				}
-				return valueNode(nil, "sum", String, string(lnum+rnum)), nil
+				return valueNode(nil, "sum", String, lnum+rnum), nil
 			}
 			lnum, rnum, err := _floats(left, right)
 			if err != nil {

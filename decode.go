@@ -207,7 +207,7 @@ func getString(b *buffer) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, ok := unquote(b.data[start : b.index+1])
+	value, ok := unquote(b.data[start:b.index+1], quotes)
 	if !ok {
 		return nil, errorSymbol(b)
 	}

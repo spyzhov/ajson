@@ -99,7 +99,7 @@ func TestJsonPath(t *testing.T) {
 		{name: "slices 14", path: "$..[::-2]", expected: "[$['store']['book'][3], $['store']['book'][1]]"},
 		{name: "slices 15", path: "$..[::2]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
 		{name: "slices 16", path: "$..[-3:(@.length)]", expected: "[$['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
-		{name: "slices 17", path: "$..[(-3*@.length + 1):(@.length - 1)]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
+		{name: "slices 17", path: "$..[1:(@.length - 1)]", expected: "[$['store']['book'][1], $['store']['book'][2]]"},
 		{name: "slices 18", path: "$..[(foobar(@.length))::]", wantErr: true},
 		{name: "slices 19", path: "$..[::0]", wantErr: true},
 		{name: "slices 20", path: "$..[:(1/0):]", wantErr: true},
@@ -312,6 +312,30 @@ func TestJSONPath_suite(t *testing.T) {
 			input:   `["first", "second", "third", "forth", "fifth"]`,
 			path:    `$[0:3:0]`,
 			wantErr: true,
+		},
+		{
+			name:     "$[2:1]",
+			input:    `["first", "second", "third", "forth"]`,
+			path:     `$[2:1]`,
+			expected: []interface{}{}, // []
+		},
+		{
+			name:     "$[-4:]",
+			input:    `["first", "second", "third"]`,
+			path:     `$[-4:]`,
+			expected: []interface{}{"first", "second", "third"}, // ["first", "second", "third"]
+		},
+		{
+			name:     "$[']']",
+			input:    `{"]": 42}`,
+			path:     `$[']']`,
+			expected: []interface{}{float64(42)}, // [42]
+		},
+		{
+			name:     `$['"']`,
+			input:    `{"\"": "value", "another": "entry"}`,
+			path:     `$['"']`,
+			expected: []interface{}{"value"}, // ["value"]
 		},
 	}
 	for _, test := range tests {
@@ -575,5 +599,611 @@ func BenchmarkJSONPath_all_prices(b *testing.B) {
 		if err != nil {
 			b.Error()
 		}
+	}
+}
+
+// https://github.com/cburgmer/json-path-comparison/blob/master/regression_suite/regression_suite.yaml
+func TestJSONPath_comparison_consensus(t *testing.T) {
+	tests := []struct {
+		name      string
+		selector  string
+		document  string
+		consensus string
+	}{
+		{
+			name:      `array_slice`,
+			selector:  `$[1:3]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["second", "third"]`,
+		},
+		{
+			name:      `array_slice_on_exact_match`,
+			selector:  `$[0:5]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "second", "third", "forth", "fifth"]`,
+		},
+		{
+			name:      `array_slice_on_non_overlapping_array`,
+			selector:  `$[7:10]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `array_slice_on_object`,
+			selector:  `$[1:3]`,
+			document:  `{":": 42, "more": "string", "a": 1, "b": 2, "c": 3}`,
+			consensus: `[]`,
+		},
+		{
+			name:      `array_slice_on_partially_overlapping_array`,
+			selector:  `$[1:10]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["second", "third"]`,
+		},
+		{
+			name:      `array_slice_with_open_end`,
+			selector:  `$[1:]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["second", "third", "forth", "fifth"]`,
+		},
+		{
+			name:      `array_slice_with_open_start`,
+			selector:  `$[:2]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "second"]`,
+		},
+		{
+			name:      `array_slice_with_open_start_and_end`,
+			selector:  `$[:]`,
+			document:  `["first", "second"]`,
+			consensus: `["first", "second"]`,
+		},
+		{
+			name:      `array_slice_with_open_start_and_end_and_step_empty`,
+			selector:  `$[::]`,
+			document:  `["first", "second"]`,
+			consensus: `["first", "second"]`,
+		},
+		{
+			name:      `array_slice_with_range_of_-1`,
+			selector:  `$[2:1]`,
+			document:  `["first", "second", "third", "forth"]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `array_slice_with_range_of_0`,
+			selector:  `$[0:0]`,
+			document:  `["first", "second"]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `array_slice_with_range_of_1`,
+			selector:  `$[0:1]`,
+			document:  `["first", "second"]`,
+			consensus: `["first"]`,
+		},
+		{
+			name:      `array_slice_with_start_-1_and_open_end`,
+			selector:  `$[-1:]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["third"]`,
+		},
+		{
+			name:      `array_slice_with_start_-2_and_open_end`,
+			selector:  `$[-2:]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["second", "third"]`,
+		},
+		{
+			name:      `array_slice_with_start_large_negative_number_and_open_end_on_short_array`,
+			selector:  `$[-4:]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["first", "second", "third"]`,
+		},
+		{
+			name:      `array_slice_with_step`,
+			selector:  `$[0:3:2]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "third"]`,
+		},
+		{
+			name:      `array_slice_with_step_1`,
+			selector:  `$[0:3:1]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "second", "third"]`,
+		},
+		{
+			name:      `array_slice_with_step_and_leading_zeros`,
+			selector:  `$[010:024:010]`,
+			document:  `[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]`,
+			consensus: `[10, 20]`,
+		},
+		{
+			name:      `array_slice_with_step_but_end_not_aligned`,
+			selector:  `$[0:4:2]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "third"]`,
+		},
+		{
+			name:      `array_slice_with_step_empty`,
+			selector:  `$[1:3:]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["second", "third"]`,
+		},
+		{
+			name:      `array_slice_with_step_only`,
+			selector:  `$[::2]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first", "third", "fifth"]`,
+		},
+		{
+			name:      `bracket_notation`,
+			selector:  `$['key']`,
+			document:  `{"key": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_after_recursive_descent`,
+			selector:  `$..[0]`,
+			document:  `["first", {"key": ["first nested", {"more": [{"nested": ["deepest", "second"]}, ["more", "values"]]}]}]`,
+			consensus: `["first", "first nested", {"nested": ["deepest", "second"]}, "more", "deepest"]`,
+			// consensus: `["deepest", "first nested", "first", "more", {"nested": ["deepest", "second"]}]`,
+		},
+		{
+			name:      `bracket_notation_with_dot`,
+			selector:  `$['two.some']`,
+			document:  `{"one": {"key": "value"}, "two": {"some": "more", "key": "other value"}, "two.some": "42"}`,
+			consensus: `["42"]`,
+		},
+		{
+			name:      `bracket_notation_with_double_quotes`,
+			selector:  `$["key"]`,
+			document:  `{"key": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_empty_string`,
+			selector:  `$['']`,
+			document:  `{"": 42, "''": 123, "\"\"": 222}`,
+			consensus: `[42]`,
+		},
+		{
+			name:      `bracket_notation_with_number`,
+			selector:  `$[2]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["third"]`,
+		},
+		{
+			name:      `bracket_notation_with_number_-1`,
+			selector:  `$[-1]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["third"]`,
+		},
+		{
+			name:      `bracket_notation_with_number_0`,
+			selector:  `$[0]`,
+			document:  `["first", "second", "third", "forth", "fifth"]`,
+			consensus: `["first"]`,
+		},
+		{
+			name:      `bracket_notation_with_number_after_dot_notation_with_wildcard_on_nested_arrays_with_different_length`,
+			selector:  `$.*[1]`,
+			document:  `[[1], [2, 3]]`,
+			consensus: `[3]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_array_slice_literal`,
+			selector:  `$[':']`,
+			document:  `{":": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_closing_bracket_literal`,
+			selector:  `$[']']`,
+			document:  `{"]": 42}`,
+			consensus: `[42]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_current_object_literal`,
+			selector:  `$['@']`,
+			document:  `{"@": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_dot_literal`,
+			selector:  `$['.']`,
+			document:  `{".": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_dot_wildcard`,
+			selector:  `$['.*']`,
+			document:  `{"key": 42, ".*": 1, "": 10}`,
+			consensus: `[1]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_double_quote_literal`,
+			selector:  `$['"']`,
+			document:  `{"\"": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_number_on_object`,
+			selector:  `$['0']`,
+			document:  `{"0": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_root_literal`,
+			selector:  `$['$']`,
+			document:  `{"$": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_union_literal`,
+			selector:  `$[',']`,
+			document:  `{",": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_quoted_wildcard_literal`,
+			selector:  `$['*']`,
+			document:  `{"*": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `bracket_notation_with_string_including_dot_wildcard`,
+			selector:  `$['ni.*']`,
+			document:  `{"nice": 42, "ni.*": 1, "mice": 100}`,
+			consensus: `[1]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_after_array_slice`,
+			selector:  `$[0:2][*]`,
+			document:  `[[1, 2], ["a", "b"], [0, 0]]`,
+			consensus: `[1, 2, "a", "b"]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_after_dot_notation_after_bracket_notation_with_wildcard`,
+			selector:  `$[*].bar[*]`,
+			document:  `[{"bar": [42]}]`,
+			consensus: `[42]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_after_recursive_descent`,
+			selector:  `$..[*]`,
+			document:  `{"key": "value", "another key": {"complex": "string", "primitives": [0, 1]}}`,
+			consensus: `[{"complex": "string", "primitives": [0, 1]}, "value", "string", [0, 1], 0, 1]`,
+			// consensus: `["string", "value", 0, 1, [0, 1], {"complex": "string", "primitives": [0, 1]}]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_on_array`,
+			selector:  `$[*]`,
+			document:  `["string", 42, {"key": "value"}, [0, 1]]`,
+			consensus: `["string", 42, {"key": "value"}, [0, 1]]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_on_empty_array`,
+			selector:  `$[*]`,
+			document:  `[]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_on_empty_object`,
+			selector:  `$[*]`,
+			document:  `{}`,
+			consensus: `[]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_on_null_value_array`,
+			selector:  `$[*]`,
+			document:  `[40, null, 42]`,
+			consensus: `[40, null, 42]`,
+		},
+		{
+			name:      `bracket_notation_with_wildcard_on_object`,
+			selector:  `$[*]`,
+			document:  `{"some": "string", "int": 42, "object": {"key": "value"}, "array": [0, 1]}`,
+			consensus: `[[0, 1], 42, {"key": "value"}, "string"]`,
+			// consensus: `["string", 42, [0, 1], {"key": "value"}]`,
+		},
+		{
+			name:      `dot_notation`,
+			selector:  `$.key`,
+			document:  `{"key": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_after_bracket_notation_with_wildcard`,
+			selector:  `$[*].a`,
+			document:  `[{"a": 1}, {"a": 1}]`,
+			consensus: `[1, 1]`,
+		},
+		{
+			name:      `dot_notation_after_bracket_notation_with_wildcard_on_one_matching`,
+			selector:  `$[*].a`,
+			document:  `[{"a": 1}]`,
+			consensus: `[1]`,
+		},
+		{
+			name:      `dot_notation_after_bracket_notation_with_wildcard_on_some_matching`,
+			selector:  `$[*].a`,
+			document:  `[{"a": 1}, {"b": 1}]`,
+			consensus: `[1]`,
+		},
+		{
+			name:      `dot_notation_after_filter_expression`,
+			selector:  `$[?(@.id==42)].name`,
+			document:  `[{"id": 42, "name": "forty-two"}, {"id": 1, "name": "one"}]`,
+			consensus: `["forty-two"]`,
+		},
+		{
+			name:      `dot_notation_after_recursive_descent`,
+			selector:  `$..key`,
+			document:  `{"object": {"key": "value", "array": [{"key": "something"}, {"key": {"key": "russian dolls"}}]}, "key": "top"}`,
+			consensus: `["top", "value", "something", {"key": "russian dolls"}, "russian dolls"]`,
+			// consensus: `["russian dolls", "something", "top", "value", {"key": "russian dolls"}]`,
+		},
+		{
+			name:      `dot_notation_after_recursive_descent_after_dot_notation`,
+			selector:  `$.store..price`,
+			document:  `{"store": {"book": [{"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95}, {"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99}, {"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99}, {"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}], "bicycle": {"color": "red", "price": 19.95}}}`,
+			consensus: `[19.95, 8.95, 12.99, 8.99, 22.99]`,
+			// consensus: `[12.99, 19.95, 22.99, 8.95, 8.99]`,
+		},
+		{
+			name:      `dot_notation_after_union`,
+			selector:  `$[0,2].key`,
+			document:  `[{"key": "ey"}, {"key": "bee"}, {"key": "see"}]`,
+			consensus: `["ey", "see"]`,
+		},
+		{
+			name:      `dot_notation_after_union_with_keys`,
+			selector:  `$['one','three'].key`,
+			document:  `{"one": {"key": "value"}, "two": {"k": "v"}, "three": {"some": "more", "key": "other value"}}`,
+			consensus: `["value", "other value"]`,
+		},
+		{
+			name:      `dot_notation_on_array_value`,
+			selector:  `$.key`,
+			document:  `{"key": ["first", "second"]}`,
+			consensus: `[["first", "second"]]`,
+		},
+		{
+			name:      `dot_notation_on_empty_object_value`,
+			selector:  `$.key`,
+			document:  `{"key": {}}`,
+			consensus: `[{}]`,
+		},
+		{
+			name:      `dot_notation_on_null_value`,
+			selector:  `$.key`,
+			document:  `{"key": null}`,
+			consensus: `[null]`,
+		},
+		{
+			name:      `dot_notation_with_dash`,
+			selector:  `$.key-dash`,
+			document:  `{"key-dash": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_with_key_named_in`,
+			selector:  `$.in`,
+			document:  `{"in": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_with_key_named_null`,
+			selector:  `$.null`,
+			document:  `{"null": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_with_key_named_true`,
+			selector:  `$.true`,
+			document:  `{"true": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_with_non_ASCII_key`,
+			selector:  `$.屬性`,
+			document:  `{"\u5c6c\u6027": "value"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `dot_notation_with_number_on_object`,
+			selector:  `$.2`,
+			document:  `{"a": "first", "2": "second", "b": "third"}`,
+			consensus: `["second"]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_after_dot_notation_after_dot_notation_with_wildcard`,
+			selector:  `$.*.bar.*`,
+			document:  `[{"bar": [42]}]`,
+			consensus: `[42]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_after_dot_notation_with_wildcard_on_nested_arrays`,
+			selector:  `$.*.*`,
+			document:  `[[1, 2, 3], [4, 5, 6]]`,
+			consensus: `[1, 2, 3, 4, 5, 6]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_after_recursive_descent`,
+			selector:  `$..*`,
+			document:  `{"key": "value", "another key": {"complex": "string", "primitives": [0, 1]}}`,
+			consensus: `[{"complex": "string", "primitives": [0, 1]}, "value", "string", [0, 1], 0, 1]`,
+			// consensus: `["string", "value", 0, 1, [0, 1], {"complex": "string", "primitives": [0, 1]}]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_after_recursive_descent_on_null_value_array`,
+			selector:  `$..*`,
+			document:  `[40, null, 42]`,
+			consensus: `[40, null, 42]`,
+			// consensus: `[40, 42, null]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_after_recursive_descent_on_scalar`,
+			selector:  `$..*`,
+			document:  `42`,
+			consensus: `[]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_on_array`,
+			selector:  `$.*`,
+			document:  `["string", 42, {"key": "value"}, [0, 1]]`,
+			consensus: `["string", 42, {"key": "value"}, [0, 1]]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_on_empty_array`,
+			selector:  `$.*`,
+			document:  `[]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_on_empty_object`,
+			selector:  `$.*`,
+			document:  `{}`,
+			consensus: `[]`,
+		},
+		{
+			name:      `dot_notation_with_wildcard_on_object`,
+			selector:  `$.*`,
+			document:  `{"some": "string", "int": 42, "object": {"key": "value"}, "array": [0, 1]}`,
+			consensus: `[[0, 1], 42, {"key": "value"}, "string"]`,
+			// consensus: `["string", 42, [0, 1], {"key": "value"}]`,
+		},
+		{
+			name:      `filter_expression_with_bracket_notation`,
+			selector:  `$[?(@['key']==42)]`,
+			document:  `[{"key": 0}, {"key": 42}, {"key": -1}, {"key": 41}, {"key": 43}, {"key": 42.0001}, {"key": 41.9999}, {"key": 100}, {"some": "value"}]`,
+			consensus: `[{"key": 42}]`,
+		},
+		{
+			name:      `filter_expression_with_bracket_notation_and_current_object_literal`,
+			selector:  `$[?(@['@key']==42)]`,
+			document:  `[{"@key": 0}, {"@key": 42}, {"key": 42}, {"@key": 43}, {"some": "value"}]`,
+			consensus: `[{"@key": 42}]`,
+		},
+		{
+			name:      `filter_expression_with_bracket_notation_with_number`,
+			selector:  `$[?(@[1]=='b')]`,
+			document:  `[["a", "b"], ["x", "y"]]`,
+			consensus: `[["a", "b"]]`,
+		},
+		{
+			name:      `filter_expression_with_equals_on_array_without_match`,
+			selector:  `$[?(@.key==43)]`,
+			document:  `[{"key": 42}]`,
+			consensus: `[]`,
+		},
+		{
+			name:      `filter_expression_with_equals_string_with_current_object_literal`,
+			selector:  `$[?(@.key=="hi@example.com")]`,
+			document:  `[{"key": "some"}, {"key": "value"}, {"key": "hi@example.com"}]`,
+			consensus: `[{"key": "hi@example.com"}]`,
+		},
+		{
+			name:      `filter_expression_with_equals_string_with_dot_literal`,
+			selector:  `$[?(@.key=="some.value")]`,
+			document:  `[{"key": "some"}, {"key": "value"}, {"key": "some.value"}]`,
+			consensus: `[{"key": "some.value"}]`,
+		},
+		{
+			name:      `filter_expression_with_equals_string_with_single_quotes`,
+			selector:  `$[?(@.key=='value')]`,
+			document:  `[{"key": "some"}, {"key": "value"}]`,
+			consensus: `[{"key": "value"}]`,
+		},
+		{
+			name:      `root`,
+			selector:  `$`,
+			document:  `{"key": "value", "another key": {"complex": ["a", 1]}}`,
+			consensus: `[{"another key": {"complex": ["a", 1]}, "key": "value"}]`,
+		},
+		{
+			name:      `root_on_scalar`,
+			selector:  `$`,
+			document:  `42`,
+			consensus: `[42]`,
+		},
+		{
+			name:      `root_on_scalar_false`,
+			selector:  `$`,
+			document:  `false`,
+			consensus: `[false]`,
+		},
+		{
+			name:      `root_on_scalar_true`,
+			selector:  `$`,
+			document:  `true`,
+			consensus: `[true]`,
+		},
+		{
+			name:      `union`,
+			selector:  `$[0,1]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["first", "second"]`,
+		},
+		{
+			name:      `union_with_keys`,
+			selector:  `$['key','another']`,
+			document:  `{"key": "value", "another": "entry"}`,
+			consensus: `["value", "entry"]`,
+		},
+		{
+			name:      `union_with_keys_after_bracket_notation`,
+			selector:  `$[0]['c','d']`,
+			document:  `[{"c": "cc1", "d": "dd1", "e": "ee1"}, {"c": "cc2", "d": "dd2", "e": "ee2"}]`,
+			consensus: `["cc1", "dd1"]`,
+		},
+		{
+			name:      `union_with_keys_on_object_without_key`,
+			selector:  `$['missing','key']`,
+			document:  `{"key": "value", "another": "entry"}`,
+			consensus: `["value"]`,
+		},
+		{
+			name:      `union_with_numbers_in_decreasing_order`,
+			selector:  `$[4,1]`,
+			document:  `[1, 2, 3, 4, 5]`,
+			consensus: `[5, 2]`,
+		},
+		{
+			name:      `union_with_spaces`,
+			selector:  `$[ 0 , 1 ]`,
+			document:  `["first", "second", "third"]`,
+			consensus: `["first", "second"]`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			nodes, err := JSONPath([]byte(test.document), test.selector)
+			if err != nil {
+				t.Errorf("JSONPath() error = %v. got = %v", err, nodes)
+				return
+			}
+
+			results := make([]interface{}, 0)
+			for _, node := range nodes {
+				value, err := node.Unpack()
+				if err != nil {
+					t.Errorf("Unpack(): unexpected error: %v", err)
+					return
+				}
+				results = append(results, value)
+			}
+
+			expected, err := Must(Unmarshal([]byte(test.consensus))).Unpack()
+			if err != nil {
+				t.Errorf("Unpack(): unexpected error: %v", err)
+				return
+			}
+
+			if !reflect.DeepEqual(expected, results) {
+				t.Errorf("JSONPath(): wrong result:\nSelector: %#+v\nDocument: %s\nExpected: %#+v\nActual:   %#+v", test.selector, test.document, expected, results)
+			}
+		})
 	}
 }

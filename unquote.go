@@ -35,14 +35,14 @@ func getu4(s []byte) rune {
 
 // unquote converts a quoted JSON string literal s into an actual string t.
 // The rules are different than for Go, so cannot use strconv.Unquote.
-func unquote(s []byte) (t string, ok bool) {
-	s, ok = unquoteBytes(s)
+func unquote(s []byte, border byte) (t string, ok bool) {
+	s, ok = unquoteBytes(s, border)
 	t = string(s)
 	return
 }
 
-func unquoteBytes(s []byte) (t []byte, ok bool) {
-	if len(s) < 2 || s[0] != '"' || s[len(s)-1] != '"' {
+func unquoteBytes(s []byte, border byte) (t []byte, ok bool) {
+	if len(s) < 2 || s[0] != border || s[len(s)-1] != border {
 		return
 	}
 	s = s[1 : len(s)-1]
@@ -53,7 +53,7 @@ func unquoteBytes(s []byte) (t []byte, ok bool) {
 	r := 0
 	for r < len(s) {
 		c := s[r]
-		if c == '\\' || c == '"' || c < ' ' {
+		if c == '\\' || c == border || c < ' ' {
 			break
 		}
 		if c < utf8.RuneSelf {
@@ -90,7 +90,7 @@ func unquoteBytes(s []byte) (t []byte, ok bool) {
 			switch s[r] {
 			default:
 				return
-			case '"', '\\', '/', '\'':
+			case border, '\\', '/', '\'':
 				b[w] = s[r]
 				r++
 				w++
@@ -136,7 +136,7 @@ func unquoteBytes(s []byte) (t []byte, ok bool) {
 			}
 
 		// Quote, control characters are invalid.
-		case c == '"', c < ' ':
+		case c == border, c < ' ':
 			return
 
 		// ASCII
