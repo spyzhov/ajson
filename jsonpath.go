@@ -263,16 +263,20 @@ func ParseJSONPath(path string) (result []string, err error) {
 				c = buf.data[buf.index]
 				switch c {
 				case quote:
-					if flag&fQuote == 0 {
-						flag &= fQuote
-					} else if !buf.backslash() {
-						flag ^= fQuote
+					if flag&fQuotes == 0 {
+						if flag&fQuote == 0 {
+							flag |= fQuote
+						} else if !buf.backslash() {
+							flag ^= fQuote
+						}
 					}
 				case quotes:
-					if flag&fQuotes == 0 {
-						flag &= fQuotes
-					} else if !buf.backslash() {
-						flag ^= fQuotes
+					if flag&fQuote == 0 {
+						if flag&fQuotes == 0 {
+							flag |= fQuotes
+						} else if !buf.backslash() {
+							flag ^= fQuotes
+						}
 					}
 				case bracketL:
 					if flag == 0 && !buf.backslash() {
@@ -391,10 +395,6 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 					}
 
 					if ikeys[2] > 0 {
-						if ikeys[0] > ikeys[1] {
-							ikeys[0], ikeys[1] = ikeys[1], ikeys[0]
-						}
-
 						for i := ikeys[0]; i < ikeys[1]; i += ikeys[2] {
 							value, ok := element.children[strconv.Itoa(i)]
 							if ok {
@@ -402,10 +402,6 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							}
 						}
 					} else if ikeys[2] < 0 {
-						if ikeys[0] < ikeys[1] {
-							ikeys[0], ikeys[1] = ikeys[1], ikeys[0]
-						}
-
 						for i := ikeys[0]; i > ikeys[1]; i += ikeys[2] {
 							value, ok := element.children[strconv.Itoa(i)]
 							if ok {
@@ -464,7 +460,6 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 						if err != nil {
 							return nil, errorRequest("wrong type convert: %s", err.Error())
 						}
-						key, _ = str(key)
 						value = element.children[key]
 					case Numeric:
 						num, err = temp.getInteger()
@@ -680,7 +675,7 @@ func getNumberIndex(element *Node, input string, Default float64) (result float6
 }
 
 func getPositiveIndex(index int, count int) int {
-	for index < 0 {
+	if index < 0 {
 		index += count
 	}
 	return index

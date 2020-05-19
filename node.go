@@ -305,7 +305,7 @@ func (n *Node) Value() (value interface{}, err error) {
 			n.value.Store(value)
 		case String:
 			var ok bool
-			value, ok = unquote(n.Source())
+			value, ok = unquote(n.Source(), quotes)
 			if !ok {
 				return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
 			}
@@ -487,7 +487,7 @@ func (n *Node) Unpack() (value interface{}, err error) {
 		}
 	case String:
 		var ok bool
-		value, ok = unquote(n.Source())
+		value, ok = unquote(n.Source(), quotes)
 		if !ok {
 			return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
 		}
