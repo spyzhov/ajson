@@ -11,33 +11,33 @@ func (n *Node) IsDirty() bool {
 }
 
 // SetNull update current node value with Null value
-func (n *Node) SetNull() {
-	n.update(Null, nil)
+func (n *Node) SetNull() error {
+	return n.update(Null, nil)
 }
 
 // SetNumeric update current node value with Numeric value
-func (n *Node) SetNumeric(value float64) {
-	n.update(Numeric, value)
+func (n *Node) SetNumeric(value float64) error {
+	return n.update(Numeric, value)
 }
 
 // SetString update current node value with String value
-func (n *Node) SetString(value string) {
-	n.update(String, value)
+func (n *Node) SetString(value string) error {
+	return n.update(String, value)
 }
 
 // SetBool update current node value with Bool value
-func (n *Node) SetBool(value bool) {
-	n.update(Bool, value)
+func (n *Node) SetBool(value bool) error {
+	return n.update(Bool, value)
 }
 
 // SetArray update current node value with Array value
-func (n *Node) SetArray(value []*Node) {
-	n.update(Array, value)
+func (n *Node) SetArray(value []*Node) error {
+	return n.update(Array, value)
 }
 
 // SetObject update current node value with Object value
-func (n *Node) SetObject(value map[string]*Node) {
-	n.update(Object, value)
+func (n *Node) SetObject(value map[string]*Node) error {
+	return n.update(Object, value)
 }
 
 // AppendArray append current Array node values with Node values
@@ -116,16 +116,76 @@ func (n *Node) Delete() error {
 	return n.parent.remove(n)
 }
 
-// update stored value, without validations
-func (n *Node) update(_type NodeType, value interface{}) {
+// update stored value, with validations
+func (n *Node) update(_type NodeType, value interface{}) error {
+	// validate
+	err := n.validate(_type, value)
+	if err != nil {
+		return err
+	}
+	// update
 	n.mark()
 	n.clear()
 
 	atomic.StoreInt32((*int32)(&n._type), int32(_type))
 	n.value = atomic.Value{}
 	if value != nil {
+		switch _type {
+		case Array:
+			nodes := value.([]*Node)
+			n.children = make(map[string]*Node, len(nodes))
+			for _, node := range nodes {
+				if err = n.appendNode(nil, node); err != nil {
+					return err
+				}
+			}
+		case Object:
+			nodes := value.(map[string]*Node)
+			n.children = make(map[string]*Node, len(nodes))
+			for key, node := range nodes {
+				if err = n.appendNode(&key, node); err != nil {
+					return err
+				}
+			}
+		}
 		n.value.Store(value)
 	}
+	return nil
+}
+
+// validate stored value, before update
+func (n *Node) validate(_type NodeType, value interface{}) error {
+	switch _type {
+	case Null:
+		if value != nil {
+			return errorType()
+		}
+	case Numeric:
+		if _, ok := value.(float64); !ok {
+			return errorType()
+		}
+	case String:
+		if _, ok := value.(string); !ok {
+			return errorType()
+		}
+	case Bool:
+		if _, ok := value.(bool); !ok {
+			return errorType()
+		}
+	case Array:
+		if value != nil {
+			if _, ok := value.([]*Node); !ok {
+				return errorType()
+			}
+		}
+	case Object:
+		if value != nil {
+			if _, ok := value.(map[string]*Node); !ok {
+				return errorType()
+			}
+		}
+	}
+	return nil
 }
 
 // update stored value, without validations
