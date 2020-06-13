@@ -1357,3 +1357,19 @@ func TestNode_update(t *testing.T) {
 		})
 	}
 }
+
+func TestNode_update_fail(t *testing.T) {
+	i0 := 0
+	node := NullNode("")
+	parent := NullNode("")
+	broken := NullNode("0")
+	broken.index = &i0
+	broken.parent = parent
+
+	if err := node.SetArray([]*Node{broken}); err == nil {
+		t.Errorf("SetArray() error is nil")
+	}
+	if err := node.SetObject(map[string]*Node{"foo": broken}); err == nil {
+		t.Errorf("SetObject() error is nil")
+	}
+}
