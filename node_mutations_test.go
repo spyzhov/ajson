@@ -78,8 +78,10 @@ func TestNode_SetNull(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetNull()
-			if value, err := test.node.GetNull(); err != nil {
+			err := test.node.SetNull()
+			if err != nil {
+				t.Errorf("SetNull returns error: %s", err)
+			} else if value, err := test.node.GetNull(); err != nil {
 				t.Errorf("GetNull returns error: %s", err)
 			} else if value != nil {
 				t.Errorf("GetNull returns wrong value: %v != nil", value)
@@ -162,8 +164,10 @@ func TestNode_SetNumeric(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetNumeric(expected)
-			if value, err := test.node.GetNumeric(); err != nil {
+			err := test.node.SetNumeric(expected)
+			if err != nil {
+				t.Errorf("SetNumeric returns error: %s", err)
+			} else if value, err := test.node.GetNumeric(); err != nil {
 				t.Errorf("GetNumeric returns error: %s", err)
 			} else if value != expected {
 				t.Errorf("GetNumeric returns wrong value: %v != %v", value, expected)
@@ -246,8 +250,10 @@ func TestNode_SetString(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetString(expected)
-			if value, err := test.node.GetString(); err != nil {
+			err := test.node.SetString(expected)
+			if err != nil {
+				t.Errorf("SetString returns error: %s", err)
+			} else if value, err := test.node.GetString(); err != nil {
 				t.Errorf("GetString returns error: %s", err)
 			} else if value != expected {
 				t.Errorf("GetString returns wrong value: %v != %v", value, expected)
@@ -330,8 +336,10 @@ func TestNode_SetBool(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetBool(expected)
-			if value, err := test.node.GetBool(); err != nil {
+			err := test.node.SetBool(expected)
+			if err != nil {
+				t.Errorf("SetBool returns error: %s", err)
+			} else if value, err := test.node.GetBool(); err != nil {
 				t.Errorf("GetBool returns error: %s", err)
 			} else if value != expected {
 				t.Errorf("GetBool returns wrong value: %v != %v", value, expected)
@@ -419,8 +427,10 @@ func TestNode_SetArray(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetArray(expected)
-			if value, err := test.node.GetArray(); err != nil {
+			err := test.node.SetArray(expected)
+			if err != nil {
+				t.Errorf("SetArray returns error: %s", err)
+			} else if value, err := test.node.GetArray(); err != nil {
 				t.Errorf("GetArray returns error: %s", err)
 			} else if !reflect.DeepEqual(value, expected) {
 				t.Errorf("GetArray returns wrong value: %v != %v", value, expected)
@@ -430,9 +440,6 @@ func TestNode_SetArray(t *testing.T) {
 			}
 			if !test.node.IsDirty() {
 				t.Errorf("modified Node is not dirty")
-			}
-			if test.node.children != nil {
-				t.Errorf("modified Node has children")
 			}
 		})
 	}
@@ -506,8 +513,10 @@ func TestNode_SetObject(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.node.SetObject(expected)
-			if value, err := test.node.GetObject(); err != nil {
+			err := test.node.SetObject(expected)
+			if err != nil {
+				t.Errorf("SetArray returns error: %s", err)
+			} else if value, err := test.node.GetObject(); err != nil {
 				t.Errorf("GetObject returns error: %s", err)
 			} else if !reflect.DeepEqual(value, expected) {
 				t.Errorf("GetObject returns wrong value: %v != %v", value, expected)
@@ -517,9 +526,6 @@ func TestNode_SetObject(t *testing.T) {
 			}
 			if !test.node.IsDirty() {
 				t.Errorf("modified Node is not dirty")
-			}
-			if test.node.children != nil {
-				t.Errorf("modified Node has children")
 			}
 		})
 	}
@@ -541,7 +547,10 @@ func TestNode_mutations(t *testing.T) {
 		t.Errorf("Marshal returns wrong value: %v", string(value))
 	}
 
-	root.SetNull()
+	err = root.SetNull()
+	if err != nil {
+		t.Errorf("SetNull returns error: %s", err)
+	}
 	if value, err := Marshal(node); err != nil {
 		t.Errorf("Marshal returns error: %s", err)
 	} else if string(value) != `"bar"` {
@@ -555,7 +564,10 @@ func TestNode_mutations(t *testing.T) {
 		t.Errorf("Marshal returns wrong value: %v", string(value))
 	}
 
-	newRoot.SetNull()
+	err = newRoot.SetNull()
+	if err != nil {
+		t.Errorf("SetNull returns error: %s", err)
+	}
 	if value, err := Marshal(node); err != nil {
 		t.Errorf("Marshal returns error: %s", err)
 	} else if string(value) != `"bar"` {
@@ -1023,5 +1035,325 @@ func TestNode_DeleteNode(t *testing.T) {
 		`{"biz":"zip","foo":{"bar":["baz",1,null]}}`,
 	}) {
 		t.Errorf("Marshal returns wrong value: %s", string(value))
+	}
+}
+
+func TestIssue22_SetArray_not_working(t *testing.T) {
+	data := []byte(`{"key": [1, 2, 3]}`)
+	node := NumericNode("", 4)
+	expected := `{"key":[1,2,4]}`
+
+	root := Must(Unmarshal(data))
+	parent := root.MustKey("key")
+
+	vals := parent.MustArray()
+	vals[2] = node
+	err := parent.SetArray(vals)
+	if err != nil {
+		t.Errorf("SetArray returns error: %s", err)
+	}
+
+	actual, err := Marshal(root)
+	if err != nil {
+		t.Errorf("error on Marshal(): %s", err)
+	} else if string(actual) != expected {
+		t.Errorf("actual != expected: \n'%s'\n'%s'", string(actual), expected)
+	}
+}
+
+func TestNode_SetArray1(t *testing.T) {
+	tests := []struct {
+		name     string
+		json     string
+		path     string
+		value    []*Node
+		wantErr  bool
+		expected string
+	}{
+		{
+			name:     "null -> []",
+			json:     `null`,
+			path:     `$`,
+			value:    []*Node{},
+			wantErr:  false,
+			expected: `[]`,
+		},
+		{
+			name:     "null -> [1,2,3]",
+			json:     `null`,
+			path:     `$`,
+			value:    []*Node{NumericNode("", 1), NumericNode("", 2), NumericNode("", 3)},
+			wantErr:  false,
+			expected: `[1,2,3]`,
+		},
+		{
+			name:     `{"key": null} -> {"key": [1,2,3]}`,
+			json:     `{"key": null}`,
+			path:     `$.key`,
+			value:    []*Node{NumericNode("", 1), NumericNode("", 2), NumericNode("", 3)},
+			wantErr:  false,
+			expected: `{"key":[1,2,3]}`,
+		},
+		{
+			name:     `{"key": [1,2,3]} -> {"key": [1,4,3]}`,
+			json:     `{"key": [1,2,3]}`,
+			path:     `$.key`,
+			value:    []*Node{NumericNode("", 1), NumericNode("", 4), NumericNode("", 3)},
+			wantErr:  false,
+			expected: `{"key":[1,4,3]}`,
+		},
+		{
+			name:     `{"key": [[1,2,3],2,3]} -> {"key": [[4,5,6],2,3]}`,
+			json:     `{"key": [[1,2,3],2,3]}`,
+			path:     `$.key[0]`,
+			value:    []*Node{NumericNode("", 4), NumericNode("", 5), NumericNode("", 6)},
+			wantErr:  false,
+			expected: `{"key":[[4,5,6],2,3]}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := Must(Unmarshal([]byte(tt.json)))
+			nodes, err := root.JSONPath(tt.path)
+			if err != nil {
+				t.Errorf("JSONPath() error = %v", err)
+			}
+			if len(nodes) != 1 {
+				t.Errorf("JSONPath() wrong response")
+			}
+			if err := nodes[0].SetArray(tt.value); (err != nil) != tt.wantErr {
+				t.Errorf("SetArray() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+
+			actual, err := Marshal(root)
+			if err != nil {
+				t.Errorf("Marshal() error = %v", err)
+			}
+			if string(actual) != tt.expected {
+				t.Errorf("actual != expected: \n'%s'\n'%s'", string(actual), tt.expected)
+			}
+		})
+	}
+}
+
+func TestNode_SetObject1(t *testing.T) {
+	tests := []struct {
+		name     string
+		json     string
+		path     string
+		value    map[string]*Node
+		wantErr  bool
+		expected string
+	}{
+		{
+			name:     "null -> {}",
+			json:     `null`,
+			path:     `$`,
+			value:    map[string]*Node{},
+			wantErr:  false,
+			expected: `{}`,
+		},
+		{
+			name:     `null -> {"foo": "bar"}`,
+			json:     `null`,
+			path:     `$`,
+			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			wantErr:  false,
+			expected: `{"foo":"bar"}`,
+		},
+		{
+			name:     `{"key": null} -> {"key": {"foo": "bar"}}`,
+			json:     `{"key": null}`,
+			path:     `$.key`,
+			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			wantErr:  false,
+			expected: `{"key":{"foo":"bar"}}`,
+		},
+		{
+			name:     `{"key": [1,2,3]} -> {"key": {"foo":"bar"}}`,
+			json:     `{"key": [1,2,3]}`,
+			path:     `$.key`,
+			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			wantErr:  false,
+			expected: `{"key":{"foo":"bar"}}`,
+		},
+		{
+			name:     `{"key": [[1,2,3],2,3]} -> {"key": [{"foo":"bar"},2,3]}`,
+			json:     `{"key": [[1,2,3],2,3]}`,
+			path:     `$.key[0]`,
+			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			wantErr:  false,
+			expected: `{"key":[{"foo":"bar"},2,3]}`,
+		},
+		{
+			name:     `{"key": {"baz": [null]}} -> {"key": {"baz": [{"foo":"bar"}]}}`,
+			json:     `{"key": {"baz": [null]}}`,
+			path:     `$.key.baz[0]`,
+			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			wantErr:  false,
+			expected: `{"key":{"baz":[{"foo":"bar"}]}}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := Must(Unmarshal([]byte(tt.json)))
+			nodes, err := root.JSONPath(tt.path)
+			if err != nil {
+				t.Errorf("JSONPath() error = %v", err)
+			}
+			if len(nodes) != 1 {
+				t.Errorf("JSONPath() wrong response")
+			}
+			if err := nodes[0].SetObject(tt.value); (err != nil) != tt.wantErr {
+				t.Errorf("SetObject() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+
+			actual, err := Marshal(root)
+			if err != nil {
+				t.Errorf("Marshal() error = %v", err)
+			}
+			if string(actual) != tt.expected {
+				t.Errorf("actual != expected: \n'%s'\n'%s'", string(actual), tt.expected)
+			}
+		})
+	}
+}
+
+func TestNode_update(t *testing.T) {
+	type args struct {
+		_type NodeType
+		value interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Null: success",
+			args: args{
+				_type: Null,
+				value: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Null: fail",
+			args: args{
+				_type: Null,
+				value: "string",
+			},
+			wantErr: true,
+		},
+		{
+			name: "String: success",
+			args: args{
+				_type: String,
+				value: "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "String: fail",
+			args: args{
+				_type: String,
+				value: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Numeric: success",
+			args: args{
+				_type: Numeric,
+				value: 1.1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "String: fail",
+			args: args{
+				_type: Numeric,
+				value: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Bool: success",
+			args: args{
+				_type: Bool,
+				value: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Bool: fail",
+			args: args{
+				_type: Bool,
+				value: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Array: success",
+			args: args{
+				_type: Array,
+				value: []*Node{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Array: success nil",
+			args: args{
+				_type: Array,
+				value: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Array: fail",
+			args: args{
+				_type: Array,
+				value: 1.1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Object: success",
+			args: args{
+				_type: Object,
+				value: map[string]*Node{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Object: success nil",
+			args: args{
+				_type: Object,
+				value: nil,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Object: fail",
+			args: args{
+				_type: Object,
+				value: 1.1,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			node := NullNode("")
+			if err := node.update(tt.args._type, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
 	}
 }
