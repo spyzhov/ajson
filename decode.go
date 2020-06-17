@@ -12,7 +12,7 @@ func UnmarshalSafe(data []byte) (root *Node, err error) {
 // Unmarshal parses the JSON-encoded data and return the root node of struct.
 //
 // Doesn't calculate values, just type of stored value. It will store link to the data, on all life long.
-func Unmarshal(data []byte) (root *Node, err error) {
+func UnmarshalOld(data []byte) (root *Node, err error) {
 	buf := newBuffer(data)
 	var (
 		last    byte
@@ -24,6 +24,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 	// main loop: detect all parts of json struct
 	for {
 		// detect type of element
+		buf.reset()
 		b, err = buf.first()
 		if err != nil {
 			break
@@ -85,7 +86,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 			if err != nil {
 				break
 			}
-			err = buf.string(quotes)
+			err = buf.string(quotes, false)
 			current.borders[1] = buf.index + 1
 			if err == nil {
 				err = buf.step()
@@ -203,7 +204,7 @@ func isCreatable(b byte, current *Node, last byte, key *string) bool {
 
 func getString(b *buffer) (*string, error) {
 	start := b.index
-	err := b.string(quotes)
+	err := b.string(quotes, false)
 	if err != nil {
 		return nil, err
 	}
