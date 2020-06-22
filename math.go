@@ -411,3 +411,10 @@ func numericFunction(name string, fn func(float float64) float64) Function {
 		return nil, errorRequest("function '%s' was called from non numeric node", name)
 	}
 }
+
+func mathFactorial(x uint) uint {
+	if x == 0 {
+		return 1
+	}
+	return x * mathFactorial(x-1)
+}

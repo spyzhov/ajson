@@ -111,6 +111,8 @@ func TestJsonPath(t *testing.T) {
 		{name: "calculated 3", path: "$..book[?(@.isbn)]", expected: "[$['store']['book'][2], $['store']['book'][3]]"},
 		{name: "calculated 4", path: "$..[?(@.price < factorial(3) + 3)]", expected: "[$['store']['book'][0], $['store']['book'][2]]"},
 		{name: "calculated 5", path: "$..[(1/0)]", wantErr: true},
+		{name: "calculated 6", path: "$[('store')][('bo'+'ok')][(@.length - 1)]", expected: "[$['store']['book'][3]]"},
+		{name: "calculated 7", path: "$[('store'+'')][('bo'+'ok')][(true)]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
 
 		{name: "$.store.book[*].author", path: "$.store.book[*].author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
 		{name: "$..author", path: "$..author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},

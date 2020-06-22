@@ -17,7 +17,7 @@ func TestBuffer_Token(t *testing.T) {
 		{name: "combined", value: "@['foo'].0.bar", index: 14, fail: false},
 		{name: "formula", value: "@['foo'].[(@.length - 1)].*", index: 27, fail: false},
 		{name: "filter", value: "@['foo'].[?(@.bar == 1 && @.baz < @.length)].*", index: 46, fail: false},
-		{name: "string", value: "@['foo)(]][[[.[?(@.bar \\' == 1 && < @.length)'].*", index: 49, fail: false},
+		{name: "string", value: `@['foo)(]]"[[[.[?(@.bar \' == 1 && < @.length)'].*`, index: 50, fail: false},
 
 		{name: "part 1", value: "@.foo+@.bar", index: 5, fail: false},
 		{name: "part 2", value: "@.foo && @.bar", index: 5, fail: false},
@@ -31,6 +31,7 @@ func TestBuffer_Token(t *testing.T) {
 
 		{name: "string 1", value: "'1'", index: 3, fail: false},
 		{name: "string 2", value: "'foo \\'bar '", index: 12, fail: false},
+		{name: "string 3", value: `"foo \"bar "`, index: 12, fail: false},
 
 		{name: "fail 1", value: "@.foo[", fail: true},
 		{name: "fail 2", value: "@.foo[(]", fail: true},
@@ -92,6 +93,8 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_9", value: "@.length+-1", expected: []string{"@.length", "-1", "+"}},
 		{name: "example_10", value: "@.length/e", expected: []string{"@.length", "e", "/"}},
 		{name: "example_11", value: "", expected: []string{}},
+		{name: "example_12", value: "123.456", expected: []string{"123.456"}},
+		{name: "example_13", value: " 123.456 ", expected: []string{"123.456"}},
 
 		{name: "1 /", value: "1 /", expected: []string{"1", "/"}},
 		{name: "1 + ", value: "1 + ", expected: []string{"1", "+"}},

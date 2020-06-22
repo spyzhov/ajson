@@ -10,6 +10,10 @@ type buffer struct {
 	data   []byte
 	length int
 	index  int
+
+	last  States
+	state States
+	class Classes
 }
 
 const __ = -1
@@ -62,6 +66,8 @@ func newBuffer(body []byte) (b *buffer) {
 	b = &buffer{
 		length: len(body),
 		data:   body,
+		last:   GO,
+		state:  GO,
 	}
 	return
 }
@@ -79,6 +85,10 @@ func (b *buffer) next() (c byte, err error) {
 		return 0, err
 	}
 	return b.data[b.index], nil
+}
+
+func (b *buffer) reset() {
+	b.last = GO
 }
 
 func (b *buffer) first() (c byte, err error) {
@@ -122,76 +132,73 @@ func (b *buffer) skipAny(s map[byte]bool) error {
 
 // if token is true - skip error from StateTransitionTable, just stop on unknown state
 func (b *buffer) numeric(token bool) error {
-	var (
-		last  = GO
-		state States
-		class Classes
-	)
+	if token {
+		b.last = GO
+	}
 	for ; b.index < b.length; b.index++ {
-		class = b.getClasses()
-		if class == __ {
+		b.class = b.getClasses(quotes)
+		if b.class == __ {
 			return b.errorSymbol()
 		}
-		state = StateTransitionTable[last][class]
-		if state == __ {
+		b.state = StateTransitionTable[b.last][b.class]
+		if b.state == __ {
 			if token {
 				break
 			}
 			return b.errorSymbol()
 		}
-		if state < __ {
+		if b.state < __ {
 			return nil
 		}
-		if state < MI || state > E3 {
+		if b.state < MI || b.state > E3 {
 			return nil
 		}
-		last = state
+		b.last = b.state
 	}
-	if last != ZE && last != IN && last != FR && last != E3 {
+	if b.last != ZE && b.last != IN && b.last != FR && b.last != E3 {
 		return b.errorSymbol()
 	}
 	return nil
 }
 
-func (b *buffer) getClasses() Classes {
-	return b.classes(AsciiClasses)
-}
-
-func (b *buffer) getQuoteClasses() Classes {
-	return b.classes(QuoteAsciiClasses)
-}
-
-func (b *buffer) classes(source [128]Classes) Classes {
+func (b *buffer) getClasses(search byte) Classes {
 	if b.data[b.index] >= 128 {
 		return C_ETC
 	}
-	return source[b.data[b.index]]
+	if search == quote {
+		return QuoteAsciiClasses[b.data[b.index]]
+	}
+	return AsciiClasses[b.data[b.index]]
 }
 
-func (b *buffer) string(search byte) error {
-	var (
-		last  = GO
-		state States
-		class Classes
-	)
-	for ; b.index < b.length; b.index++ {
-		if search == quote {
-			class = b.getQuoteClasses()
-		} else {
-			class = b.getClasses()
-		}
+func (b *buffer) getState() States {
+	b.last = b.state
+	b.class = b.getClasses(quotes)
+	if b.class == __ {
+		return __
+	}
+	b.state = StateTransitionTable[b.last][b.class]
+	return b.state
+}
 
-		if class == __ {
+func (b *buffer) string(search byte, token bool) error {
+	if token {
+		b.last = GO
+	}
+	for ; b.index < b.length; b.index++ {
+		b.class = b.getClasses(search)
+
+		if b.class == __ {
 			return b.errorSymbol()
 		}
-		state = StateTransitionTable[last][class]
-		if state == __ {
+		b.state = StateTransitionTable[b.last][b.class]
+		if b.state == __ {
 			return b.errorSymbol()
 		}
-		if state < __ {
+		if b.state < __ {
 			return nil
 		}
-		last = state
+		b.last = b.state
 	}
 	return b.errorSymbol()
 }
@@ -338,6 +345,7 @@ func (b *buffer) rpn() (result rpn, err error) {
 		stack    = make([]string, 0)
 	)
 	for {
+		b.reset()
 		c, err = b.first()
 		if err != nil {
 			break
@@ -391,22 +399,18 @@ func (b *buffer) rpn() (result rpn, err error) {
 			variable = true
 			start = b.index
 			err = b.numeric(true)
-			if err != nil && err != io.EOF {
+			if err != nil {
 				return nil, err
 			}
 			current = string(b.data[start:b.index])
 			result = append(result, current)
-			if err != nil {
-				err = nil
-			} else {
-				b.index--
-			}
+			b.index--
 		case c == quotes: // string
 			fallthrough
 		case c == quote: // string
 			variable = true
 			start = b.index
-			err = b.string(c)
+			err = b.string(c, true)
 			if err != nil {
 				return nil, b.errorEOF()
 			}
@@ -481,11 +485,9 @@ func (b *buffer) rpn() (result rpn, err error) {
 			break
 		}
 	}
-
-	if err != io.EOF {
-		return
+	if err == io.EOF {
+		err = nil // only io.EOF can be here
 	}
-	err = nil
 
 	for len(stack) > 0 {
 		temp = stack[len(stack)-1]
@@ -509,6 +511,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		variable bool
 	)
 	for {
+		b.reset()
 		c, err = b.first()
 		if err != nil {
 			break
@@ -550,17 +553,13 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			}
 			current = string(b.data[start:b.index])
 			result = append(result, current)
-			if err != nil {
-				err = nil
-			} else {
-				b.index--
-			}
+			b.index--
 		case c == quotes: // string
 			fallthrough
 		case c == quote: // string
 			variable = true
 			start = b.index
-			err = b.string(c)
+			err = b.string(c, true)
 			if err != nil {
 				return nil, b.errorEOF()
 			}
@@ -626,10 +625,9 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		}
 	}
 
-	if err != io.EOF {
-		return
+	if err == io.EOF {
+		err = nil
 	}
-	err = nil
 
 	return
 }
@@ -640,13 +638,6 @@ func (b *buffer) errorEOF() error {
 
 func (b *buffer) errorSymbol() error {
 	return errorSymbol(b)
-}
-
-func mathFactorial(x uint) uint {
-	if x == 0 {
-		return 1
-	}
-	return x * mathFactorial(x-1)
 }
 
 func _floats(left, right *Node) (lnum, rnum float64, err error) {

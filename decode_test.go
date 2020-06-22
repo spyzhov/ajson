@@ -65,8 +65,8 @@ type testCase struct {
 	value []byte
 }
 
-func simpleCorrupted(name string) testCase {
-	return testCase{name: name, input: []byte(name)}
+func simpleCorrupted(name string) *testCase {
+	return &testCase{name: name, input: []byte(name)}
 }
 
 func simpleValid(test *testCase, t *testing.T) {
@@ -92,7 +92,7 @@ func simpleInvalid(test *testCase, t *testing.T) {
 }
 
 func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "1", input: []byte("1"), _type: Numeric, value: []byte("1")},
 		{name: "-1", input: []byte("-1"), _type: Numeric, value: []byte("-1")},
 
@@ -127,13 +127,13 @@ func TestUnmarshal_NumericSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		simpleCorrupted("+1"),
 		simpleCorrupted("+1.1"),
 		simpleCorrupted("+1e1"),
@@ -155,13 +155,13 @@ func TestUnmarshal_NumericSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_StringSimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "blank", input: []byte("\"\""), _type: String, value: []byte("\"\"")},
 		{name: "char", input: []byte("\"c\""), _type: String, value: []byte("\"c\"")},
 		{name: "word", input: []byte("\"cat\""), _type: String, value: []byte("\"cat\"")},
@@ -171,13 +171,13 @@ func TestUnmarshal_StringSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "one quote", input: []byte("\"")},
 		{name: "white NL", input: []byte("\"foo\nbar\"")},
 		{name: "white R", input: []byte("\"foo\rbar\"")},
@@ -189,25 +189,25 @@ func TestUnmarshal_StringSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_NullSimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "lower", input: []byte("null"), _type: Null, value: []byte("null")},
 		{name: "spaces", input: []byte("  null\r\n "), _type: Null, value: []byte("null")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "nul", input: []byte("nul")},
 		{name: "NILL", input: []byte("NILL")},
 		{name: "Null", input: []byte("Null")},
@@ -218,13 +218,13 @@ func TestUnmarshal_NullSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_BoolSimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "lower true", input: []byte("true"), _type: Bool, value: []byte("true")},
 		{name: "lower false", input: []byte("false"), _type: Bool, value: []byte("false")},
 		{name: "spaces true", input: []byte("  true\r\n "), _type: Bool, value: []byte("true")},
@@ -232,13 +232,13 @@ func TestUnmarshal_BoolSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		simpleCorrupted("tru"),
 		simpleCorrupted("fals"),
 		simpleCorrupted("tre"),
@@ -251,13 +251,13 @@ func TestUnmarshal_BoolSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_ArraySimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "[]", input: []byte("[]"), _type: Array, value: []byte("[]")},
 		{name: "[1]", input: []byte("[1]"), _type: Array, value: []byte("[1]")},
 		{name: "[1,2,3]", input: []byte("[1,2,3]"), _type: Array, value: []byte("[1,2,3]")},
@@ -270,13 +270,13 @@ func TestUnmarshal_ArraySimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_ArraySimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		simpleCorrupted("[,]"),
 		simpleCorrupted("[]\\"),
 		simpleCorrupted("[1,]"),
@@ -289,13 +289,13 @@ func TestUnmarshal_ArraySimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_ObjectSimpleSuccess(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		{name: "{}", input: []byte("{}"), _type: Object, value: []byte("{}")},
 		{name: `{ \r\n }`, input: []byte("{ \r\n }"), _type: Object, value: []byte("{ \r\n }")},
 		{name: `{"key":1}`, input: []byte(`{"key":1}`), _type: Object, value: []byte(`{"key":1}`)},
@@ -308,13 +308,13 @@ func TestUnmarshal_ObjectSimpleSuccess(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleValid(&test, t)
+			simpleValid(test, t)
 		})
 	}
 }
 
 func TestUnmarshal_ObjectSimpleCorrupted(t *testing.T) {
-	tests := []testCase{
+	tests := []*testCase{
 		simpleCorrupted("{,}"),
 		simpleCorrupted("{:}"),
 		simpleCorrupted(`{"foo"}`),
@@ -335,7 +335,7 @@ func TestUnmarshal_ObjectSimpleCorrupted(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			simpleInvalid(&test, t)
+			simpleInvalid(test, t)
 		})
 	}
 }
@@ -782,6 +782,20 @@ func ExampleMust() {
 	fmt.Printf("Object has %d inheritors inside", root.Size())
 	// Output:
 	// Object has 1 inheritors inside
+}
+
+func ExampleMust_panic() {
+	defer func() {
+		if rec := recover(); rec != nil {
+			fmt.Printf("Unmarshal(): %s", rec)
+		}
+	}()
+	data := []byte(`{]`)
+
+	root := Must(Unmarshal(data))
+	fmt.Printf("Object has %d inheritors inside", root.Size())
+	// Output:
+	// Unmarshal(): wrong symbol ']' at 1
 }
 
 func TestUnmarshal_main(t *testing.T) {
