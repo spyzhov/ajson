@@ -651,15 +651,6 @@ func BenchmarkUnmarshal_AJSON(b *testing.B) {
 	}
 }
 
-func BenchmarkUnmarshal_AJSON_Old(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		root, err := UnmarshalOld(jsonExample)
-		if err != nil || root == nil {
-			b.Errorf("Error on Unmarshal")
-		}
-	}
-}
-
 func BenchmarkUnmarshal_JSON(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		root := new(storeExample)
@@ -791,6 +782,20 @@ func ExampleMust() {
 	fmt.Printf("Object has %d inheritors inside", root.Size())
 	// Output:
 	// Object has 1 inheritors inside
+}
+
+func ExampleMust_panic() {
+	defer func() {
+		if rec := recover(); rec != nil {
+			fmt.Printf("Unmarshal(): %s", rec)
+		}
+	}()
+	data := []byte(`{]`)
+
+	root := Must(Unmarshal(data))
+	fmt.Printf("Object has %d inheritors inside", root.Size())
+	// Output:
+	// Unmarshal(): wrong symbol ']' at 1
 }
 
 func TestUnmarshal_main(t *testing.T) {
