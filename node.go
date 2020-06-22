@@ -205,7 +205,7 @@ func (n *Node) Source() []byte {
 
 // String is implementation of Stringer interface, returns string based on source part
 func (n *Node) String() string {
-	if n.ready() {
+	if n.ready() && !n.dirty {
 		return string(n.Source())
 	}
 	val := n.value.Load()
@@ -481,19 +481,20 @@ func (n *Node) Unpack() (value interface{}, err error) {
 	case Null:
 		return nil, nil
 	case Numeric:
-		value, err = strconv.ParseFloat(string(n.Source()), 64)
-		if err != nil {
-			return
+		value, err = n.Value()
+		if _, ok := value.(float64); !ok {
+			return nil, errorType()
 		}
 	case String:
-		var ok bool
-		value, ok = unquote(n.Source(), quotes)
-		if !ok {
-			return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
+		value, err = n.Value()
+		if _, ok := value.(string); !ok {
+			return nil, errorType()
 		}
 	case Bool:
-		b := n.Source()[0]
-		value = b == 't' || b == 'T'
+		value, err = n.Value()
+		if _, ok := value.(bool); !ok {
+			return nil, errorType()
+		}
 	case Array:
 		children := make([]interface{}, len(n.children))
 		for _, child := range n.children {

@@ -339,6 +339,42 @@ func TestJSONPath_suite(t *testing.T) {
 			path:     `$['"']`,
 			expected: []interface{}{"value"}, // ["value"]
 		},
+		{
+			name:     "$[2:113667776004]",
+			input:    `["first", "second", "third", "forth", "fifth"]`,
+			path:     `$[2:113667776004]`,
+			expected: []interface{}{"third", "forth", "fifth"}, // ["third", "forth", "fifth"]
+		},
+		{
+			name:     "$[2:-113667776004:-1]",
+			input:    `["first", "second", "third", "forth", "fifth"]`,
+			path:     `$[2:-113667776004:-1]`,
+			expected: []interface{}{"third", "second", "first"}, // ["third", "second", "first"]
+		},
+		{
+			name:     "$[-113667776004:2]",
+			input:    `["first", "second", "third", "forth", "fifth"]`,
+			path:     `$[-113667776004:2]`,
+			expected: []interface{}{"first", "second"}, // ["first", "second"]
+		},
+		{
+			name:     "$[113667776004:2:-1]",
+			input:    `["first", "second", "third", "forth", "fifth"]`,
+			path:     `$[113667776004:2:-1]`,
+			expected: []interface{}{"fifth", "forth"}, // ["fifth", "forth"]
+		},
+		{
+			name:     "$.length",
+			input:    `[4, 5, 6]`,
+			path:     `$.length`,
+			expected: []interface{}{float64(3)}, // [3]
+		},
+		{
+			name:    "$[?()]",
+			input:   `[1, {"key": 42}, "value", null]`,
+			path:    `$[?()]`,
+			wantErr: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

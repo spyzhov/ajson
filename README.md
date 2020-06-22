@@ -4,17 +4,22 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/spyzhov/ajson)](https://goreportcard.com/report/github.com/spyzhov/ajson)
 [![GoDoc](https://godoc.org/github.com/spyzhov/ajson?status.svg)](https://godoc.org/github.com/spyzhov/ajson)
 [![Coverage Status](https://coveralls.io/repos/github/spyzhov/ajson/badge.svg?branch=master)](https://coveralls.io/github/spyzhov/ajson?branch=master)
+[![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/avelino/awesome-go#json)
 
-Abstract [JSON](https://www.json.org/) is a small golang package that provide a parser for JSON with support of JSONPath, in case when you are not sure in it's structure.
+Abstract [JSON](https://www.json.org/) is a small golang package provides a parser for JSON with support of JSONPath, in case when you are not sure in its structure.
 
-Method `Unmarshal` will scan all the byte slice to create a root node of JSON structure, with all it behaviors.
+Method `Unmarshal` will scan all the byte slice to create a root node of JSON structure, with all its behaviors.
 
 Method `Marshal` will serialize current `Node` object to JSON structure.
 
-Each `Node` has it's own type and calculated value, which will be calculated on demand. 
+Each `Node` has its own type and calculated value, which will be calculated on demand. 
 Calculated value saves in `atomic.Value`, so it's thread safe.
 
-Method `JSONPath` will returns slice of founded elements in current JSON data, by it's JSONPath.
+Method `JSONPath` will returns slice of found elements in current JSON data, by [JSONPath](http://goessner.net/articles/JsonPath/) request.
+
+## Compare with other solutions
+
+Check the [cburgmer/json-path-comparison](https://cburgmer.github.io/json-path-comparison/) project.
 
 ## Example
 
@@ -307,7 +312,8 @@ func main() {
 
 Current package supports JSONPath selection described at [http://goessner.net/articles/JsonPath/](http://goessner.net/articles/JsonPath/).
 
-JSONPath expressions always refer to a JSON structure in the same way as XPath expression are used in combination with an XML document. Since a JSON structure is usually anonymous and doesn't necessarily have a "root member object" JSONPath assumes the abstract name $ assigned to the outer level object.
+JSONPath expressions always refer to a JSON structure in the same way as XPath expression are used in combination with an XML document. 
+Since a JSON structure is usually anonymous and doesn't necessarily have a "root member object" JSONPath assumes the abstract name $ assigned to the outer level object.
 
 JSONPath expressions can use the dot–notation
 
@@ -317,9 +323,10 @@ or the bracket–notation
 
 `$['store']['book'][0]['title']`
 
-for input pathes. Internal or output pathes will always be converted to the more general bracket–notation.
+for input paths. Internal or output paths will always be converted to the more general bracket–notation.
 
-JSONPath allows the wildcard symbol `*` for member names and array indices. It borrows the descendant operator `..` from E4X and the array slice syntax proposal `[start:end:step]` from ECMASCRIPT 4.
+JSONPath allows the wildcard symbol `*` for member names and array indices. 
+It borrows the descendant operator `..` from E4X and the array slice syntax proposal `[start:end:step]` from ECMASCRIPT 4.
 
 Expressions of the underlying scripting language `(<expr>)` can be used as an alternative to explicit names or indices as in
 
@@ -348,7 +355,7 @@ Here is a complete overview and a side by side comparison of the JSONPath syntax
 
 ### Predefined constant
 
-Package has several predefined constants. You are free to add new one with `AddConstant`
+Package has several predefined constants. 
 
      e       math.E     float64
      pi      math.Pi    float64
@@ -367,10 +374,16 @@ Package has several predefined constants. You are free to add new one with `AddC
      true    true       bool
      false   false      bool
      null    nil        interface{}
+     
+You are free to add new one with function `AddConstant`:
+
+```go
+    AddConstant("c", NumericNode("speed of light in vacuum", 299_792_458))
+```
 
 ### Supported operations
 
-Package has several predefined operators. You are free to add new one with `AddOperator`
+Package has several predefined operators.
 
 [Operator precedence](https://golang.org/ref/spec#Operator_precedence)
 
@@ -407,9 +420,21 @@ Package has several predefined operators. You are free to add new one with `AddO
 	>=  larger or equals        any
 	=~  equals regex string     strings
 
+You are free to add new one with function `AddOperation`:
+
+```go
+	AddOperation("<>", 3, false, func(left *ajson.Node, right *ajson.Node) (node *ajson.Node, err error) {
+		result, err := left.Eq(right)
+		if err != nil {
+			return nil, err
+		}
+		return BoolNode("neq", !result), nil
+	})
+```
+
 ### Supported functions
 
-Package has several predefined functions. You are free to add new one with `AddFunction`
+Package has several predefined functions.
 
     abs          math.Abs          integers, floats
     acos         math.Acos         integers, floats
@@ -453,6 +478,17 @@ Package has several predefined functions. You are free to add new one with `AddF
     trunc        math.Trunc        integers, floats
     y0           math.Y0           integers, floats
     y1           math.Y1           integers, floats
+
+You are free to add new one with function `AddFunction`:
+
+```go
+	AddFunction("trim", func(node *ajson.Node) (result *Node, err error) {
+		if node.IsString() {
+			return StringNode("trim", strings.TrimSpace(node.MustString())), nil
+		}
+		return
+	})
+```
 
 # Benchmarks
 
@@ -499,9 +535,9 @@ $ go test -bench=. -cpu=1 -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
-BenchmarkUnmarshal_AJSON           91104             13756 ns/op            5344 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON            67794             16851 ns/op             968 B/op         31 allocs/op
-BenchmarkJSONPath_all_prices       49650             25073 ns/op            7368 B/op        161 allocs/op
+BenchmarkUnmarshal_AJSON          138032              8762 ns/op            5344 B/op         95 allocs/op
+BenchmarkUnmarshal_JSON           117423             10502 ns/op             968 B/op         31 allocs/op
+BenchmarkJSONPath_all_prices       80908             14394 ns/op            7128 B/op        153 allocs/op
 ```
 
 # License

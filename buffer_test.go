@@ -92,7 +92,6 @@ func TestBuffer_RPN(t *testing.T) {
 		{name: "example_8", value: "@.length-1", expected: []string{"@.length", "1", "-"}},
 		{name: "example_9", value: "@.length+-1", expected: []string{"@.length", "-1", "+"}},
 		{name: "example_10", value: "@.length/e", expected: []string{"@.length", "e", "/"}},
-		{name: "example_11", value: "", expected: []string{}},
 		{name: "example_12", value: "123.456", expected: []string{"123.456"}},
 		{name: "example_13", value: " 123.456 ", expected: []string{"123.456"}},
 
@@ -140,6 +139,7 @@ func TestBuffer_RPNError(t *testing.T) {
 		{value: "e + q"},
 		{value: "foo(e)"},
 		{value: "++2"},
+		{value: ""},
 	}
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
