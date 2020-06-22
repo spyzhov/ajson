@@ -394,6 +394,13 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 					}
 
 					if ikeys[2] > 0 {
+						if ikeys[0] < 0 {
+							ikeys[0] = 0
+						}
+						if ikeys[1] > element.Size() {
+							ikeys[1] = element.Size()
+						}
+
 						for i := ikeys[0]; i < ikeys[1]; i += ikeys[2] {
 							value, ok := element.children[strconv.Itoa(i)]
 							if ok {
@@ -401,6 +408,13 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 							}
 						}
 					} else if ikeys[2] < 0 {
+						if ikeys[0] > element.Size() {
+							ikeys[0] = element.Size()
+						}
+						if ikeys[1] < -1 {
+							ikeys[1] = -1
+						}
+
 						for i := ikeys[0]; i > ikeys[1]; i += ikeys[2] {
 							value, ok := element.children[strconv.Itoa(i)]
 							if ok {
