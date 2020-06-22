@@ -499,6 +499,10 @@ func (b *buffer) rpn() (result rpn, err error) {
 		stack = stack[:len(stack)-1]
 	}
 
+	if len(result) == 0 {
+		return nil, b.errorEOF()
+	}
+
 	return
 }
 
