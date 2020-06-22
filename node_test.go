@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"math"
+	"reflect"
 	"testing"
 )
 
@@ -1643,6 +1644,62 @@ func TestNode_IsDirty(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			if test.node.dirty != test.expected {
 				t.Errorf("Node dirty is not correct")
+			}
+		})
+	}
+}
+
+func Test_newNode(t *testing.T) {
+	var nilKey *string
+	fillKey := "key"
+	relFillKey := &fillKey
+	type args struct {
+		parent *Node
+		buf    *buffer
+		_type  NodeType
+		key    **string
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantCurrent *Node
+		wantErr     bool
+	}{
+		{
+			name: "blank key for Object",
+			args: args{
+				parent: ObjectNode("", make(map[string]*Node)),
+				buf:    newBuffer(make([]byte, 10)),
+				_type:  Bool,
+				key:    &nilKey,
+			},
+			wantCurrent: nil,
+			wantErr:     true,
+		},
+		{
+			name: "child for non Object/Array",
+			args: args{
+				parent: BoolNode("", true),
+				buf:    newBuffer(make([]byte, 10)),
+				_type:  Bool,
+				key:    &relFillKey,
+			},
+			wantCurrent: nil,
+			wantErr:     true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCurrent, err := newNode(tt.args.parent, tt.args.buf, tt.args._type, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newNode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+			if !reflect.DeepEqual(gotCurrent, tt.wantCurrent) {
+				t.Errorf("newNode() gotCurrent = %v, want %v", gotCurrent, tt.wantCurrent)
 			}
 		})
 	}

@@ -320,11 +320,10 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 		value, temp *Node
 		float       float64
 		tokens      tokens
-		buf         *buffer
+		expr        rpn
 	)
 	for i, cmd := range commands {
-		buf = newBuffer([]byte(cmd))
-		tokens, err = buf.tokenize()
+		tokens, err = newBuffer([]byte(cmd)).tokenize()
 		if err != nil {
 			return
 		}
@@ -413,8 +412,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "?(") && strings.HasSuffix(cmd, ")"): // applies a filter (script) expression
-			buf = newBuffer([]byte(cmd[2 : len(cmd)-1]))
-			rpn, err := buf.rpn()
+			expr, err = newBuffer([]byte(cmd[2 : len(cmd)-1])).rpn()
 			if err != nil {
 				return nil, errorRequest("wrong request: %s", cmd)
 			}
@@ -422,7 +420,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			for _, element := range result {
 				if element.isContainer() {
 					for _, temp = range element.Inheritors() {
-						value, err = eval(temp, rpn, cmd)
+						value, err = eval(temp, expr, cmd)
 						if err != nil {
 							return nil, errorRequest("wrong request: %s", cmd)
 						}
@@ -438,8 +436,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "(") && strings.HasSuffix(cmd, ")"): // script expression, using the underlying script engine
-			buf := newBuffer([]byte(cmd[1 : len(cmd)-1]))
-			rpn, err := buf.rpn()
+			expr, err = newBuffer([]byte(cmd[1 : len(cmd)-1])).rpn()
 			if err != nil {
 				return nil, errorRequest("wrong request: %s", cmd)
 			}
@@ -448,7 +445,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 				if !element.isContainer() {
 					continue
 				}
-				temp, err = eval(element, rpn, cmd)
+				temp, err = eval(element, expr, cmd)
 				if err != nil {
 					return nil, errorRequest("wrong request: %s", cmd)
 				}
@@ -456,7 +453,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 					value = nil
 					switch temp.Type() {
 					case String:
-						key, err = element.GetString()
+						key, err = temp.GetString()
 						if err != nil {
 							return nil, errorRequest("wrong type convert: %s", err.Error())
 						}
@@ -560,11 +557,11 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 // Eval evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
 func Eval(node *Node, cmd string) (result *Node, err error) {
 	buf := newBuffer([]byte(cmd))
-	rpn, err := buf.rpn()
+	calc, err := buf.rpn()
 	if err != nil {
 		return nil, err
 	}
-	return eval(node, rpn, cmd)
+	return eval(node, calc, cmd)
 }
 
 func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
@@ -619,7 +616,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 			} else {
 				bstr = []byte(exp)
 				size = len(bstr)
-				if size > 2 && bstr[0] == quote && bstr[size-1] == quote {
+				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
 					bstr[0] = quotes
 					bstr[size-1] = quotes
 				}
@@ -649,13 +646,13 @@ func getNumberIndex(element *Node, input string, Default float64) (result float6
 	} else if input == "(@.length)" {
 		result = float64(element.Size())
 	} else if strings.HasPrefix(input, "(") && strings.HasSuffix(input, ")") {
-		var rpn rpn
+		var expr rpn
 		var temp *Node
-		rpn, err = newBuffer([]byte(input[1 : len(input)-1])).rpn()
+		expr, err = newBuffer([]byte(input[1 : len(input)-1])).rpn()
 		if err != nil {
 			return 0, err
 		}
-		temp, err = eval(element, rpn, input)
+		temp, err = eval(element, expr, input)
 		if err != nil {
 			return
 		}

@@ -136,7 +136,7 @@ func (b *buffer) numeric(token bool) error {
 		b.last = GO
 	}
 	for ; b.index < b.length; b.index++ {
-		b.class = b.getClasses()
+		b.class = b.getClasses(quotes)
 		if b.class == __ {
 			return b.errorSymbol()
 		}
@@ -161,31 +161,19 @@ func (b *buffer) numeric(token bool) error {
 	return nil
 }
 
-func (b *buffer) getClasses() Classes {
-	return b.classesAscii()
-}
-
-func (b *buffer) getQuoteClasses() Classes {
-	return b.classesQuoteAscii()
-}
-
-func (b *buffer) classesAscii() Classes {
+func (b *buffer) getClasses(search byte) Classes {
 	if b.data[b.index] >= 128 {
 		return C_ETC
+	}
+	if search == quote {
+		return QuoteAsciiClasses[b.data[b.index]]
 	}
 	return AsciiClasses[b.data[b.index]]
 }
 
-func (b *buffer) classesQuoteAscii() Classes {
-	if b.data[b.index] >= 128 {
-		return C_ETC
-	}
-	return QuoteAsciiClasses[b.data[b.index]]
-}
-
 func (b *buffer) getState() States {
 	b.last = b.state
-	b.class = b.getClasses()
+	b.class = b.getClasses(quotes)
 	if b.class == __ {
 		return __
 	}
@@ -198,11 +186,7 @@ func (b *buffer) string(search byte, token bool) error {
 		b.last = GO
 	}
 	for ; b.index < b.length; b.index++ {
-		if search == quote {
-			b.class = b.getQuoteClasses()
-		} else {
-			b.class = b.getClasses()
-		}
+		b.class = b.getClasses(search)
 
 		if b.class == __ {
 			return b.errorSymbol()
@@ -415,16 +399,12 @@ func (b *buffer) rpn() (result rpn, err error) {
 			variable = true
 			start = b.index
 			err = b.numeric(true)
-			if err != nil && err != io.EOF {
+			if err != nil {
 				return nil, err
 			}
 			current = string(b.data[start:b.index])
 			result = append(result, current)
-			if err != nil {
-				err = nil
-			} else {
-				b.index--
-			}
+			b.index--
 		case c == quotes: // string
 			fallthrough
 		case c == quote: // string
@@ -505,11 +485,9 @@ func (b *buffer) rpn() (result rpn, err error) {
 			break
 		}
 	}
-
-	if err != io.EOF {
-		return
+	if err == io.EOF {
+		err = nil // only io.EOF can be here
 	}
-	err = nil
 
 	for len(stack) > 0 {
 		temp = stack[len(stack)-1]
@@ -575,11 +553,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			}
 			current = string(b.data[start:b.index])
 			result = append(result, current)
-			if err != nil {
-				err = nil
-			} else {
-				b.index--
-			}
+			b.index--
 		case c == quotes: // string
 			fallthrough
 		case c == quote: // string
@@ -651,10 +625,9 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		}
 	}
 
-	if err != io.EOF {
-		return
+	if err == io.EOF {
+		err = nil
 	}
-	err = nil
 
 	return
 }
@@ -665,13 +638,6 @@ func (b *buffer) errorEOF() error {
 
 func (b *buffer) errorSymbol() error {
 	return errorSymbol(b)
-}
-
-func mathFactorial(x uint) uint {
-	if x == 0 {
-		return 1
-	}
-	return x * mathFactorial(x-1)
 }
 
 func _floats(left, right *Node) (lnum, rnum float64, err error) {

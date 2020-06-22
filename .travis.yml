@@ -43,3 +43,4 @@ script:
   - go test -race ./... # Run all the tests with the race detector enabled
   - go test -covermode=count -coverprofile=coverage.out # coveralls.io
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN # coveralls.io
+  - go test -bench=. -cpu=1
