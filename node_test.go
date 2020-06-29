@@ -34,14 +34,14 @@ func TestNode_Value_Simple(t *testing.T) {
 				borders: [2]int{0, len(test.bytes)},
 				data:    &test.bytes,
 			}
-			value, err := current.Value()
+			value, err := current.getValue()
 			if err != nil {
 				if !test.error {
 					t.Errorf("Error on get value: %s", err.Error())
 				}
 			} else if value != test.expected {
 				t.Errorf("Error on get value: '%v' != '%v'", value, test.expected)
-			} else if value2, err := current.Value(); err != nil {
+			} else if value2, err := current.getValue(); err != nil {
 				t.Errorf("Error on get value 2: %s", err.Error())
 			} else if value != value2 {
 				t.Errorf("Error on get value 2: '%v' != '%v'", value, value2)
@@ -85,7 +85,7 @@ func TestNode_Unpack(t *testing.T) {
 	}
 }
 
-func TestNode_Value(t *testing.T) {
+func TestNode_getValue(t *testing.T) {
 	root, err := Unmarshal([]byte(`{ "category": null,
         "author": "Evelyn Waugh",
         "title": "Sword of Honour",
@@ -98,7 +98,7 @@ func TestNode_Value(t *testing.T) {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
 		return
 	}
-	iValue, err := root.Value()
+	iValue, err := root.getValue()
 	if err != nil {
 		t.Errorf("Error on root.Value(): %s", err.Error())
 	}
@@ -125,7 +125,7 @@ func TestNode_Empty(t *testing.T) {
 		t.Errorf("Error on Unmarshal(): %s", err.Error())
 		return
 	}
-	iValue, err := root.Value()
+	iValue, err := root.getValue()
 	if err != nil {
 		t.Errorf("Error on root.Value(): %s", err.Error())
 	}
@@ -1700,6 +1700,116 @@ func Test_newNode(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotCurrent, tt.wantCurrent) {
 				t.Errorf("newNode() gotCurrent = %v, want %v", gotCurrent, tt.wantCurrent)
+			}
+		})
+	}
+}
+
+func TestNode_Value(t *testing.T) {
+	array := ArrayNode("", []*Node{
+		NumericNode("0", 0),
+		StringNode("1", "bar"),
+	})
+	object := ObjectNode("", map[string]*Node{
+		"foo": NumericNode("foo", 0),
+		"bar": StringNode("bar", "bar"),
+	})
+	tests := []struct {
+		name      string
+		node      *Node
+		wantValue interface{}
+		wantErr   bool
+	}{
+		{
+			name:      "null",
+			node:      NullNode(""),
+			wantValue: nil,
+			wantErr:   false,
+		},
+		{
+			name:      "string",
+			node:      StringNode("", "foo"),
+			wantValue: "foo",
+			wantErr:   false,
+		},
+		{
+			name:      "string error",
+			node:      valueNode(nil, "", String, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name:      "numeric",
+			node:      NumericNode("", 1e3),
+			wantValue: float64(1000),
+			wantErr:   false,
+		},
+		{
+			name:      "numeric error",
+			node:      valueNode(nil, "", Numeric, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name:      "bool",
+			node:      BoolNode("", true),
+			wantValue: true,
+			wantErr:   false,
+		},
+		{
+			name:      "bool error",
+			node:      valueNode(nil, "", Bool, nil),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name: "array",
+			node: array,
+			wantValue: []*Node{
+				array.children["0"],
+				array.children["1"],
+			},
+			wantErr: false,
+		},
+		{
+			name:      "array error",
+			node:      valueNode(nil, "", Array, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name: "object",
+			node: object,
+			wantValue: map[string]*Node{
+				"foo": object.children["foo"],
+				"bar": object.children["bar"],
+			},
+			wantErr: false,
+		},
+		{
+			name:      "object error",
+			node:      valueNode(nil, "", Array, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name:      "type error",
+			node:      valueNode(nil, "", 10000, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotValue, err := tt.node.Value()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Value() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if !reflect.DeepEqual(gotValue, tt.wantValue) {
+					t.Errorf("Value() gotValue = %v, want %v", gotValue, tt.wantValue)
+				}
 			}
 		})
 	}

@@ -381,6 +381,59 @@ You are free to add new one with function `AddConstant`:
     AddConstant("c", NumericNode("speed of light in vacuum", 299_792_458))
 ```
 
+#### Examples
+
+<details>
+<summary>Using `true` in path</summary>
+
+[Playground](https://play.golang.org/p/h0oFLaE11Tn)
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{"foo": [true, null, false, 1, "bar", true, 1e3], "bar": [true, "baz", false]}`)
+	result, _ := ajson.JSONPath(json, `$..[?(@ == true)]`)
+	fmt.Printf("Count of `true` values: %d", len(result))
+}
+```
+Output:
+```
+Count of `true` values: 3
+```
+</details>
+<details>
+<summary>Using `null` in eval</summary>
+
+[Playground](https://play.golang.org/p/wpqh1Fw5vWE)
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{"foo": [true, null, false, 1, "bar", true, 1e3], "bar": [true, "baz", false]}`)
+	result, _ := ajson.JSONPath(json, `$..[?(@ == true)]`)
+	fmt.Printf("Count of `true` values: %d", len(result))
+}
+```
+Output:
+```
+Count of `true` values: 3
+```
+</details>
+
 ### Supported operations
 
 Package has several predefined operators.
@@ -431,6 +484,40 @@ You are free to add new one with function `AddOperation`:
 		return BoolNode("neq", !result), nil
 	})
 ```
+
+#### Examples
+
+<details>
+<summary>Using `regex` operator</summary>
+
+[Playground](https://play.golang.org/p/Lm_F4OGTMWl)
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`[{"name":"Foo","mail":"foo@example.com"},{"name":"bar","mail":"bar@example.org"}]`)
+	result, err := ajson.JSONPath(json, `$.[?(@.mail =~ '.+@example\\.com')]`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("JSON: %s", result[0].Source())
+	// Output:
+	// JSON: {"name":"Foo","mail":"foo@example.com"}
+}
+
+```
+Output:
+```
+JSON: {"name":"Foo","mail":"foo@example.com"}
+```
+</details>
 
 ### Supported functions
 
@@ -489,6 +576,43 @@ You are free to add new one with function `AddFunction`:
 		return
 	})
 ```
+
+#### Examples
+
+<details>
+<summary>Using `avg` for array</summary>
+
+[Playground](https://play.golang.org/p/cM66hTE-CX1)
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{"prices": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}`)
+	root, err := ajson.Unmarshal(json)
+	if err != nil {
+		panic(err)
+	}
+	result, err := ajson.Eval(root, `avg($.prices)`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Avg price: %0.1f", result.MustNumeric())
+	// Output:
+	// Avg price: 5.5
+}
+```
+Output:
+```
+Avg price: 5.5
+```
+</details>
 
 # Benchmarks
 

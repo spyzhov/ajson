@@ -71,6 +71,20 @@ var (
 		"&&": 2,
 		"||": 1,
 	}
+	priorityChar = map[byte]bool{
+		'*': true,
+		'/': true,
+		'%': true,
+		'<': true,
+		'>': true,
+		'&': true,
+		'|': true,
+		'^': true,
+		'+': true,
+		'-': true,
+		'=': true,
+		'!': true,
+	}
 
 	rightOp = map[string]bool{
 		"**": true,
@@ -322,7 +336,17 @@ var (
 			if node.IsArray() {
 				return valueNode(nil, "length", Numeric, float64(node.Size())), nil
 			}
-			return nil, errorRequest("function 'length' was called from non array node")
+			if node.IsObject() {
+				return valueNode(nil, "length", Numeric, float64(node.Size())), nil
+			}
+			if node.IsString() {
+				if res, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					return valueNode(nil, "length", Numeric, float64(len(res))), nil
+				}
+			}
+			return valueNode(nil, "length", Numeric, float64(1)), nil
 		},
 		"factorial": func(node *Node) (result *Node, err error) {
 			num, err := node.getUInteger()
@@ -389,6 +413,7 @@ func AddOperation(alias string, prior uint8, right bool, operation Operation) {
 	alias = strings.ToLower(alias)
 	operations[alias] = operation
 	priority[alias] = prior
+	priorityChar[alias[0]] = true
 	if right {
 		rightOp[alias] = true
 	}

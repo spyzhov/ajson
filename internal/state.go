@@ -1,9 +1,9 @@
-package internal
-
 /*
 Copy from https://github.com/freddierice/php_source/blob/467ed5d6edff72219afd3e644516f131118ef48e/ext/json/JSON_parser.c
 Base code: Copyright (c) 2005 JSON.org
 */
+package internal
+
 type (
 	States  int8
 	Classes int8
@@ -46,6 +46,7 @@ const (
 	C_ETC                  /* everything else */
 )
 
+// AsciiClasses array maps the 128 ASCII characters into character classes.
 var AsciiClasses = [128]Classes{
 	/*
 	   This array maps the 128 ASCII characters into character classes.
@@ -73,7 +74,7 @@ var AsciiClasses = [128]Classes{
 	C_ETC, C_ETC, C_ETC, C_LCURB, C_ETC, C_RCURB, C_ETC, C_ETC,
 }
 
-// HACK: for single quote
+// QuoteAsciiClasses is a HACK for single quote from AsciiClasses
 var QuoteAsciiClasses = [128]Classes{
 	/*
 	   This array maps the 128 ASCII characters into character classes.
@@ -152,12 +153,15 @@ const (
 	ec States = -9 /* curly br. empty */
 )
 
+// StateTransitionTable is the state transition table takes the current state and the current symbol, and returns either
+// a new state or an action. An action is represented as a negative number. A JSON text is accepted if at the end of the
+// text the state is OK and if the mode is DONE.
 var StateTransitionTable = [31][31]States{
 	/*
 	   The state transition table takes the current state and the current symbol,
 	   and returns either a new state or an action. An action is represented as a
 	   negative number. A JSON text is accepted if at the end of the text the
-	   state is OK and if the mode is MODE_DONE.
+	   state is OK and if the mode is DONE.
 	                  white                                                    1-9                                                ABCDF   etc
 	            space   |   {   }   [   ]   :   ,   "   \   /   +   -   .   0   |   a   b   c   d   e   f   l   n   r   s   t   u   |   E   |*/
 	/*start  GO*/ {GO, GO, co, __, bo, __, __, __, ST, __, __, __, MI, __, ZE, IN, __, __, __, __, __, F1, __, N1, __, __, T1, __, __, __, __},

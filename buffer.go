@@ -521,7 +521,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			break
 		}
 		switch true {
-		case c == asterisk || c == division || c == minus || c == plus || c == caret || c == ampersand || c == pipe || c == signL || c == signG || c == signE || c == exclamation: // operations
+		case priorityChar[c]: // operations
 			if variable || (c != minus && c != plus) {
 				variable = false
 				current = string(c)

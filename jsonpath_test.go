@@ -604,6 +604,13 @@ func TestEval(t *testing.T) {
 			expected: nil,
 			wantErr:  true,
 		},
+		{
+			name:     "round(avg($..price)+pi)",
+			root:     Must(Unmarshal(json)),
+			eval:     "round(avg($..price)+pi)",
+			expected: NumericNode("", 18),
+			wantErr:  false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
