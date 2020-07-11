@@ -632,10 +632,14 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				bstr = []byte(exp)
 				size = len(bstr)
 				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
-					bstr[0] = quotes
-					bstr[size-1] = quotes
+					if sstr, ok := unquote(bstr, quote); ok {
+						temp = StringNode("", sstr)
+					} else {
+						err = errorRequest("wrong request: %s", cmd)
+					}
+				} else {
+					temp, err = Unmarshal(bstr)
 				}
-				temp, err = Unmarshal(bstr)
 				if err != nil {
 					return
 				}

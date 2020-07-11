@@ -1252,3 +1252,71 @@ func TestJSONPath_comparison_consensus(t *testing.T) {
 		})
 	}
 }
+
+func TestJSONPath_special_requests(t *testing.T) {
+	tests := []struct {
+		selector  string
+		document  string
+		consensus string
+	}{
+		{
+			selector:  `$.[?(@.name=='special\'')]`,
+			document:  `[{"name":"special'"}, {"name":"special"}]`,
+			consensus: `[{"name":"special'"}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special\n')]`,
+			document:  `[{"name":"special\n"}, {"name":"special"}]`,
+			consensus: `[{"name":"special\n"}]`,
+		},
+		{
+			selector:  `$.[?(@.name==')special(')]`,
+			document:  `[{"name":")special("}, {"name":"special"}]`,
+			consensus: `[{"name":")special("}]`,
+		},
+		{
+			selector:  `$.[?(@.name==']special[')]`,
+			document:  `[{"name":"]special["}, {"name":"special"}]`,
+			consensus: `[{"name":"]special["}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special?')]`,
+			document:  `[{"name":"special?"}, {"name":"special"}]`,
+			consensus: `[{"name":"special?"}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special\u3210')]`,
+			document:  `[{"name":"special\u3210"}, {"name":"special"}]`,
+			consensus: `[{"name":"special\u3210"}]`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.selector, func(t *testing.T) {
+			nodes, err := JSONPath([]byte(test.document), test.selector)
+			if err != nil {
+				t.Errorf("JSONPath() error = %v. got = %v", err, nodes)
+				return
+			}
+
+			results := make([]interface{}, 0)
+			for _, node := range nodes {
+				value, err := node.Unpack()
+				if err != nil {
+					t.Errorf("Unpack(): unexpected error: %v", err)
+					return
+				}
+				results = append(results, value)
+			}
+
+			expected, err := Must(Unmarshal([]byte(test.consensus))).Unpack()
+			if err != nil {
+				t.Errorf("Unpack(): unexpected error: %v", err)
+				return
+			}
+
+			if !reflect.DeepEqual(expected, results) {
+				t.Errorf("JSONPath(): wrong result:\nSelector: %#+v\nDocument: %s\nExpected: %#+v\nActual:   %#+v", test.selector, test.document, expected, results)
+			}
+		})
+	}
+}

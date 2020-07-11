@@ -21,293 +21,6 @@ Method `JSONPath` will returns slice of found elements in current JSON data, by 
 
 Check the [cburgmer/json-path-comparison](https://cburgmer.github.io/json-path-comparison/) project.
 
-## Example
-
-Calculating `AVG(price)` when object is heterogeneous.
-
-### Unmarshal
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/spyzhov/ajson"
-)
-
-func main() {
-	data := []byte(`{ 
-      "store": {
-        "book": [ 
-          { "category": "reference",
-            "author": "Nigel Rees",
-            "title": "Sayings of the Century",
-            "price": 8.95
-          },
-          { "category": "fiction",
-            "author": "Evelyn Waugh",
-            "title": "Sword of Honour",
-            "price": 12.99
-          },
-          { "category": "fiction",
-            "author": "Herman Melville",
-            "title": "Moby Dick",
-            "isbn": "0-553-21311-3",
-            "price": 8.99
-          },
-          { "category": "fiction",
-            "author": "J. R. R. Tolkien",
-            "title": "The Lord of the Rings",
-            "isbn": "0-395-19395-8",
-            "price": 22.99
-          }
-        ],
-        "bicycle": { "color": "red",
-          "price": 19.95
-        },
-        "tools": null
-      }
-    }`)
-
-	root, err := ajson.Unmarshal(data)
-	if err != nil {
-		panic(err)
-	}
-
-	store := root.MustKey("store").MustObject()
-
-	var prices float64
-	size := 0
-	for _, objects := range store {
-		if objects.IsArray() && objects.Size() > 0 {
-			size += objects.Size()
-			for _, object := range objects.MustArray() {
-				prices += object.MustKey("price").MustNumeric()
-			}
-		} else if objects.IsObject() && objects.HasKey("price") {
-			size++
-			prices += objects.MustKey("price").MustNumeric()
-		}
-	}
-
-	if size > 0 {
-		fmt.Println("AVG price:", prices/float64(size))
-	} else {
-		fmt.Println("AVG price:", 0)
-	}
-}
-```
-
-### JSONPath:
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/spyzhov/ajson"
-)
-
-func main() {
-	data := []byte(`{ 
-      "store": {
-        "book": [ 
-          { "category": "reference",
-            "author": "Nigel Rees",
-            "title": "Sayings of the Century",
-            "price": 8.95
-          },
-          { "category": "fiction",
-            "author": "Evelyn Waugh",
-            "title": "Sword of Honour",
-            "price": 12.99
-          },
-          { "category": "fiction",
-            "author": "Herman Melville",
-            "title": "Moby Dick",
-            "isbn": "0-553-21311-3",
-            "price": 8.99
-          },
-          { "category": "fiction",
-            "author": "J. R. R. Tolkien",
-            "title": "The Lord of the Rings",
-            "isbn": "0-395-19395-8",
-            "price": 22.99
-          }
-        ],
-        "bicycle": { "color": "red",
-          "price": 19.95
-        },
-        "tools": null
-      }
-    }`)
-
-	nodes, err := ajson.JSONPath(data, "$..price")
-	if err != nil {
-		panic(err)
-	}
-
-	var prices float64
-	size := len(nodes)
-	for _, node := range nodes {
-		prices += node.MustNumeric()
-	}
-
-	if size > 0 {
-		fmt.Println("AVG price:", prices/float64(size))
-	} else {
-		fmt.Println("AVG price:", 0)
-	}
-}
-```
-
-### Eval
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/spyzhov/ajson"
-)
-
-func main() {
-	json := []byte(`{ "store": {
-    "book": [ 
-      { "category": "reference",
-        "author": "Nigel Rees",
-        "title": "Sayings of the Century",
-        "price": 8.95
-      },
-      { "category": "fiction",
-        "author": "Evelyn Waugh",
-        "title": "Sword of Honour",
-        "price": 12.99
-      },
-      { "category": "fiction",
-        "author": "Herman Melville",
-        "title": "Moby Dick",
-        "isbn": "0-553-21311-3",
-        "price": 8.99
-      },
-      { "category": "fiction",
-        "author": "J. R. R. Tolkien",
-        "title": "The Lord of the Rings",
-        "isbn": "0-395-19395-8",
-        "price": 22.99
-      }
-    ],
-    "bicycle": [
-      {
-        "color": "red",
-        "price": 19.95
-      }
-    ]
-  }
-}`)
-	root, err := ajson.Unmarshal(json)
-	if err != nil {
-		panic(err)
-	}
-	result, err := ajson.Eval(root, "avg($..price)")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("AVG price:", result.MustNumeric())
-}
-```
-
-### Marshal
-
-```go
-package main
-
-import (
-	"fmt"
-	"github.com/spyzhov/ajson"
-)
-
-func main() {
-	json := []byte(`{ "store": {
-    "book": [ 
-      { "category": "reference",
-        "author": "Nigel Rees",
-        "title": "Sayings of the Century",
-        "price": 8.95
-      },
-      { "category": "fiction",
-        "author": "Evelyn Waugh",
-        "title": "Sword of Honour",
-        "price": 12.99
-      },
-      { "category": "fiction",
-        "author": "Herman Melville",
-        "title": "Moby Dick",
-        "isbn": "0-553-21311-3",
-        "price": 8.99
-      },
-      { "category": "fiction",
-        "author": "J. R. R. Tolkien",
-        "title": "The Lord of the Rings",
-        "isbn": "0-395-19395-8",
-        "price": 22.99
-      }
-    ],
-    "bicycle": [
-      {
-        "color": "red",
-        "price": 19.95
-      }
-    ]
-  }
-}`)
-	root := ajson.Must(ajson.Unmarshal(json))
-	result := ajson.Must(ajson.Eval(root, "avg($..price)"))
-	err := root.AppendObject("price(avg)", result)
-	if err != nil {
-		panic(err)
-	}
-	marshalled, err := ajson.Marshal(root)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("%s", marshalled)
-	// Output:
-	// {"store":{
-	//    "book": [
-	//      { "category": "reference",
-	//        "author": "Nigel Rees",
-	//        "title": "Sayings of the Century",
-	//        "price": 8.95
-	//      },
-	//      { "category": "fiction",
-	//        "author": "Evelyn Waugh",
-	//        "title": "Sword of Honour",
-	//        "price": 12.99
-	//      },
-	//      { "category": "fiction",
-	//        "author": "Herman Melville",
-	//        "title": "Moby Dick",
-	//        "isbn": "0-553-21311-3",
-	//        "price": 8.99
-	//      },
-	//      { "category": "fiction",
-	//        "author": "J. R. R. Tolkien",
-	//        "title": "The Lord of the Rings",
-	//        "isbn": "0-395-19395-8",
-	//        "price": 22.99
-	//      }
-	//    ],
-	//    "bicycle": [
-	//      {
-	//        "color": "red",
-	//        "price": 19.95
-	//      }
-	//    ]
-	//  },"price(avg)":14.774000000000001}
-}
-```
-
 # JSONPath
 
 Current package supports JSONPath selection described at [http://goessner.net/articles/JsonPath/](http://goessner.net/articles/JsonPath/).
@@ -613,6 +326,198 @@ Output:
 Avg price: 5.5
 ```
 </details>
+
+# Examples
+
+Calculating `AVG(price)` when object is heterogeneous.
+
+```json
+{
+  "store": {
+    "book": [
+      {
+        "category": "reference",
+        "author": "Nigel Rees",
+        "title": "Sayings of the Century",
+        "price": 8.95
+      },
+      {
+        "category": "fiction",
+        "author": "Evelyn Waugh",
+        "title": "Sword of Honour",
+        "price": 12.99
+      },
+      {
+        "category": "fiction",
+        "author": "Herman Melville",
+        "title": "Moby Dick",
+        "isbn": "0-553-21311-3",
+        "price": 8.99
+      },
+      {
+        "category": "fiction",
+        "author": "J. R. R. Tolkien",
+        "title": "The Lord of the Rings",
+        "isbn": "0-395-19395-8",
+        "price": 22.99
+      }
+    ],
+    "bicycle": {
+      "color": "red",
+      "price": 19.95
+    },
+    "tools": null
+  }
+}
+```
+
+## Unmarshal
+
+[Playground](https://play.golang.org/p/xny93dzjZCK)
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	data := []byte(`{"store": {"book": [
+{"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95}, 
+{"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99}, 
+{"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99}, 
+{"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}], 
+"bicycle": {"color": "red", "price": 19.95}, "tools": null}}`)
+
+	root, err := ajson.Unmarshal(data)
+	if err != nil {
+		panic(err)
+	}
+
+	store := root.MustKey("store").MustObject()
+
+	var prices float64
+	size := 0
+	for _, objects := range store {
+		if objects.IsArray() && objects.Size() > 0 {
+			size += objects.Size()
+			for _, object := range objects.MustArray() {
+				prices += object.MustKey("price").MustNumeric()
+			}
+		} else if objects.IsObject() && objects.HasKey("price") {
+			size++
+			prices += objects.MustKey("price").MustNumeric()
+		}
+	}
+
+	if size > 0 {
+		fmt.Println("AVG price:", prices/float64(size))
+	} else {
+		fmt.Println("AVG price:", 0)
+	}
+}
+```
+
+## JSONPath:
+
+[Playground](https://play.golang.org/p/7twZHOd6dbT)
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	data := []byte(`{"store": {"book": [
+{"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95}, 
+{"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99}, 
+{"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99}, 
+{"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}], 
+"bicycle": {"color": "red", "price": 19.95}, "tools": null}}`)
+
+	nodes, err := ajson.JSONPath(data, "$..price")
+	if err != nil {
+		panic(err)
+	}
+
+	var prices float64
+	size := len(nodes)
+	for _, node := range nodes {
+		prices += node.MustNumeric()
+	}
+
+	if size > 0 {
+		fmt.Println("AVG price:", prices/float64(size))
+	} else {
+		fmt.Println("AVG price:", 0)
+	}
+}
+```
+
+## Eval
+
+[Playground](https://play.golang.org/p/lTXnlRU3sgR)
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{"store": {"book": [
+{"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95}, 
+{"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99}, 
+{"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99}, 
+{"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}], 
+"bicycle": {"color": "red", "price": 19.95}, "tools": null}}`)
+	root, err := ajson.Unmarshal(json)
+	if err != nil {
+		panic(err)
+	}
+	result, err := ajson.Eval(root, "avg($..price)")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("AVG price:", result.MustNumeric())
+}
+```
+
+## Marshal
+
+[Playground](https://play.golang.org/p/i4gXXcA2VLU)
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/spyzhov/ajson"
+)
+
+func main() {
+	json := []byte(`{"store": {"book": [
+{"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95}, 
+{"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99}, 
+{"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99}, 
+{"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}], 
+"bicycle": {"color": "red", "price": 19.95}, "tools": null}}`)
+	root := ajson.Must(ajson.Unmarshal(json))
+	result := ajson.Must(ajson.Eval(root, "avg($..price)"))
+	err := root.AppendObject("price(avg)", result)
+	if err != nil {
+		panic(err)
+	}
+	marshalled, err := ajson.Marshal(root)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s", marshalled)
+}
+```
 
 # Benchmarks
 
