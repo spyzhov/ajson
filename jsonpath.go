@@ -570,8 +570,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 
 // Eval evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
 func Eval(node *Node, cmd string) (result *Node, err error) {
-	buf := newBuffer([]byte(cmd))
-	calc, err := buf.rpn()
+	calc, err := newBuffer([]byte(cmd)).rpn()
 	if err != nil {
 		return nil, err
 	}
@@ -627,14 +626,20 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 					// stack = append(stack, NullNode(""))
 					return NullNode(""), nil
 				}
+			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
+				stack = append(stack, constant)
 			} else {
 				bstr = []byte(exp)
 				size = len(bstr)
 				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
-					bstr[0] = quotes
-					bstr[size-1] = quotes
+					if sstr, ok := unquote(bstr, quote); ok {
+						temp = StringNode("", sstr)
+					} else {
+						err = errorRequest("wrong request: %s", cmd)
+					}
+				} else {
+					temp, err = Unmarshal(bstr)
 				}
-				temp, err = Unmarshal(bstr)
 				if err != nil {
 					return
 				}

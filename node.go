@@ -292,6 +292,24 @@ func (n *Node) IsBool() bool {
 //
 // Value will be calculated only once and saved into atomic.Value.
 func (n *Node) Value() (value interface{}, err error) {
+	switch n._type {
+	case Null:
+		return n.GetNull()
+	case Numeric:
+		return n.GetNumeric()
+	case String:
+		return n.GetString()
+	case Bool:
+		return n.GetBool()
+	case Array:
+		return n.GetArray()
+	case Object:
+		return n.GetObject()
+	}
+	return nil, errorType()
+}
+
+func (n *Node) getValue() (value interface{}, err error) {
 	value = n.value.Load()
 	if value == nil {
 		switch n._type {
@@ -311,6 +329,9 @@ func (n *Node) Value() (value interface{}, err error) {
 			}
 			n.value.Store(value)
 		case Bool:
+			if len(n.Source()) == 0 {
+				return nil, errorUnparsed()
+			}
 			b := n.Source()[0]
 			value = b == 't' || b == 'T'
 			n.value.Store(value)
@@ -334,11 +355,11 @@ func (n *Node) Value() (value interface{}, err error) {
 }
 
 // GetNull returns nil, if current type is Null, else: WrongType error
-func (n *Node) GetNull() (value interface{}, err error) {
+func (n *Node) GetNull() (interface{}, error) {
 	if n._type != Null {
-		return value, errorType()
+		return nil, errorType()
 	}
-	return
+	return nil, nil
 }
 
 // GetNumeric returns float64, if current type is Numeric, else: WrongType error
@@ -346,7 +367,7 @@ func (n *Node) GetNumeric() (value float64, err error) {
 	if n._type != Numeric {
 		return value, errorType()
 	}
-	iValue, err := n.Value()
+	iValue, err := n.getValue()
 	if err != nil {
 		return 0, err
 	}
@@ -362,7 +383,7 @@ func (n *Node) GetString() (value string, err error) {
 	if n._type != String {
 		return value, errorType()
 	}
-	iValue, err := n.Value()
+	iValue, err := n.getValue()
 	if err != nil {
 		return "", err
 	}
@@ -378,7 +399,7 @@ func (n *Node) GetBool() (value bool, err error) {
 	if n._type != Bool {
 		return value, errorType()
 	}
-	iValue, err := n.Value()
+	iValue, err := n.getValue()
 	if err != nil {
 		return false, err
 	}
@@ -394,7 +415,7 @@ func (n *Node) GetArray() (value []*Node, err error) {
 	if n._type != Array {
 		return value, errorType()
 	}
-	iValue, err := n.Value()
+	iValue, err := n.getValue()
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +431,7 @@ func (n *Node) GetObject() (value map[string]*Node, err error) {
 	if n._type != Object {
 		return value, errorType()
 	}
-	iValue, err := n.Value()
+	iValue, err := n.getValue()
 	if err != nil {
 		return nil, err
 	}

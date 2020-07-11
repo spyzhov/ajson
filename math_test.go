@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"testing"
 )
@@ -33,8 +34,49 @@ func ExampleAddFunction() {
 	})
 }
 
+func ExampleAddFunction_usage() {
+	json := []byte(`{"prices": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}`)
+	root, err := Unmarshal(json)
+	if err != nil {
+		panic(err)
+	}
+	result, err := Eval(root, `avg($.prices)`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Avg price: %0.1f", result.MustNumeric())
+	// Output:
+	// Avg price: 5.5
+}
+
 func ExampleAddConstant() {
 	AddConstant("SqrtPi", NumericNode("SqrtPi", math.SqrtPi))
+}
+
+func ExampleAddConstant_using() {
+	json := []byte(`{"foo": [true, null, false, 1, "bar", true, 1e3], "bar": [true, "baz", false]}`)
+	result, err := JSONPath(json, `$..[?(@ == true)]`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Count of `true` values: %d", len(result))
+	// Output:
+	// Count of `true` values: 3
+}
+
+func ExampleAddConstant_eval() {
+	json := []byte(`{"radius": 50, "position": [56.4772531, 84.9918139]}`)
+	root, err := Unmarshal(json)
+	if err != nil {
+		panic(err)
+	}
+	result, err := Eval(root, `2 * $.radius * pi`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Circumference: %0.3f m.", result.MustNumeric())
+	// Output:
+	// Circumference: 314.159 m.
 }
 
 func ExampleAddOperation() {
@@ -45,6 +87,17 @@ func ExampleAddOperation() {
 		}
 		return BoolNode("neq", !res), nil
 	})
+}
+
+func ExampleAddOperation_regex() {
+	json := []byte(`[{"name":"Foo","mail":"foo@example.com"},{"name":"bar","mail":"bar@example.org"}]`)
+	result, err := JSONPath(json, `$.[?(@.mail =~ '.+@example\\.com')]`)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("JSON: %s", result[0].Source())
+	// Output:
+	// JSON: {"name":"Foo","mail":"foo@example.com"}
 }
 
 type operationTest struct {
@@ -314,6 +367,7 @@ func TestFunctions(t *testing.T) {
 
 func TestFunctions2(t *testing.T) {
 	_e := valueNode(nil, "", Numeric, "foo")
+	_s := valueNode(nil, "", String, true)
 	tests := []struct {
 		name   string
 		fname  string
@@ -326,12 +380,21 @@ func TestFunctions2(t *testing.T) {
 		{name: "abs error 1", fname: "abs", value: _e, fail: true},
 		{name: "abs error 2", fname: "abs", value: StringNode("", ""), fail: true},
 
-		{name: "length", fname: "length", value: ArrayNode("test", []*Node{
+		{name: "length array", fname: "length", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), result: NumericNode("", 3)},
-		{name: "length error", fname: "length", value: _e, fail: true},
+		{name: "length blank array", fname: "length", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "length object", fname: "length", value: ObjectNode("test", map[string]*Node{
+			"foo": NumericNode("foo", 1),
+			"bar": NumericNode("bar", 1),
+		}), result: NumericNode("", 2)},
+		{name: "length string", fname: "length", value: StringNode("", "foo_bar"), result: NumericNode("", 7)},
+		{name: "length string error", fname: "length", value: _s, fail: true},
+		{name: "length numeric", fname: "length", value: NumericNode("", 123), result: NumericNode("", 1)},
+		{name: "length bool", fname: "length", value: BoolNode("", false), result: NumericNode("", 1)},
+		{name: "length null", fname: "length", value: NullNode(""), result: NumericNode("", 1)},
 		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),

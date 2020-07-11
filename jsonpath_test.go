@@ -113,6 +113,11 @@ func TestJsonPath(t *testing.T) {
 		{name: "calculated 5", path: "$..[(1/0)]", wantErr: true},
 		{name: "calculated 6", path: "$[('store')][('bo'+'ok')][(@.length - 1)]", expected: "[$['store']['book'][3]]"},
 		{name: "calculated 7", path: "$[('store'+'')][('bo'+'ok')][(true)]", expected: "[$['store']['book'][0], $['store']['book'][1], $['store']['book'][2], $['store']['book'][3]]"},
+		{name: "calculated 8", path: "$.store.book[(@.length / 0)]", wantErr: true},
+		{name: "calculated 9", path: "$.store.book[?(@.price / 0 > 0)]", wantErr: true},
+		{name: "calculated 10", path: "$.store.bicycle.price[(@.length-1)]", expected: `[]`},
+		{name: "calculated 11", path: "$.store.bicycle.price[?(@ > 0)]", expected: `[]`},
+		{name: "calculated 12", path: "$.store.book[?(@.price * 0 = 0)]", wantErr: true},
 
 		{name: "$.store.book[*].author", path: "$.store.book[*].author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
 		{name: "$..author", path: "$..author", expected: "[$['store']['book'][0]['author'], $['store']['book'][1]['author'], $['store']['book'][2]['author'], $['store']['book'][3]['author']]"},
@@ -603,6 +608,13 @@ func TestEval(t *testing.T) {
 			eval:     "($..price+)",
 			expected: nil,
 			wantErr:  true,
+		},
+		{
+			name:     "round(avg($..price)+pi)",
+			root:     Must(Unmarshal(json)),
+			eval:     "round(avg($..price)+pi)",
+			expected: NumericNode("", 18),
+			wantErr:  false,
 		},
 	}
 	for _, test := range tests {
@@ -1217,6 +1229,74 @@ func TestJSONPath_comparison_consensus(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			nodes, err := JSONPath([]byte(test.document), test.selector)
+			if err != nil {
+				t.Errorf("JSONPath() error = %v. got = %v", err, nodes)
+				return
+			}
+
+			results := make([]interface{}, 0)
+			for _, node := range nodes {
+				value, err := node.Unpack()
+				if err != nil {
+					t.Errorf("Unpack(): unexpected error: %v", err)
+					return
+				}
+				results = append(results, value)
+			}
+
+			expected, err := Must(Unmarshal([]byte(test.consensus))).Unpack()
+			if err != nil {
+				t.Errorf("Unpack(): unexpected error: %v", err)
+				return
+			}
+
+			if !reflect.DeepEqual(expected, results) {
+				t.Errorf("JSONPath(): wrong result:\nSelector: %#+v\nDocument: %s\nExpected: %#+v\nActual:   %#+v", test.selector, test.document, expected, results)
+			}
+		})
+	}
+}
+
+func TestJSONPath_special_requests(t *testing.T) {
+	tests := []struct {
+		selector  string
+		document  string
+		consensus string
+	}{
+		{
+			selector:  `$.[?(@.name=='special\'')]`,
+			document:  `[{"name":"special'"}, {"name":"special"}]`,
+			consensus: `[{"name":"special'"}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special\n')]`,
+			document:  `[{"name":"special\n"}, {"name":"special"}]`,
+			consensus: `[{"name":"special\n"}]`,
+		},
+		{
+			selector:  `$.[?(@.name==')special(')]`,
+			document:  `[{"name":")special("}, {"name":"special"}]`,
+			consensus: `[{"name":")special("}]`,
+		},
+		{
+			selector:  `$.[?(@.name==']special[')]`,
+			document:  `[{"name":"]special["}, {"name":"special"}]`,
+			consensus: `[{"name":"]special["}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special?')]`,
+			document:  `[{"name":"special?"}, {"name":"special"}]`,
+			consensus: `[{"name":"special?"}]`,
+		},
+		{
+			selector:  `$.[?(@.name=='special\u3210')]`,
+			document:  `[{"name":"special\u3210"}, {"name":"special"}]`,
+			consensus: `[{"name":"special\u3210"}]`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.selector, func(t *testing.T) {
 			nodes, err := JSONPath([]byte(test.document), test.selector)
 			if err != nil {
 				t.Errorf("JSONPath() error = %v. got = %v", err, nodes)

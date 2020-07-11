@@ -877,6 +877,12 @@ func TestUnmarshal_main(t *testing.T) {
 			want:    float64(-130),
 			wantErr: false,
 		},
+		{
+			name:    `y_object_key_unicode`,
+			args:    args{[]byte(`{"\u041f\u043e\u043b\u0442\u043e\u0440\u0430\n\u0417\u0435\u043c\u043b\u0435\u043a\u043e\u043f\u0430": true}`)},
+			want:    map[string]interface{}{"Полтора\nЗемлекопа": true},
+			wantErr: false,
+		},
 		// endregion
 		// region From https://json.org/example.html
 		{
