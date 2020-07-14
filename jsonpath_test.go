@@ -9,7 +9,7 @@ import (
 
 // JSON from example https://goessner.net/articles/JsonPath/index.html#e3
 var jsonPathTestData = []byte(`{ "store": {
-    "book": [ 
+    "book": [
       { "category": "reference",
         "author": "Nigel Rees",
         "title": "Sayings of the Century",
@@ -1293,6 +1293,11 @@ func TestJSONPath_special_requests(t *testing.T) {
 			selector:  `$.[?(@.name=='special\u3210')]`,
 			document:  `[{"name":"special\u3210"}, {"name":"special"}]`,
 			consensus: `[{"name":"special\u3210"}]`,
+		},
+		{
+			selector:  `$.[?(@.['special\u3210']=='name')]`,
+			document:  `[{"special\u3210":"name"}, {"special":"another"}]`,
+			consensus: `[{"special\u3210":"name"}]`,
 		},
 	}
 	for _, test := range tests {

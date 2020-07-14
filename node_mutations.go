@@ -116,6 +116,33 @@ func (n *Node) Delete() error {
 	return n.parent.remove(n)
 }
 
+// Clone creates full copy of current Node. With all child, but without link to the parent.
+func (n *Node) Clone() *Node {
+	node := n.clone()
+	node.parent = nil
+	node.key = nil
+	node.index = nil
+	return node
+}
+
+func (n *Node) clone() *Node {
+	node := &Node{
+		parent:   n.parent,
+		children: make(map[string]*Node, len(n.children)),
+		key:      n.key,
+		index:    n.index,
+		_type:    n._type,
+		data:     n.data,
+		borders:  n.borders,
+		value:    n.value,
+		dirty:    n.dirty,
+	}
+	for key, value := range n.children {
+		node.children[key] = value.clone()
+	}
+	return node
+}
+
 // update stored value, with validations
 func (n *Node) update(_type NodeType, value interface{}) error {
 	// validate
