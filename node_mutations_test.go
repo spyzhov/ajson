@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -1372,4 +1373,109 @@ func TestNode_update_fail(t *testing.T) {
 	if err := node.SetObject(map[string]*Node{"foo": broken}); err == nil {
 		t.Errorf("SetObject() error is nil")
 	}
+}
+
+func TestNode_Clone(t *testing.T) {
+	node := NumericNode("", 1.1)
+	null := NullNode("")
+	array := ArrayNode("", []*Node{node, null})
+	object := ObjectNode("", map[string]*Node{"array": array})
+
+	tests := []struct {
+		name string
+		node *Node
+		json string
+	}{
+		{
+			name: "null",
+			node: null,
+			json: "null",
+		},
+		{
+			name: "node",
+			node: node,
+			json: "1.1",
+		},
+		{
+			name: "array",
+			node: array,
+			json: "[1.1,null]",
+		},
+		{
+			name: "object",
+			node: object,
+			json: `{"array":[1.1,null]}`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			clone := test.node.Clone()
+			if clone.parent != nil {
+				t.Error("Clone().parent != nil")
+			} else if clone.index != nil {
+				t.Error("Clone().index != nil")
+			} else if clone.key != nil {
+				t.Error("Clone().key != nil")
+			}
+
+			if result, err := Marshal(clone); err != nil {
+				t.Errorf("Marshal() error: %s", err)
+			} else if string(result) != test.json {
+				t.Errorf("Marshal() clone not match: \nExpected: %s\nActual: %s", test.json, result)
+			} else if base, err := Marshal(test.node); err != nil {
+				t.Errorf("Marshal() error: %s", err)
+			} else if string(base) != test.json {
+				t.Errorf("Marshal() base not match: \nExpected: %s\nActual: %s", test.json, base)
+			}
+		})
+	}
+}
+
+func ExampleNode_Clone() {
+	root := Must(Unmarshal(jsonPathTestData))
+	nodes, _ := root.JSONPath("$..price")
+	for i, node := range nodes {
+		nodes[i] = node.Clone()
+	}
+
+	result, _ := Marshal(ArrayNode("", nodes))
+	fmt.Printf("Array: %s\n", result)
+
+	result, _ = Marshal(root)
+	fmt.Printf("Basic: %s\n", result)
+
+	// Output:
+	// Array: [19.95,8.95,12.99,8.99,22.99]
+	// Basic: { "store": {
+	//     "book": [
+	//       { "category": "reference",
+	//         "author": "Nigel Rees",
+	//         "title": "Sayings of the Century",
+	//         "price": 8.95
+	//       },
+	//       { "category": "fiction",
+	//         "author": "Evelyn Waugh",
+	//         "title": "Sword of Honour",
+	//         "price": 12.99
+	//       },
+	//       { "category": "fiction",
+	//         "author": "Herman Melville",
+	//         "title": "Moby Dick",
+	//         "isbn": "0-553-21311-3",
+	//         "price": 8.99
+	//       },
+	//       { "category": "fiction",
+	//         "author": "J. R. R. Tolkien",
+	//         "title": "The Lord of the Rings",
+	//         "isbn": "0-395-19395-8",
+	//         "price": 22.99
+	//       }
+	//     ],
+	//     "bicycle": {
+	//       "color": "red",
+	//       "price": 19.95
+	//     }
+	//   }
+	// }
+	//
 }
