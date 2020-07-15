@@ -559,6 +559,7 @@ func deReference(node *Node, commands []string) (result []*Node, err error) {
 					}
 					if ok {
 						temporary = append(temporary, value)
+						ok = false
 					}
 				}
 			}

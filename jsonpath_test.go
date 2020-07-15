@@ -40,6 +40,76 @@ var jsonPathTestData = []byte(`{ "store": {
   }
 }`)
 
+var jpStubs = map[string]string{
+	// JSON from API https://randomuser.me/api/?results=1
+	"random_user": `{
+  "results": [
+    {
+      "gender": "female",
+      "name": {
+        "title": "Miss",
+        "first": "Annette",
+        "last": "Jennings"
+      },
+      "location": {
+        "street": {
+          "number": 855,
+          "name": "Dane St"
+        },
+        "city": "Abilene",
+        "state": "New York",
+        "country": "United States",
+        "postcode": 90538,
+        "coordinates": {
+          "latitude": "88.1096",
+          "longitude": "22.9540"
+        },
+        "timezone": {
+          "offset": "-1:00",
+          "description": "Azores, Cape Verde Islands"
+        }
+      },
+      "email": "annette.jennings@example.com",
+      "login": {
+        "uuid": "0726120a-e330-42f6-821c-fcec841b797a",
+        "username": "smallwolf778",
+        "password": "banker",
+        "salt": "modk0zGi",
+        "md5": "5b3a522f1e66625d0e76b92f031ffe80",
+        "sha1": "d56c12fa9110585956392523a90b06aca99a7fc9",
+        "sha256": "1b5a15c21683337d60d53dfb5853c8357fa218a96e280f2adf5aefdf2157fd76"
+      },
+      "dob": {
+        "date": "1994-09-14T00:34:29.287Z",
+        "age": 26
+      },
+      "registered": {
+        "date": "2015-11-18T14:09:34.475Z",
+        "age": 5
+      },
+      "phone": "(217)-464-6621",
+      "cell": "(445)-236-5456",
+      "id": {
+        "name": "SSN",
+        "value": "071-39-5493"
+      },
+      "picture": {
+        "large": "https://randomuser.me/api/portraits/women/48.jpg",
+        "medium": "https://randomuser.me/api/portraits/med/women/48.jpg",
+        "thumbnail": "https://randomuser.me/api/portraits/thumb/women/48.jpg"
+      },
+      "nat": "US"
+    }
+  ],
+  "info": {
+    "seed": "eabbc063d314ff54",
+    "results": 1,
+    "page": 1,
+    "version": "1.3"
+  }
+}`,
+}
+
 func fullPath(array []*Node) string {
 	return sliceString(Paths(array))
 }
@@ -1298,6 +1368,11 @@ func TestJSONPath_special_requests(t *testing.T) {
 			selector:  `$.[?(@.['special\u3210']=='name')]`,
 			document:  `[{"special\u3210":"name"}, {"special":"another"}]`,
 			consensus: `[{"special\u3210":"name"}]`,
+		},
+		{
+			selector:  `$..name.title`,
+			document:  jpStubs["random_user"],
+			consensus: `["Miss"]`,
 		},
 	}
 	for _, test := range tests {
