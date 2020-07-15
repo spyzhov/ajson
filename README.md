@@ -48,6 +48,34 @@ func main() {
 }
 ```
 
+# Console application
+
+You can download `ajson` cli from the [release page](https://github.com/spyzhov/ajson/releases), or install from the source:
+
+```shell script
+go get github.com/spyzhov/ajson/cmd/ajson@v0.4.0
+```
+
+Usage:
+
+```
+Usage: ajson "jsonpath" ["input"]
+  Read JSON and evaluate it with JSONPath.
+Argument:
+  jsonpath   Valid JSONPath or evaluate string (Examples: "$..[?(@.price)]", "$..price", "avg($..price)")
+  input      Path to the JSON file. Leave it blank to use STDIN.
+```
+
+Examples:
+
+```shell script
+  ajson "avg($..registered.age)" "https://randomuser.me/api/?results=5000"
+  ajson "$.results.*.name" "https://randomuser.me/api/?results=10"
+  curl -s "https://randomuser.me/api/?results=10" | ajson "$..coordinates"
+  ajson "$" example.json
+  echo "3" | ajson "2 * pi * $"
+```
+
 # JSONPath
 
 Current package supports JSONPath selection described at [http://goessner.net/articles/JsonPath/](http://goessner.net/articles/JsonPath/).
