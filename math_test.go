@@ -395,6 +395,7 @@ func TestFunctions2(t *testing.T) {
 		{name: "length numeric", fname: "length", value: NumericNode("", 123), result: NumericNode("", 1)},
 		{name: "length bool", fname: "length", value: BoolNode("", false), result: NumericNode("", 1)},
 		{name: "length null", fname: "length", value: NullNode(""), result: NumericNode("", 1)},
+
 		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
@@ -418,6 +419,30 @@ func TestFunctions2(t *testing.T) {
 			"e": NumericNode("", 3),
 		}), result: NumericNode("", 2)},
 		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+
+		{name: "sum error 1", fname: "sum", value: ArrayNode("test", []*Node{
+			valueNode(nil, "", Numeric, "foo"),
+			valueNode(nil, "", Numeric, "foo"),
+			valueNode(nil, "", Numeric, "foo"),
+		}), fail: true},
+		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NullNode("")},
+		{name: "sum array 1", fname: "sum", value: ArrayNode("test", []*Node{
+			NumericNode("", 1),
+			NumericNode("", 1),
+			NumericNode("", 1),
+			NumericNode("", 1),
+		}), result: NumericNode("", 4)},
+		{name: "sum array 2", fname: "sum", value: ArrayNode("test", []*Node{
+			NumericNode("", 1),
+			NumericNode("", 2),
+			NumericNode("", 3),
+		}), result: NumericNode("", 6)},
+		{name: "sum object", fname: "sum", value: ObjectNode("test", map[string]*Node{
+			"q": NumericNode("", 1),
+			"w": NumericNode("", 2),
+			"e": NumericNode("", 3),
+		}), result: NumericNode("", 6)},
+		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

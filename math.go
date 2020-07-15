@@ -373,6 +373,24 @@ var (
 			}
 			return valueNode(nil, "avg", Null, nil), nil
 		},
+		"sum": func(node *Node) (result *Node, err error) {
+			if node.isContainer() {
+				sum := float64(0)
+				if node.Size() == 0 {
+					return valueNode(nil, "sum", Numeric, sum), nil
+				}
+				var value float64
+				for _, temp := range node.Inheritors() {
+					value, err = temp.GetNumeric()
+					if err != nil {
+						return nil, err
+					}
+					sum += value
+				}
+				return valueNode(nil, "sum", Numeric, sum), nil
+			}
+			return valueNode(nil, "sum", Null, nil), nil
+		},
 		"not": func(node *Node) (result *Node, err error) {
 			if value, err := boolean(node); err != nil {
 				return nil, err
