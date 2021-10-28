@@ -3,6 +3,7 @@ package ajson
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -1404,4 +1405,98 @@ func TestJSONPath_special_requests(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestApplyJSONPath(t *testing.T) {
+	node1 := NumericNode("", 1.)
+	node2 := NumericNode("", 2.)
+	cpy := func(n Node) *Node {
+		return &n
+	}
+	array := ArrayNode("", []*Node{cpy(*node1), cpy(*node2)})
+
+	type args struct {
+		node     *Node
+		commands []string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantResult []*Node
+		wantErr    bool
+	}{
+		{
+			name: "nil",
+			args: args{
+				node:     nil,
+				commands: nil,
+			},
+			wantResult: make([]*Node, 0),
+			wantErr:    false,
+		},
+		{
+			name: "root",
+			args: args{
+				node:     node1,
+				commands: []string{"$"},
+			},
+			wantResult: []*Node{node1},
+			wantErr:    false,
+		},
+		{
+			name: "second",
+			args: args{
+				node:     array,
+				commands: []string{"$", "1"},
+			},
+			wantResult: []*Node{array.children["1"]},
+			wantErr:    false,
+		},
+		{
+			name: "both",
+			args: args{
+				node:     array,
+				commands: []string{"$", "1,0"},
+			},
+			wantResult: []*Node{array.children["1"], array.children["0"]},
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := ApplyJSONPath(tt.args.node, tt.args.commands)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ApplyJSONPath() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotResult, tt.wantResult) {
+				t.Errorf("ApplyJSONPath() gotResult = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
+}
+
+func ExampleApplyJSONPath() {
+	json := `[
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+		[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+	]`
+	node := Must(Unmarshal([]byte(json)))
+	for i := 0; i < 10; i++ {
+		key1 := strconv.Itoa(i)
+		key2 := strconv.Itoa(4 - i)
+		nodes, _ := ApplyJSONPath(node, []string{"$", key1, key2})
+		fmt.Printf("%s", nodes)
+	}
+
+	// Output:
+	// [4][3][2][1][0][9][8][7][6][5]
 }

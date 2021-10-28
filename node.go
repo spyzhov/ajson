@@ -835,7 +835,7 @@ func (n *Node) JSONPath(path string) (result []*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return deReference(n, commands)
+	return ApplyJSONPath(n, commands)
 }
 
 // root returns the root node
