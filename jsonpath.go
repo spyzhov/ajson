@@ -166,7 +166,7 @@ func JSONPath(data []byte, path string) (result []*Node, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return deReference(node, commands)
+	return ApplyJSONPath(node, commands)
 }
 
 // Paths returns calculated paths of underlying nodes
@@ -307,7 +307,13 @@ func ParseJSONPath(path string) (result []string, err error) {
 	return
 }
 
-func deReference(node *Node, commands []string) (result []*Node, err error) {
+// ApplyJSONPath function applies commands sequence parse from JSONPath.
+// Example:
+//
+//	commands := []string{"$", "store", "book", "?(@.price < 10)", "title"}
+//	result, _ := ApplyJSONPath(node, commands)
+//
+func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 	result = make([]*Node, 0)
 	var (
 		temporary   []*Node
@@ -615,7 +621,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				if err != nil {
 					return
 				}
-				slice, err = deReference(node, commands)
+				slice, err = ApplyJSONPath(node, commands)
 				if err != nil {
 					return
 				}
