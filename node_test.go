@@ -85,6 +85,13 @@ func TestNode_Unpack(t *testing.T) {
 	}
 }
 
+func TestNode_Unpack_nil(t *testing.T) {
+	_, err := (*Node)(nil).Unpack()
+	if err == nil {
+		t.Errorf("(nil).Unpack() should be an error")
+	}
+}
+
 func TestNode_getValue(t *testing.T) {
 	root, err := Unmarshal([]byte(`{ "category": null,
         "author": "Evelyn Waugh",
@@ -145,6 +152,9 @@ func TestNode_Empty(t *testing.T) {
 	if !value["sub1"].Empty() {
 		t.Errorf("Node `sub1` is empty")
 	}
+	if (*Node)(nil).Empty() {
+		t.Errorf("(nil).Empty() is empty")
+	}
 }
 
 func TestNode_GetArray(t *testing.T) {
@@ -165,6 +175,9 @@ func TestNode_GetArray(t *testing.T) {
 	_, err = root.GetArray()
 	if err == nil {
 		t.Errorf("Error on root.GetArray(): NullNode")
+	}
+	if _, err := (*Node)(nil).GetArray(); err == nil {
+		t.Errorf("(nil).GetArray() should be an error")
 	}
 }
 
@@ -198,6 +211,9 @@ func TestNode_GetBool(t *testing.T) {
 	_, err = root.GetBool()
 	if err == nil {
 		t.Errorf("Error on root.GetBool(): NullNode")
+	}
+	if _, err := (*Node)(nil).GetBool(); err == nil {
+		t.Errorf("(nil).GetBool() should be an error")
 	}
 }
 
@@ -234,6 +250,9 @@ func TestNode_GetIndex(t *testing.T) {
 	if value != nil {
 		t.Errorf("Error on root.GetIndex() - wrong value")
 	}
+	if _, err := (*Node)(nil).GetIndex(0); err == nil {
+		t.Errorf("(nil).GetIndex() should be an error")
+	}
 }
 
 func TestNode_MustIndex(t *testing.T) {
@@ -269,6 +288,9 @@ func TestNode_GetKey(t *testing.T) {
 	if value != nil {
 		t.Errorf("Error on root.GetKey() - wrong value")
 	}
+	if _, err := (*Node)(nil).GetKey(""); err == nil {
+		t.Errorf("(nil).GetKey() should be an error")
+	}
 }
 
 func TestNode_MustKey(t *testing.T) {
@@ -301,6 +323,9 @@ func TestNode_GetNull(t *testing.T) {
 	_, err = root.GetNull()
 	if err == nil {
 		t.Errorf("Error expected on root.GetNull() using NumericNode")
+	}
+	if _, err := (*Node)(nil).GetNull(); err == nil {
+		t.Errorf("(nil).GetNull() should be an error")
 	}
 }
 
@@ -341,6 +366,9 @@ func TestNode_GetNumeric(t *testing.T) {
 	if err == nil {
 		t.Errorf("Error on root.GetNumeric() wrong data")
 	}
+	if _, err := (*Node)(nil).GetNumeric(); err == nil {
+		t.Errorf("(nil).GetNumeric() should be an error")
+	}
 }
 
 func TestNode_MustNumeric(t *testing.T) {
@@ -376,6 +404,9 @@ func TestNode_GetObject(t *testing.T) {
 	_, err = root.GetObject()
 	if err == nil {
 		t.Errorf("Error on root.GetArray(): NullNode")
+	}
+	if _, err := (*Node)(nil).GetObject(); err == nil {
+		t.Errorf("(nil).GetObject() should be an error")
 	}
 }
 
@@ -413,6 +444,9 @@ func TestNode_GetString(t *testing.T) {
 	if err == nil {
 		t.Errorf("Error on root.GetString(): NumericNode")
 	}
+	if _, err := (*Node)(nil).GetString(); err == nil {
+		t.Errorf("(nil).GetString() should be an error")
+	}
 }
 
 func TestNode_MustString(t *testing.T) {
@@ -439,6 +473,9 @@ func TestNode_Index(t *testing.T) {
 			t.Errorf("Wrong node.Index(): %d != %d", i, node.Index())
 		}
 	}
+	if (*Node)(nil).Index() != -1 {
+		t.Errorf("Wrong value for (*Node)(nil).Index()")
+	}
 }
 
 func TestNode_Key(t *testing.T) {
@@ -452,6 +489,9 @@ func TestNode_Key(t *testing.T) {
 		if key != node.Key() {
 			t.Errorf("Wrong node.Index(): '%s' != '%s'", key, node.Key())
 		}
+	}
+	if (*Node)(nil).Key() != "" {
+		t.Errorf("Wrong value for (*Node)(nil).Key()")
 	}
 }
 
@@ -594,20 +634,38 @@ func TestNode_IsNull(t *testing.T) {
 	if root.IsArray() {
 		t.Errorf("Wrong root.IsArray()")
 	}
+	if (*Node)(nil).IsArray() {
+		t.Errorf("Wrong (*Node)(nil).IsArray()")
+	}
 	if root.IsObject() {
 		t.Errorf("Wrong root.IsObject()")
+	}
+	if (*Node)(nil).IsObject() {
+		t.Errorf("Wrong (*Node)(nil).IsObject()")
 	}
 	if root.IsString() {
 		t.Errorf("Wrong root.IsString()")
 	}
+	if (*Node)(nil).IsString() {
+		t.Errorf("Wrong (*Node)(nil).IsString()")
+	}
 	if root.IsNumeric() {
 		t.Errorf("Wrong root.IsNumeric()")
+	}
+	if (*Node)(nil).IsNumeric() {
+		t.Errorf("Wrong (*Node)(nil).IsNumeric()")
 	}
 	if root.IsBool() {
 		t.Errorf("Wrong root.IsBool()")
 	}
+	if (*Node)(nil).IsBool() {
+		t.Errorf("Wrong (*Node)(nil).IsBool()")
+	}
 	if !root.IsNull() {
 		t.Errorf("Wrong root.IsNull()")
+	}
+	if (*Node)(nil).IsNull() {
+		t.Errorf("Wrong (*Node)(nil).IsNull()")
 	}
 }
 
@@ -627,6 +685,9 @@ func TestNode_Keys(t *testing.T) {
 	if value[1] != "foo" && value[1] != "bar" {
 		t.Errorf("Wrong value in 1")
 	}
+	if (*Node)(nil).Keys() != nil {
+		t.Errorf("Wrong value for (*Node)(nil).Keys()")
+	}
 }
 
 func TestNode_Size(t *testing.T) {
@@ -638,6 +699,9 @@ func TestNode_Size(t *testing.T) {
 	value := root.Size()
 	if value != 4 {
 		t.Errorf("Wrong root.Size()")
+	}
+	if (*Node)(nil).Size() != 0 {
+		t.Errorf("Wrong (*Node)(nil).Size()")
 	}
 }
 
@@ -655,6 +719,9 @@ func TestNode_Parent(t *testing.T) {
 	if value.Parent().String() != root.String() {
 		t.Errorf("Wrong value.Parent()")
 	}
+	if (*Node)(nil).Parent() != nil {
+		t.Errorf("Wrong value for (*Node)(nil).Parent()")
+	}
 }
 
 func TestNode_Source(t *testing.T) {
@@ -666,6 +733,9 @@ func TestNode_Source(t *testing.T) {
 	value := root.Source()
 	if !bytes.Equal(value, []byte(`{"foo":true,"bar":null}`)) {
 		t.Errorf("Wrong root.Source()")
+	}
+	if (*Node)(nil).Source() != nil {
+		t.Errorf("Wrong value for (*Node)(nil).Source()")
 	}
 }
 
@@ -682,7 +752,7 @@ func TestNode_String(t *testing.T) {
 
 	root = StringNode("", "foo")
 	value = root.String()
-	if value != "foo" {
+	if value != `"foo"` {
 		t.Errorf("Wrong (StringNode) root.String()")
 	}
 
@@ -690,6 +760,16 @@ func TestNode_String(t *testing.T) {
 	value = root.String()
 	if value != "null" {
 		t.Errorf("Wrong (NullNode) root.String()")
+	}
+	if (*Node)(nil).String() != "" {
+		t.Errorf("Wrong value for (*Node)(nil).String()")
+	}
+
+	node := Must(Unmarshal([]byte(`{"foo":"bar"}`)))
+	node.borders[1] = 0 // broken borders
+	broken := node.String()
+	if broken != "Error: not parsed yet" {
+		t.Errorf("Wrong broken.String() value, actual value: %s", broken)
 	}
 }
 
@@ -721,6 +801,12 @@ func TestNode_Type(t *testing.T) {
 	}
 }
 
+func TestNode_Type_null(t *testing.T) {
+	if (*Node)(nil).Type() != Null {
+		t.Errorf("Wrong value for (*Node)(nil).Type()")
+	}
+}
+
 func TestNode_HasKey(t *testing.T) {
 	root, err := Unmarshal([]byte(`{"foo":true,"bar":null}`))
 	if err != nil {
@@ -735,6 +821,9 @@ func TestNode_HasKey(t *testing.T) {
 	}
 	if root.HasKey("baz") {
 		t.Errorf("Wrong root.HasKey('bar')")
+	}
+	if (*Node)(nil).HasKey("baz") {
+		t.Errorf("Wrong (*Node)(nil).HasKey('bar')")
 	}
 }
 
@@ -764,6 +853,9 @@ func TestNode_Path(t *testing.T) {
 	element := root.MustKey("Image").MustKey("Thumbnail").MustKey("Url")
 	if element.Path() != "$['Image']['Thumbnail']['Url']" {
 		t.Errorf("Wrong element.Path()")
+	}
+	if (*Node)(nil).Path() != "" {
+		t.Errorf("Wrong (nil).Path()")
 	}
 }
 
@@ -906,6 +998,18 @@ func TestNode_Eq(t *testing.T) {
 			right: valueNode(nil, "", Object, float64(1)),
 			error: true,
 		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
+			error: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -928,6 +1032,7 @@ func TestNode_Neq(t *testing.T) {
 		name        string
 		left, right *Node
 		expected    bool
+		error       bool
 	}{
 		{
 			name:     "simple",
@@ -983,11 +1088,27 @@ func TestNode_Neq(t *testing.T) {
 			right:    NumericNode("", 1.00011),
 			expected: true,
 		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
+			error: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual, err := test.left.Neq(test.right)
-			if err != nil {
+			if test.error {
+				if err == nil {
+					t.Errorf("Error expected: nil given")
+				}
+			} else if err != nil {
 				t.Errorf("Error on node.Neq(): %s", err.Error())
 			} else if actual != test.expected {
 				t.Errorf("Failed node.Neq()")
@@ -1087,6 +1208,18 @@ func TestNode_Ge(t *testing.T) {
 			right: StringNode("", "foo"),
 			error: true,
 		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
+			error: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1098,7 +1231,6 @@ func TestNode_Ge(t *testing.T) {
 			} else if actual != test.expected {
 				t.Errorf("Failed node.Ge()")
 			}
-
 		})
 	}
 }
@@ -1192,6 +1324,18 @@ func TestNode_Geq(t *testing.T) {
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
 			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
 			error: true,
 		},
 	}
@@ -1301,6 +1445,18 @@ func TestNode_Le(t *testing.T) {
 			right: StringNode("", "foo"),
 			error: true,
 		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
+			error: true,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1406,6 +1562,18 @@ func TestNode_Leq(t *testing.T) {
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
 			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "nil/value",
+			left:  nil,
+			right: StringNode("", "foo"),
+			error: true,
+		},
+		{
+			name:  "value/nil",
+			left:  StringNode("", "foo"),
+			right: nil,
 			error: true,
 		},
 	}
@@ -1795,6 +1963,12 @@ func TestNode_Value(t *testing.T) {
 		{
 			name:      "type error",
 			node:      valueNode(nil, "", 10000, false),
+			wantValue: nil,
+			wantErr:   true,
+		},
+		{
+			name:      "nil",
+			node:      nil,
 			wantValue: nil,
 			wantErr:   true,
 		},
