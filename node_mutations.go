@@ -15,7 +15,7 @@ func (n *Node) Set(value interface{}) error {
 	if value == nil {
 		return n.SetNull()
 	}
-	switch value.(type) {
+	switch result := value.(type) {
 	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		if tValue, err := numeric2float64(value); err != nil {
 			return err
@@ -23,15 +23,15 @@ func (n *Node) Set(value interface{}) error {
 			return n.SetNumeric(tValue)
 		}
 	case string:
-		return n.SetString(value.(string))
+		return n.SetString(result)
 	case bool:
-		return n.SetBool(value.(bool))
+		return n.SetBool(result)
 	case []*Node:
-		return n.SetArray(value.([]*Node))
+		return n.SetArray(result)
 	case map[string]*Node:
-		return n.SetObject(value.(map[string]*Node))
+		return n.SetObject(result)
 	case *Node:
-		return n.SetNode(value.(*Node))
+		return n.SetNode(result)
 	default:
 		return unsupportedType(value)
 	}
@@ -366,7 +366,8 @@ func (n *Node) setReference(parent *Node, key *string, index *int) {
 	if key == nil {
 		n.key = nil
 	} else {
-		n.key = &(*key)
+		temp := *key
+		n.key = &temp
 	}
 	n.index = index
 }
