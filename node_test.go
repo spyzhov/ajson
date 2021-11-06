@@ -476,6 +476,12 @@ func TestNode_Index(t *testing.T) {
 	if (*Node)(nil).Index() != -1 {
 		t.Errorf("Wrong value for (*Node)(nil).Index()")
 	}
+	if NullNode("").Index() != -1 {
+		t.Errorf("Wrong value for Null.Index()")
+	}
+	if ObjectNode("", nil).Index() != -1 {
+		t.Errorf("Wrong value for Null.Index()")
+	}
 }
 
 func TestNode_Key(t *testing.T) {
@@ -492,6 +498,9 @@ func TestNode_Key(t *testing.T) {
 	}
 	if (*Node)(nil).Key() != "" {
 		t.Errorf("Wrong value for (*Node)(nil).Key()")
+	}
+	if root.MustKey("foo").Clone().Key() != "" {
+		t.Errorf("Wrong value for Cloned.Key()")
 	}
 }
 

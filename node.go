@@ -202,7 +202,7 @@ func (n *Node) Source() []byte {
 	if n == nil {
 		return nil
 	}
-	if n.ready() && !n.dirty {
+	if n.ready() && !n.dirty && n.data != nil {
 		return (*n.data)[n.borders[0]:n.borders[1]]
 	}
 	return nil
@@ -233,7 +233,10 @@ func (n *Node) Type() NodeType {
 
 // Key will return key of current node, please check, that parent of this node has an Object type
 func (n *Node) Key() string {
-	if n == nil || n.key == nil {
+	if n == nil {
+		return ""
+	}
+	if n.key == nil {
 		return ""
 	}
 	return *n.key
@@ -242,6 +245,9 @@ func (n *Node) Key() string {
 // Index will return index of current node, please check, that parent of this node has an Array type
 func (n *Node) Index() int {
 	if n == nil {
+		return -1
+	}
+	if n.index == nil {
 		return -1
 	}
 	return *n.index
