@@ -68,10 +68,10 @@ func (n *Node) SetObject(value map[string]*Node) error {
 }
 
 // SetNode updates current node value with the clone of the given Node value
+// NB! The result will be the clone of the given Node!
 func (n *Node) SetNode(value *Node) error {
 	if n == value {
 		// Attempt to set current node as the value: node.SetNode(node)
-		//
 		return nil
 	}
 	if n.isParentOrSelfNode(value) {
