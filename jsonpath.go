@@ -314,6 +314,9 @@ func ParseJSONPath(path string) (result []string, err error) {
 //	result, _ := ApplyJSONPath(node, commands)
 //
 func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
+	if node == nil {
+		return nil, nil
+	}
 	result = make([]*Node, 0)
 	var (
 		temporary   []*Node
@@ -585,6 +588,9 @@ func Eval(node *Node, cmd string) (result *Node, err error) {
 }
 
 func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
+	if node == nil {
+		return nil, nil
+	}
 	var (
 		stack    = make([]*Node, 0)
 		slice    []*Node

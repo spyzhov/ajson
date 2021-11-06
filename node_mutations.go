@@ -10,37 +10,85 @@ func (n *Node) IsDirty() bool {
 	return n.dirty
 }
 
-// SetNull update current node value with Null value
+// Set updates current node value with the value of any type
+func (n *Node) Set(value interface{}) error {
+	if value == nil {
+		return n.SetNull()
+	}
+	switch result := value.(type) {
+	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		if tValue, err := numeric2float64(value); err != nil {
+			return err
+		} else {
+			return n.SetNumeric(tValue)
+		}
+	case string:
+		return n.SetString(result)
+	case bool:
+		return n.SetBool(result)
+	case []*Node:
+		return n.SetArray(result)
+	case map[string]*Node:
+		return n.SetObject(result)
+	case *Node:
+		return n.SetNode(result)
+	default:
+		return unsupportedType(value)
+	}
+}
+
+// SetNull updates current node value with Null value
 func (n *Node) SetNull() error {
 	return n.update(Null, nil)
 }
 
-// SetNumeric update current node value with Numeric value
+// SetNumeric updates current node value with Numeric value
 func (n *Node) SetNumeric(value float64) error {
 	return n.update(Numeric, value)
 }
 
-// SetString update current node value with String value
+// SetString updates current node value with String value
 func (n *Node) SetString(value string) error {
 	return n.update(String, value)
 }
 
-// SetBool update current node value with Bool value
+// SetBool updates current node value with Bool value
 func (n *Node) SetBool(value bool) error {
 	return n.update(Bool, value)
 }
 
-// SetArray update current node value with Array value
+// SetArray updates current node value with Array value
 func (n *Node) SetArray(value []*Node) error {
 	return n.update(Array, value)
 }
 
-// SetObject update current node value with Object value
+// SetObject updates current node value with Object value
 func (n *Node) SetObject(value map[string]*Node) error {
 	return n.update(Object, value)
 }
 
-// AppendArray append current Array node values with Node values
+// SetNode updates current node value with the clone of the given Node value
+// NB! The result will be the clone of the given Node!
+func (n *Node) SetNode(value *Node) error {
+	if n == value {
+		// Attempt to set current node as the value: node.SetNode(node)
+		return nil
+	}
+	if n.isParentOrSelfNode(value) {
+		return errorRequest("attempt to create infinite loop")
+	}
+
+	node := value.Clone()
+	node.setReference(n.parent, n.key, n.index)
+	n.setReference(nil, nil, nil)
+	*n = *node
+	if n.parent != nil {
+		n.parent.mark()
+	}
+	return nil
+}
+
+// AppendArray appends current Array node values with Node values
 func (n *Node) AppendArray(value ...*Node) error {
 	if !n.IsArray() {
 		return errorType()
@@ -54,7 +102,7 @@ func (n *Node) AppendArray(value ...*Node) error {
 	return nil
 }
 
-// AppendObject append current Object node value with key:value
+// AppendObject appends current Object node value with key:value
 func (n *Node) AppendObject(key string, value *Node) error {
 	if !n.IsObject() {
 		return errorType()
@@ -119,9 +167,7 @@ func (n *Node) Delete() error {
 // Clone creates full copy of current Node. With all child, but without link to the parent.
 func (n *Node) Clone() *Node {
 	node := n.clone()
-	node.parent = nil
-	node.key = nil
-	node.index = nil
+	node.setReference(nil, nil, nil)
 	return node
 }
 
@@ -143,7 +189,7 @@ func (n *Node) clone() *Node {
 	return node
 }
 
-// update stored value, with validations
+// update method updates stored value, with validations
 func (n *Node) update(_type NodeType, value interface{}) error {
 	// validate
 	err := n.validate(_type, value)
@@ -180,8 +226,11 @@ func (n *Node) update(_type NodeType, value interface{}) error {
 	return nil
 }
 
-// validate stored value, before update
+// validate method validates stored value, before update
 func (n *Node) validate(_type NodeType, value interface{}) error {
+	if n == nil {
+		return errorUnparsed()
+	}
 	switch _type {
 	case Null:
 		if value != nil {
@@ -215,7 +264,7 @@ func (n *Node) validate(_type NodeType, value interface{}) error {
 	return nil
 }
 
-// update stored value, without validations
+// remove method removes value from current container
 func (n *Node) remove(value *Node) error {
 	if !n.isContainer() {
 		return errorType()
@@ -246,10 +295,10 @@ func (n *Node) dropindex(index int) {
 	}
 }
 
-// appendNode append current Node node value with new Node value, by key or index
+// appendNode appends current Node node value with new Node value, by key or index
 func (n *Node) appendNode(key *string, value *Node) error {
-	if n.isParentNode(value) {
-		return errorRequest("try to create infinite loop")
+	if n.isParentOrSelfNode(value) {
+		return errorRequest("attempt to create infinite loop")
 	}
 	if value.parent != nil {
 		if err := value.parent.remove(value); err != nil {
@@ -294,12 +343,31 @@ func (n *Node) clear() {
 	n.children = nil
 }
 
+// isParentOrSelfNode check if current node is the same as given one of parents
+func (n *Node) isParentOrSelfNode(node *Node) bool {
+	return n == node || n.isParentNode(node)
+}
+
 // isParentNode check if current node is one of the parents
 func (n *Node) isParentNode(node *Node) bool {
-	for current := n; current != nil; current = current.parent {
-		if current == node {
-			return true
+	if n != nil {
+		for current := n.parent; current != nil; current = current.parent {
+			if current == node {
+				return true
+			}
 		}
 	}
 	return false
+}
+
+// setReference updates references of current node
+func (n *Node) setReference(parent *Node, key *string, index *int) {
+	n.parent = parent
+	if key == nil {
+		n.key = nil
+	} else {
+		temp := *key
+		n.key = &temp
+	}
+	n.index = index
 }

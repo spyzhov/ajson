@@ -1,7 +1,6 @@
 package ajson
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -192,12 +191,18 @@ func valueNode(parent *Node, key string, _type NodeType, value interface{}) (cur
 
 // Parent returns link to the parent of current node, nil for root
 func (n *Node) Parent() *Node {
+	if n == nil {
+		return nil
+	}
 	return n.parent
 }
 
 // Source returns slice of bytes, which was identified to be current node
 func (n *Node) Source() []byte {
-	if n.ready() && !n.dirty {
+	if n == nil {
+		return nil
+	}
+	if n.ready() && !n.dirty && n.data != nil {
 		return (*n.data)[n.borders[0]:n.borders[1]]
 	}
 	return nil
@@ -205,38 +210,62 @@ func (n *Node) Source() []byte {
 
 // String is implementation of Stringer interface, returns string based on source part
 func (n *Node) String() string {
+	if n == nil {
+		return ""
+	}
 	if n.ready() && !n.dirty {
 		return string(n.Source())
 	}
-	val := n.value.Load()
-	if val != nil {
-		return fmt.Sprint(val)
+	val, err := Marshal(n)
+	if err != nil {
+		return "Error: " + err.Error()
 	}
-	return "null"
+	return string(val)
 }
 
 // Type will return type of current node
 func (n *Node) Type() NodeType {
+	if n == nil {
+		return Null
+	}
 	return n._type
 }
 
 // Key will return key of current node, please check, that parent of this node has an Object type
 func (n *Node) Key() string {
+	if n == nil {
+		return ""
+	}
+	if n.key == nil {
+		return ""
+	}
 	return *n.key
 }
 
 // Index will return index of current node, please check, that parent of this node has an Array type
 func (n *Node) Index() int {
+	if n == nil {
+		return -1
+	}
+	if n.index == nil {
+		return -1
+	}
 	return *n.index
 }
 
 // Size will return count of children of current node, please check, that parent of this node has an Array type
 func (n *Node) Size() int {
+	if n == nil {
+		return 0
+	}
 	return len(n.children)
 }
 
 // Keys will return count all keys of children of current node, please check, that parent of this node has an Object type
 func (n *Node) Keys() (result []string) {
+	if n == nil {
+		return nil
+	}
 	result = make([]string, 0, len(n.children))
 	for key := range n.children {
 		result = append(result, key)
@@ -246,31 +275,49 @@ func (n *Node) Keys() (result []string) {
 
 // IsArray returns true if current node is Array
 func (n *Node) IsArray() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == Array
 }
 
 // IsObject returns true if current node is Object
 func (n *Node) IsObject() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == Object
 }
 
 // IsNull returns true if current node is Null
 func (n *Node) IsNull() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == Null
 }
 
 // IsNumeric returns true if current node is Numeric
 func (n *Node) IsNumeric() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == Numeric
 }
 
 // IsString returns true if current node is String
 func (n *Node) IsString() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == String
 }
 
 // IsBool returns true if current node is Bool
 func (n *Node) IsBool() bool {
+	if n == nil {
+		return false
+	}
 	return n._type == Bool
 }
 
@@ -292,6 +339,9 @@ func (n *Node) IsBool() bool {
 //
 // Value will be calculated only once and saved into atomic.Value.
 func (n *Node) Value() (value interface{}, err error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	switch n._type {
 	case Null:
 		return n.GetNull()
@@ -356,6 +406,9 @@ func (n *Node) getValue() (value interface{}, err error) {
 
 // GetNull returns nil, if current type is Null, else: WrongType error
 func (n *Node) GetNull() (interface{}, error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	if n._type != Null {
 		return nil, errorType()
 	}
@@ -364,6 +417,9 @@ func (n *Node) GetNull() (interface{}, error) {
 
 // GetNumeric returns float64, if current type is Numeric, else: WrongType error
 func (n *Node) GetNumeric() (value float64, err error) {
+	if n == nil {
+		return 0, errorUnparsed()
+	}
 	if n._type != Numeric {
 		return value, errorType()
 	}
@@ -380,6 +436,9 @@ func (n *Node) GetNumeric() (value float64, err error) {
 
 // GetString returns string, if current type is String, else: WrongType error
 func (n *Node) GetString() (value string, err error) {
+	if n == nil {
+		return "", errorUnparsed()
+	}
 	if n._type != String {
 		return value, errorType()
 	}
@@ -396,6 +455,9 @@ func (n *Node) GetString() (value string, err error) {
 
 // GetBool returns bool, if current type is Bool, else: WrongType error
 func (n *Node) GetBool() (value bool, err error) {
+	if n == nil {
+		return value, errorUnparsed()
+	}
 	if n._type != Bool {
 		return value, errorType()
 	}
@@ -412,6 +474,9 @@ func (n *Node) GetBool() (value bool, err error) {
 
 // GetArray returns []*Node, if current type is Array, else: WrongType error
 func (n *Node) GetArray() (value []*Node, err error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	if n._type != Array {
 		return value, errorType()
 	}
@@ -428,6 +493,9 @@ func (n *Node) GetArray() (value []*Node, err error) {
 
 // GetObject returns map[string]*Node, if current type is Object, else: WrongType error
 func (n *Node) GetObject() (value map[string]*Node, err error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	if n._type != Object {
 		return value, errorType()
 	}
@@ -498,6 +566,9 @@ func (n *Node) MustObject() (value map[string]*Node) {
 
 // Unpack will produce current node to it's interface, recursively with all underlying nodes (in contrast to Node.Value).
 func (n *Node) Unpack() (value interface{}, err error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	switch n._type {
 	case Null:
 		return nil, nil
@@ -541,6 +612,9 @@ func (n *Node) Unpack() (value interface{}, err error) {
 
 // GetIndex will return child node of current array node. If current node is not Array, or index is unavailable, will return error
 func (n *Node) GetIndex(index int) (*Node, error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	if n._type != Array {
 		return nil, errorType()
 	}
@@ -565,6 +639,9 @@ func (n *Node) MustIndex(index int) (value *Node) {
 
 // GetKey will return child node of current object node. If current node is not Object, or key is unavailable, will return error
 func (n *Node) GetKey(key string) (*Node, error) {
+	if n == nil {
+		return nil, errorUnparsed()
+	}
 	if n._type != Object {
 		return nil, errorType()
 	}
@@ -586,22 +663,28 @@ func (n *Node) MustKey(key string) (value *Node) {
 
 // HasKey will return boolean value, if current object node has custom key
 func (n *Node) HasKey(key string) bool {
+	if n == nil {
+		return false
+	}
 	_, ok := n.children[key]
 	return ok
 }
 
 // Empty method check if current container node has no children
 func (n *Node) Empty() bool {
+	if n == nil {
+		return false
+	}
 	return len(n.children) == 0
 }
 
 // Path returns full JsonPath of current Node
 func (n *Node) Path() string {
+	if n == nil {
+		return ""
+	}
 	if n.parent == nil {
-		if n.key == nil {
-			return "$"
-		}
-		return n.Key()
+		return "$"
 	}
 	if n.key != nil {
 		return n.parent.Path() + "['" + n.Key() + "']"
@@ -611,6 +694,9 @@ func (n *Node) Path() string {
 
 // Eq check if nodes value are the same
 func (n *Node) Eq(node *Node) (result bool, err error) {
+	if n == nil || node == nil {
+		return false, errorUnparsed()
+	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Bool:
@@ -685,6 +771,9 @@ func (n *Node) Neq(node *Node) (result bool, err error) {
 
 // Le check if nodes value is lesser than given
 func (n *Node) Le(node *Node) (result bool, err error) {
+	if n == nil || node == nil {
+		return false, errorUnparsed()
+	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
@@ -708,6 +797,9 @@ func (n *Node) Le(node *Node) (result bool, err error) {
 
 // Leq check if nodes value is lesser or equal than given
 func (n *Node) Leq(node *Node) (result bool, err error) {
+	if n == nil || node == nil {
+		return false, errorUnparsed()
+	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
@@ -731,6 +823,9 @@ func (n *Node) Leq(node *Node) (result bool, err error) {
 
 // Ge check if nodes value is greater than given
 func (n *Node) Ge(node *Node) (result bool, err error) {
+	if n == nil || node == nil {
+		return false, errorUnparsed()
+	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
@@ -754,6 +849,9 @@ func (n *Node) Ge(node *Node) (result bool, err error) {
 
 // Geq check if nodes value is greater or equal than given
 func (n *Node) Geq(node *Node) (result bool, err error) {
+	if n == nil || node == nil {
+		return false, errorUnparsed()
+	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
@@ -810,6 +908,9 @@ func (n *Node) getUInteger() (uint, error) {
 
 // Inheritors return sorted by keys/index slice of children
 func (n *Node) Inheritors() (result []*Node) {
+	if n == nil {
+		return nil
+	}
 	size := len(n.children)
 	if n.IsObject() {
 		result = make([]*Node, size)

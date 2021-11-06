@@ -687,6 +687,13 @@ func TestEval(t *testing.T) {
 			expected: NumericNode("", 18),
 			wantErr:  false,
 		},
+		{
+			name:     "nil",
+			root:     nil,
+			eval:     "round(avg($..price)+pi)",
+			expected: nil,
+			wantErr:  false,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -698,11 +705,14 @@ func TestEval(t *testing.T) {
 			if test.wantErr {
 				return
 			}
-			if result == nil {
+			if test.expected != nil && result == nil {
 				t.Errorf("Eval() result in nil")
 				return
 			}
 
+			if test.expected == nil && result == nil {
+				return
+			}
 			if ok, err := result.Eq(test.expected); !ok {
 				t.Errorf("result.Eq(): wrong result:\nExpected: %#+v\nActual: %#+v", test.expected, result.value.Load())
 			} else if err != nil {
@@ -1431,7 +1441,7 @@ func TestApplyJSONPath(t *testing.T) {
 				node:     nil,
 				commands: nil,
 			},
-			wantResult: make([]*Node, 0),
+			wantResult: nil,
 			wantErr:    false,
 		},
 		{

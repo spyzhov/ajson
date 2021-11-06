@@ -28,3 +28,58 @@ func TestError_Error(t *testing.T) {
 		})
 	}
 }
+
+func Test_unsupportedType(t *testing.T) {
+	f := 1.
+	type args struct {
+		value interface{}
+	}
+	tests := []struct {
+		name   string
+		args   args
+		result string
+	}{
+		{
+			name: "nil",
+			args: args{
+				value: nil,
+			},
+			result: "unsupported type was given: '<nil>'",
+		},
+		{
+			name: "int",
+			args: args{
+				value: int(10),
+			},
+			result: "unsupported type was given: 'int'",
+		},
+		{
+			name: "float64",
+			args: args{
+				value: float64(10),
+			},
+			result: "unsupported type was given: 'float64'",
+		},
+		{
+			name: "*float64",
+			args: args{
+				value: &f,
+			},
+			result: "unsupported type was given: '*float64'",
+		},
+		{
+			name: "[]float64",
+			args: args{
+				value: []float64{1.},
+			},
+			result: "unsupported type was given: '[]float64'",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := unsupportedType(tt.args.value); err.Error() != tt.result {
+				t.Errorf("unsupportedType() error = %v, wantErr %v", err, tt.result)
+			}
+		})
+	}
+}

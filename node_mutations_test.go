@@ -1479,3 +1479,313 @@ func ExampleNode_Clone() {
 	// }
 	//
 }
+
+func TestNode_SetNode(t *testing.T) {
+	iValue := `{"foo": [{"bar":"baz"}]}`
+	idempotent := Must(Unmarshal([]byte(iValue)))
+	child := StringNode("", "example")
+	parent := ArrayNode("", []*Node{child})
+	array := ArrayNode("", []*Node{})
+	proxy := func(root *Node) *Node {
+		return root
+	}
+
+	tests := []struct {
+		name    string
+		root    *Node
+		getter  func(root *Node) *Node
+		value   *Node
+		result  string
+		after   func(t *testing.T)
+		wantErr bool
+	}{
+		{
+			name:    "Null->Numeric(1)",
+			root:    NullNode(""),
+			getter:  proxy,
+			value:   NumericNode("", 1),
+			result:  `1`,
+			wantErr: false,
+		},
+		{
+			name:    "Null->Object",
+			root:    NullNode(""),
+			getter:  proxy,
+			value:   Must(Unmarshal([]byte(`{"bar":"baz"}`))),
+			result:  `{"bar":"baz"}`,
+			wantErr: false,
+		},
+		{
+			name:    "Null->Object(ref)",
+			root:    NullNode(""),
+			getter:  proxy,
+			value:   idempotent.MustObject()["foo"].MustArray()[0],
+			result:  `{"bar":"baz"}`,
+			wantErr: false,
+		},
+		{
+			name: "[Numeric(1)]->[Object]",
+			root: Must(Unmarshal([]byte(`[1]`))),
+			getter: func(root *Node) *Node {
+				return root.MustArray()[0]
+			},
+			value:   Must(Unmarshal([]byte(`{"bar":"baz"}`))),
+			result:  `[{"bar":"baz"}]`,
+			wantErr: false,
+		},
+		{
+			name: "[Numeric(1)]->[Object(ref)]",
+			root: Must(Unmarshal([]byte(`[1]`))),
+			getter: func(root *Node) *Node {
+				return root.MustIndex(0)
+			},
+			value:   idempotent.MustKey("foo").MustIndex(0),
+			result:  `[{"bar":"baz"}]`,
+			wantErr: false,
+		},
+		{
+			name: "{foo:Null}->{foo:Object(ref)}",
+			root: Must(Unmarshal([]byte(`{"foo":null}`))),
+			getter: func(root *Node) *Node {
+				return root.MustKey("foo")
+			},
+			value:   idempotent.MustKey("foo").MustIndex(0),
+			result:  `{"foo":{"bar":"baz"}}`,
+			wantErr: false,
+		},
+		{
+			name: "parent[child]->parent[parent]",
+			root: parent,
+			getter: func(_ *Node) *Node {
+				return child
+			},
+			value:   parent,
+			result:  ``,
+			wantErr: true,
+		},
+		{
+			name:    "array[]->array[]",
+			root:    array,
+			getter:  proxy,
+			value:   array,
+			result:  `[]`,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			node := tt.getter(tt.root)
+			if err := node.SetNode(tt.value); (err != nil) != tt.wantErr {
+				t.Errorf("SetNode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			} else if tt.wantErr {
+				return
+			}
+			if tt.root.String() != tt.result {
+				t.Errorf("SetNode() value not match: \nExpected: %s\nActual: %s", tt.result, tt.root.String())
+				return
+			}
+			if idempotent.String() != iValue {
+				t.Errorf("SetNode() unexpected update value: \nUpdated: %s", idempotent.String())
+				return
+			}
+			if tt.after != nil {
+				tt.after(t)
+			}
+		})
+	}
+}
+
+func TestNode_Set(t *testing.T) {
+	node := func(data string) *Node {
+		return Must(Unmarshal([]byte(data)))
+	}
+	tests := []struct {
+		name    string
+		node    *Node
+		getter  func(root *Node) *Node
+		value   interface{}
+		result  string
+		wantErr bool
+	}{
+		{
+			name:    "Null->float64(123.456)",
+			node:    node("null"),
+			value:   float64(123.456),
+			result:  "123.456",
+			wantErr: false,
+		},
+		{
+			name:    "Null->float32(123)",
+			node:    node("null"),
+			value:   float32(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->int(123)",
+			node:    node("null"),
+			value:   123,
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->int8(123)",
+			node:    node("null"),
+			value:   int8(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->int16(123)",
+			node:    node("null"),
+			value:   int16(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->int32(123)",
+			node:    node("null"),
+			value:   int32(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->int64(123)",
+			node:    node("null"),
+			value:   int64(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->uint8(123)",
+			node:    node("null"),
+			value:   uint8(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->uint16(123)",
+			node:    node("null"),
+			value:   uint16(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->uint32(123)",
+			node:    node("null"),
+			value:   uint32(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->uint64(123)",
+			node:    node("null"),
+			value:   uint64(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Null->uint(123)",
+			node:    node("null"),
+			value:   uint(123),
+			result:  "123",
+			wantErr: false,
+		},
+		{
+			name:    "Array[]->string",
+			node:    node("[123]"),
+			value:   "example value",
+			result:  `"example value"`,
+			wantErr: false,
+		},
+		{
+			name:    "Object[]->bool",
+			node:    node(`{"foo":["bar"]}`),
+			value:   true,
+			result:  `true`,
+			wantErr: false,
+		},
+		{
+			name: "Object[V]->bool",
+			node: node(`{"foo":["bar"]}`),
+			getter: func(root *Node) *Node {
+				return root.MustKey("foo").MustIndex(0)
+			},
+			value:   true,
+			result:  `{"foo":[true]}`,
+			wantErr: false,
+		},
+		{
+			name: "Object[V]->nil",
+			node: node(`{"foo":["bar"]}`),
+			getter: func(root *Node) *Node {
+				return root.MustKey("foo").MustIndex(0)
+			},
+			value:   nil,
+			result:  `{"foo":[null]}`,
+			wantErr: false,
+		},
+		{
+			name: "Array[V]->Array[Array[]]",
+			node: node(`[null]`),
+			getter: func(root *Node) *Node {
+				return root.MustIndex(0)
+			},
+			value:   []*Node{node(`1`)},
+			result:  `[[1]]`,
+			wantErr: false,
+		},
+		{
+			name: "Array[V]->Array[Object[]]",
+			node: node(`[null]`),
+			getter: func(root *Node) *Node {
+				return root.MustIndex(0)
+			},
+			value:   map[string]*Node{},
+			result:  `[{}]`,
+			wantErr: false,
+		},
+		{
+			name: "Array[V]->Array[Node]",
+			node: node(`[null]`),
+			getter: func(root *Node) *Node {
+				return root.MustIndex(0)
+			},
+			value:   node(`{}`),
+			result:  `[{}]`,
+			wantErr: false,
+		},
+		{
+			name:    "wrong_type",
+			node:    node(`[null]`),
+			value:   new(string),
+			wantErr: true,
+		},
+		{
+			name:    "nil",
+			node:    nil,
+			value:   nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			value := tt.node
+			if tt.getter != nil {
+				value = tt.getter(tt.node)
+			}
+			if err := value.Set(tt.value); (err != nil) != tt.wantErr {
+				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+			if tt.node.String() != tt.result {
+				t.Errorf("Set() value not match: \nExpected: %s\nActual: %s", tt.result, tt.node.String())
+				return
+			}
+		})
+	}
+}
