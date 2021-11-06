@@ -30,14 +30,14 @@ const (
 )
 
 func errorSymbol(b *buffer) error {
-	c, err := b.current()
+	symbol, err := b.current()
 	if err != nil {
-		c = 0
+		symbol = 0
 	}
 	return Error{
 		Type:  WrongSymbol,
 		Index: b.index,
-		Char:  c,
+		Char:  symbol,
 	}
 }
 
@@ -70,7 +70,9 @@ func unsupportedType(value interface{}) error {
 }
 
 func errorUnparsed() error {
-	return Error{Type: Unparsed}
+	return Error{
+		Type: Unparsed,
+	}
 }
 
 func errorRequest(format string, args ...interface{}) error {
