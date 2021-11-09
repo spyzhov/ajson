@@ -723,7 +723,7 @@ func ExampleUnmarshal() {
 	}
 }
 
-// Unpack object interface and render html link. JSON from: https://tools.ietf.org/html/rfc7159#section-13
+// Interface object interface and render html link. JSON from: https://tools.ietf.org/html/rfc7159#section-13
 func ExampleUnmarshal_unpack() {
 	data := []byte(`{
         "Image": {
@@ -744,7 +744,7 @@ func ExampleUnmarshal_unpack() {
 	if err != nil {
 		panic(err)
 	}
-	object, err := root.Unpack()
+	object, err := root.Interface()
 	if err != nil {
 		panic(err)
 	}
@@ -2883,7 +2883,7 @@ line"]`)},
 				want = tt.want
 			}
 
-			got, err := root.Unpack()
+			got, err := root.Interface()
 			if err != nil {
 				t.Errorf("Unmarshal() error = %v, wantErr %v. got = %v", err, tt.wantErr, got)
 			}

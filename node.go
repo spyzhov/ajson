@@ -60,54 +60,49 @@ const (
 	Object
 )
 
-// NullNode is constructor for Node with Null value
-func NullNode(key string) *Node {
+// NewNull is constructor for Node with Null value
+func NewNull() *Node {
 	return &Node{
 		_type: Null,
-		key:   &key,
 		dirty: true,
 	}
 }
 
-// NumericNode is constructor for Node with a Numeric value
-func NumericNode(key string, value float64) (current *Node) {
+// NewNumeric is constructor for Node with a Numeric value
+func NewNumeric(value float64) (current *Node) {
 	current = &Node{
 		_type: Numeric,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// StringNode is constructor for Node with a String value
-func StringNode(key string, value string) (current *Node) {
+// NewString is constructor for Node with a String value
+func NewString(value string) (current *Node) {
 	current = &Node{
 		_type: String,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// BoolNode is constructor for Node with a Bool value
-func BoolNode(key string, value bool) (current *Node) {
+// NewBool is constructor for Node with a Bool value
+func NewBool(value bool) (current *Node) {
 	current = &Node{
 		_type: Bool,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// ArrayNode is constructor for Node with an Array value
-func ArrayNode(key string, value []*Node) (current *Node) {
+// NewArray is constructor for Node with an Array value
+func NewArray(value []*Node) (current *Node) {
 	current = &Node{
 		data:  nil,
 		_type: Array,
-		key:   &key,
 		dirty: true,
 	}
 	current.children = make(map[string]*Node, len(value))
@@ -123,11 +118,10 @@ func ArrayNode(key string, value []*Node) (current *Node) {
 	return
 }
 
-// ObjectNode is constructor for Node with an Object value
-func ObjectNode(key string, value map[string]*Node) (current *Node) {
+// NewObject is constructor for Node with an Object value
+func NewObject(value map[string]*Node) (current *Node) {
 	current = &Node{
 		_type:    Object,
-		key:      &key,
 		children: value,
 		dirty:    true,
 	}
@@ -335,7 +329,7 @@ func (n *Node) IsBool() bool {
 //
 // It returns map[string]*Node, if current node type is Object.
 //
-// BUT! Current method doesn't calculate underlying nodes (use method Node.Unpack for that).
+// BUT! Current method doesn't calculate underlying nodes (use method Node.Interface for that).
 //
 // Value will be calculated only once and saved into atomic.Value.
 func (n *Node) Value() (value interface{}, err error) {
@@ -564,8 +558,8 @@ func (n *Node) MustObject() (value map[string]*Node) {
 	return
 }
 
-// Unpack will produce current node to it's interface, recursively with all underlying nodes (in contrast to Node.Value).
-func (n *Node) Unpack() (value interface{}, err error) {
+// Interface will produce current node to it's interface, recursively with all underlying nodes (in contrast to Node.Value).
+func (n *Node) Interface() (value interface{}, err error) {
 	if n == nil {
 		return nil, errorUnparsed()
 	}
@@ -590,7 +584,7 @@ func (n *Node) Unpack() (value interface{}, err error) {
 	case Array:
 		children := make([]interface{}, len(n.children))
 		for _, child := range n.children {
-			val, err := child.Unpack()
+			val, err := child.Interface()
 			if err != nil {
 				return nil, err
 			}
@@ -600,7 +594,7 @@ func (n *Node) Unpack() (value interface{}, err error) {
 	case Object:
 		result := make(map[string]interface{})
 		for key, child := range n.children {
-			result[key], err = child.Unpack()
+			result[key], err = child.Interface()
 			if err != nil {
 				return nil, err
 			}

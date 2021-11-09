@@ -465,9 +465,9 @@ func TestJSONPath_suite(t *testing.T) {
 
 			results := make([]interface{}, 0)
 			for _, node := range nodes {
-				value, err := node.Unpack()
+				value, err := node.Interface()
 				if err != nil {
-					t.Errorf("node.Unpack(): unexpected error: %v", err)
+					t.Errorf("node.Interface(): unexpected error: %v", err)
 					return
 				}
 				results = append(results, value)
@@ -562,7 +562,7 @@ func ExampleJSONPath_array() {
 	if err != nil {
 		panic(err)
 	}
-	result, err := Marshal(ArrayNode("", authors))
+	result, err := Marshal(NewArray(authors))
 	if err != nil {
 		panic(err)
 	}
@@ -663,7 +663,7 @@ func TestEval(t *testing.T) {
 			name:     "avg($..price)",
 			root:     Must(Unmarshal(json)),
 			eval:     "avg($..price)",
-			expected: NumericNode("", 14.774000000000001),
+			expected: NewNumeric(14.774000000000001),
 			wantErr:  false,
 		},
 		{
@@ -684,7 +684,7 @@ func TestEval(t *testing.T) {
 			name:     "round(avg($..price)+pi)",
 			root:     Must(Unmarshal(json)),
 			eval:     "round(avg($..price)+pi)",
-			expected: NumericNode("", 18),
+			expected: NewNumeric(18),
 			wantErr:  false,
 		},
 		{
@@ -1318,17 +1318,17 @@ func TestJSONPath_comparison_consensus(t *testing.T) {
 
 			results := make([]interface{}, 0)
 			for _, node := range nodes {
-				value, err := node.Unpack()
+				value, err := node.Interface()
 				if err != nil {
-					t.Errorf("Unpack(): unexpected error: %v", err)
+					t.Errorf("Interface(): unexpected error: %v", err)
 					return
 				}
 				results = append(results, value)
 			}
 
-			expected, err := Must(Unmarshal([]byte(test.consensus))).Unpack()
+			expected, err := Must(Unmarshal([]byte(test.consensus))).Interface()
 			if err != nil {
-				t.Errorf("Unpack(): unexpected error: %v", err)
+				t.Errorf("Interface(): unexpected error: %v", err)
 				return
 			}
 
@@ -1396,17 +1396,17 @@ func TestJSONPath_special_requests(t *testing.T) {
 
 			results := make([]interface{}, 0)
 			for _, node := range nodes {
-				value, err := node.Unpack()
+				value, err := node.Interface()
 				if err != nil {
-					t.Errorf("Unpack(): unexpected error: %v", err)
+					t.Errorf("Interface(): unexpected error: %v", err)
 					return
 				}
 				results = append(results, value)
 			}
 
-			expected, err := Must(Unmarshal([]byte(test.consensus))).Unpack()
+			expected, err := Must(Unmarshal([]byte(test.consensus))).Interface()
 			if err != nil {
-				t.Errorf("Unpack(): unexpected error: %v", err)
+				t.Errorf("Interface(): unexpected error: %v", err)
 				return
 			}
 
@@ -1418,12 +1418,12 @@ func TestJSONPath_special_requests(t *testing.T) {
 }
 
 func TestApplyJSONPath(t *testing.T) {
-	node1 := NumericNode("", 1.)
-	node2 := NumericNode("", 2.)
+	node1 := NewNumeric(1.)
+	node2 := NewNumeric(2.)
 	cpy := func(n Node) *Node {
 		return &n
 	}
-	array := ArrayNode("", []*Node{cpy(*node1), cpy(*node2)})
+	array := NewArray([]*Node{cpy(*node1), cpy(*node2)})
 
 	type args struct {
 		node     *Node

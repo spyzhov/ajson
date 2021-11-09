@@ -1,7 +1,7 @@
 package ajson
 
 import (
-	. "github.com/spyzhov/ajson/internal"
+	. "github.com/spyzhov/ajson/v1/internal"
 )
 
 /*

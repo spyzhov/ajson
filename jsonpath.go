@@ -179,9 +179,9 @@ func Paths(array []*Node) []string {
 }
 
 func recursiveChildren(node *Node) (result []*Node) {
-	if node.isContainer() {
+	if node.IsArray() || node.IsObject() {
 		for _, element := range node.Inheritors() {
-			if element.isContainer() {
+			if element.IsArray() || element.IsObject() {
 				result = append(result, element)
 			}
 		}
@@ -632,12 +632,12 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 					return
 				}
 				if len(slice) > 1 { // array given
-					stack = append(stack, ArrayNode("", slice))
+					stack = append(stack, NewArray(slice))
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
-					// stack = append(stack, NullNode(""))
-					return NullNode(""), nil
+					// stack = append(stack, NewNull())
+					return NewNull(), nil
 				}
 			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
 				stack = append(stack, constant)
@@ -646,7 +646,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				size = len(bstr)
 				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
 					if sstr, ok := unquote(bstr, quote); ok {
-						temp = StringNode("", sstr)
+						temp = NewString(sstr)
 					} else {
 						err = errorRequest("wrong request: %s", cmd)
 					}
@@ -666,7 +666,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		return stack[0], nil
 	}
 	if len(stack) == 0 {
-		return NullNode(""), nil
+		return NewNull(), nil
 	}
 	return nil, errorRequest("wrong request: %s", cmd)
 }
