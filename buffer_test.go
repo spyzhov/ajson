@@ -63,14 +63,14 @@ func TestBuffer_Token(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			buf := newBuffer([]byte(test.value))
+			buf := NewBuffer([]byte(test.value))
 			err := buf.token()
 			if !test.fail && err != nil && err != io.EOF {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if test.fail && (err == nil || err == io.EOF) {
 				t.Errorf("Expected error, got nothing")
-			} else if !test.fail && test.index != buf.index {
-				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.index)
+			} else if !test.fail && test.index != buf.Index {
+				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.Index)
 			}
 		})
 	}
@@ -102,8 +102,8 @@ func TestBuffer_RPN(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			buf := newBuffer([]byte(test.value))
-			result, err := buf.rpn()
+			buf := NewBuffer([]byte(test.value))
+			result, err := buf.RPN()
 			if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if !sliceEqual(test.expected, result) {
@@ -143,8 +143,8 @@ func TestBuffer_RPNError(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
-			buf := newBuffer([]byte(test.value))
-			result, err := buf.rpn()
+			buf := NewBuffer([]byte(test.value))
+			result, err := buf.RPN()
 			if err == nil {
 				t.Errorf("Expected error, nil given, with result: %v", strings.Join(result, ", "))
 			}
@@ -177,7 +177,7 @@ func TestTokenize(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := tokenize(test.value)
+			result, err := GetTokens(test.value)
 			if test.fail {
 				if err == nil {
 					t.Error("Expected error: nil given")
@@ -192,8 +192,8 @@ func TestTokenize(t *testing.T) {
 }
 
 func TestBuffer_Current(t *testing.T) {
-	buf := newBuffer([]byte{})
-	_, err := buf.current()
+	buf := NewBuffer([]byte{})
+	_, err := buf.Current()
 	if err != io.EOF {
 		t.Error("Unexpected result: io.EOF expected")
 	}
@@ -229,14 +229,14 @@ func TestBuffer_Numeric(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.value, func(t *testing.T) {
-			buf := newBuffer([]byte(test.value))
-			err := buf.numeric(true)
+			buf := NewBuffer([]byte(test.value))
+			err := buf.AsNumeric(true)
 			if !test.fail && err != nil && err != io.EOF {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if test.fail && (err == nil || err == io.EOF) {
 				t.Errorf("Expected error, got nothing")
-			} else if !test.fail && test.index != buf.index {
-				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.index)
+			} else if !test.fail && test.index != buf.Index {
+				t.Errorf("Wrong index: expected %d, got %d", test.index, buf.Index)
 			}
 		})
 	}

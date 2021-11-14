@@ -2,6 +2,8 @@ package ajson
 
 import (
 	"strconv"
+
+	"github.com/spyzhov/ajson/v1/internal"
 )
 
 // Marshal returns slice of bytes, marshaled from current value
@@ -15,11 +17,11 @@ func Marshal(node *Node) (result []byte, err error) {
 	)
 
 	if node == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	} else if node.dirty {
 		switch node._type {
 		case Null:
-			result = append(result, _null...)
+			result = append(result, C_null...)
 		case Numeric:
 			nValue, err = node.GetNumeric()
 			if err != nil {
@@ -31,27 +33,27 @@ func Marshal(node *Node) (result []byte, err error) {
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, quotes)
-			result = append(result, quoteString(sValue, true)...)
-			result = append(result, quotes)
+			result = append(result, BQuotes)
+			result = append(result, internal.QuoteString(sValue, true)...)
+			result = append(result, BQuotes)
 		case Bool:
 			bValue, err = node.GetBool()
 			if err != nil {
 				return nil, err
 			} else if bValue {
-				result = append(result, _true...)
+				result = append(result, C_true...)
 			} else {
-				result = append(result, _false...)
+				result = append(result, C_false...)
 			}
 		case Array:
-			result = append(result, bracketL)
+			result = append(result, BBracketL)
 			for i := 0; i < len(node.children); i++ {
 				if i != 0 {
-					result = append(result, coma)
+					result = append(result, BComa)
 				}
 				child, ok := node.children[strconv.Itoa(i)]
 				if !ok {
-					return nil, errorRequest("wrong length of array")
+					return nil, NewErrorRequest("wrong length of array")
 				}
 				oValue, err = Marshal(child)
 				if err != nil {
@@ -59,31 +61,31 @@ func Marshal(node *Node) (result []byte, err error) {
 				}
 				result = append(result, oValue...)
 			}
-			result = append(result, bracketR)
+			result = append(result, BBracketR)
 		case Object:
-			result = append(result, bracesL)
+			result = append(result, BBracesL)
 			bValue = false
 			for key, child := range node.children {
 				if bValue {
-					result = append(result, coma)
+					result = append(result, BComa)
 				} else {
 					bValue = true
 				}
-				result = append(result, quotes)
-				result = append(result, quoteString(key, true)...)
-				result = append(result, quotes, colon)
+				result = append(result, BQuotes)
+				result = append(result, internal.QuoteString(key, true)...)
+				result = append(result, BQuotes, BColon)
 				oValue, err = Marshal(child)
 				if err != nil {
 					return nil, err
 				}
 				result = append(result, oValue...)
 			}
-			result = append(result, bracesR)
+			result = append(result, BBracesR)
 		}
 	} else if node.ready() {
 		result = append(result, node.Source()...)
 	} else {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 
 	return

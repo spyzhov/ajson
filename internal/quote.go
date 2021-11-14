@@ -1,4 +1,4 @@
-package ajson
+package internal
 
 import "unicode/utf8"
 
@@ -220,7 +220,7 @@ var htmlSafeSet = [utf8.RuneSelf]bool{
 	'\u007f': true,
 }
 
-func quoteString(s string, escapeHTML bool) []byte {
+func QuoteString(s string, escapeHTML bool) []byte {
 	result := make([]byte, 0, len(s))
 	start := 0
 	for i := 0; i < len(s); {

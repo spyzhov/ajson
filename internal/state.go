@@ -1,7 +1,6 @@
-/*
-Copy from https://github.com/freddierice/php_source/blob/467ed5d6edff72219afd3e644516f131118ef48e/ext/json/JSON_parser.c
-Base code: Copyright (c) 2005 JSON.org
-*/
+// Package internal
+// Copy from https://github.com/freddierice/php_source/blob/467ed5d6edff72219afd3e644516f131118ef48e/ext/json/JSON_parser.c
+// Base code: Copyright (c) 2005 JSON.org
 package internal
 
 type (
@@ -102,9 +101,7 @@ var QuoteAsciiClasses = [128]Classes{
 	C_ETC, C_ETC, C_ETC, C_LCURB, C_ETC, C_RCURB, C_ETC, C_ETC,
 }
 
-/*
-   The state codes.
-*/
+// The state codes.
 const (
 	GO States = iota /* start    */
 	OK               /* ok       */
@@ -139,9 +136,7 @@ const (
 	N3               /* null     */
 )
 
-/*
-	The action codes
-*/
+// The action codes
 const (
 	cl States = -2 /* colon           */
 	cm States = -3 /* comma           */

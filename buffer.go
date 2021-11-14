@@ -4,107 +4,104 @@ import (
 	"io"
 	"strings"
 
-	. "github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/internal"
 )
 
-type buffer struct {
-	data   []byte
-	length int
-	index  int
+type Buffer struct {
+	Bytes  []byte
+	Length int
+	Index  int
 
-	last  States
-	state States
-	class Classes
+	Last  internal.States
+	State internal.States
+	Class internal.Classes
 }
 
 const __ = -1
 
 const (
-	quotes       byte = '"'
-	quote        byte = '\''
-	coma         byte = ','
-	colon        byte = ':'
-	backslash    byte = '\\'
-	skipS        byte = ' '
-	skipN        byte = '\n'
-	skipR        byte = '\r'
-	skipT        byte = '\t'
-	bracketL     byte = '['
-	bracketR     byte = ']'
-	bracesL      byte = '{'
-	bracesR      byte = '}'
-	parenthesesL byte = '('
-	parenthesesR byte = ')'
-	dollar       byte = '$'
-	at           byte = '@'
-	dot          byte = '.'
-	asterisk     byte = '*'
-	plus         byte = '+'
-	minus        byte = '-'
-	division     byte = '/'
-	exclamation  byte = '!'
-	caret        byte = '^'
-	signL        byte = '<'
-	signG        byte = '>'
-	signE        byte = '='
-	ampersand    byte = '&'
-	pipe         byte = '|'
-	question     byte = '?'
+	BQuotes       byte = '"'
+	BQuote        byte = '\''
+	BComa         byte = ','
+	BColon        byte = ':'
+	BBackslash    byte = '\\'
+	BSkipS        byte = ' '
+	BSkipN        byte = '\n'
+	BSkipR        byte = '\r'
+	BSkipT        byte = '\t'
+	BBracketL     byte = '['
+	BBracketR     byte = ']'
+	BBracesL      byte = '{'
+	BBracesR      byte = '}'
+	BParenthesesL byte = '('
+	BParenthesesR byte = ')'
+	BDollar       byte = '$'
+	BAt           byte = '@'
+	BDot          byte = '.'
+	BAsterisk     byte = '*'
+	BPlus         byte = '+'
+	BMinus        byte = '-'
+	BDivision     byte = '/'
+	BExclamation  byte = '!'
+	BCaret        byte = '^'
+	BSignL        byte = '<'
+	BSignG        byte = '>'
+	BSignE        byte = '='
+	BAmpersand    byte = '&'
+	BPipe         byte = '|'
+	BQuestion     byte = '?'
 )
 
-type (
-	rpn    []string
-	tokens []string
-)
+// RPN is a `Reverse Polish notation`
+type RPN []string
 
 var (
-	_null  = []byte("null")
-	_true  = []byte("true")
-	_false = []byte("false")
+	C_null  = []byte("null")
+	C_true  = []byte("true")
+	C_false = []byte("false")
 )
 
-func newBuffer(body []byte) (b *buffer) {
-	b = &buffer{
-		length: len(body),
-		data:   body,
-		last:   GO,
-		state:  GO,
+func NewBuffer(body []byte) *Buffer {
+	return &Buffer{
+		Length: len(body),
+		Bytes:  body,
+		Last:   internal.GO,
+		State:  internal.GO,
 	}
-	return
 }
 
-func (b *buffer) current() (c byte, err error) {
-	if b.index < b.length {
-		return b.data[b.index], nil
+func (b *Buffer) Current() (c byte, err error) {
+	if b.Index < b.Length {
+		return b.Bytes[b.Index], nil
 	}
 	return 0, io.EOF
 }
 
-func (b *buffer) next() (c byte, err error) {
-	err = b.step()
+func (b *Buffer) Next() (c byte, err error) {
+	err = b.Step()
 	if err != nil {
 		return 0, err
 	}
-	return b.data[b.index], nil
+	return b.Bytes[b.Index], nil
 }
 
-func (b *buffer) reset() {
-	b.last = GO
+func (b *Buffer) Reset() {
+	b.Last = internal.GO
 }
 
-func (b *buffer) first() (c byte, err error) {
-	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
-		if !(c == skipS || c == skipR || c == skipN || c == skipT) {
+func (b *Buffer) First() (c byte, err error) {
+	for ; b.Index < b.Length; b.Index++ {
+		c = b.Bytes[b.Index]
+		if !(c == BSkipS || c == BSkipR || c == BSkipN || c == BSkipT) {
 			return c, nil
 		}
 	}
 	return 0, io.EOF
 }
 
-func (b *buffer) backslash() (result bool) {
-	for i := b.index - 1; i >= 0; i-- {
-		if b.data[i] == backslash {
+func (b *Buffer) Backslash() (result bool) {
+	for i := b.Index - 1; i >= 0; i-- {
+		if b.Bytes[i] == BBackslash {
 			result = !result
 		} else {
 			break
@@ -113,118 +110,118 @@ func (b *buffer) backslash() (result bool) {
 	return
 }
 
-func (b *buffer) skip(s byte) error {
-	for ; b.index < b.length; b.index++ {
-		if b.data[b.index] == s && !b.backslash() {
+func (b *Buffer) Skip(s byte) error {
+	for ; b.Index < b.Length; b.Index++ {
+		if b.Bytes[b.Index] == s && !b.Backslash() {
 			return nil
 		}
 	}
 	return io.EOF
 }
 
-func (b *buffer) skipAny(s map[byte]bool) error {
-	for ; b.index < b.length; b.index++ {
-		if s[b.data[b.index]] && !b.backslash() {
+func (b *Buffer) SkipAny(s map[byte]bool) error {
+	for ; b.Index < b.Length; b.Index++ {
+		if s[b.Bytes[b.Index]] && !b.Backslash() {
 			return nil
 		}
 	}
 	return io.EOF
 }
 
-// if token is true - skip error from StateTransitionTable, just stop on unknown state
-func (b *buffer) numeric(token bool) error {
+// AsNumeric if token is true - skip error from StateTransitionTable, just stop on unknown state
+func (b *Buffer) AsNumeric(token bool) error {
 	if token {
-		b.last = GO
+		b.Last = internal.GO
 	}
-	for ; b.index < b.length; b.index++ {
-		b.class = b.getClasses(quotes)
-		if b.class == __ {
-			return b.errorSymbol()
+	for ; b.Index < b.Length; b.Index++ {
+		b.Class = b.GetClasses(BQuotes)
+		if b.Class == __ {
+			return b.ErrorSymbol()
 		}
-		b.state = StateTransitionTable[b.last][b.class]
-		if b.state == __ {
+		b.State = internal.StateTransitionTable[b.Last][b.Class]
+		if b.State == __ {
 			if token {
 				break
 			}
-			return b.errorSymbol()
+			return b.ErrorSymbol()
 		}
-		if b.state < __ {
+		if b.State < __ {
 			return nil
 		}
-		if b.state < MI || b.state > E3 {
+		if b.State < internal.MI || b.State > internal.E3 {
 			return nil
 		}
-		b.last = b.state
+		b.Last = b.State
 	}
-	if b.last != ZE && b.last != IN && b.last != FR && b.last != E3 {
-		return b.errorSymbol()
+	if b.Last != internal.ZE && b.Last != internal.IN && b.Last != internal.FR && b.Last != internal.E3 {
+		return b.ErrorSymbol()
 	}
 	return nil
 }
 
-func (b *buffer) getClasses(search byte) Classes {
-	if b.data[b.index] >= 128 {
-		return C_ETC
+func (b *Buffer) GetClasses(search byte) internal.Classes {
+	if b.Bytes[b.Index] >= 128 {
+		return internal.C_ETC
 	}
-	if search == quote {
-		return QuoteAsciiClasses[b.data[b.index]]
+	if search == BQuote {
+		return internal.QuoteAsciiClasses[b.Bytes[b.Index]]
 	}
-	return AsciiClasses[b.data[b.index]]
+	return internal.AsciiClasses[b.Bytes[b.Index]]
 }
 
-func (b *buffer) getState() States {
-	b.last = b.state
-	b.class = b.getClasses(quotes)
-	if b.class == __ {
+func (b *Buffer) GetState() internal.States {
+	b.Last = b.State
+	b.Class = b.GetClasses(BQuotes)
+	if b.Class == __ {
 		return __
 	}
-	b.state = StateTransitionTable[b.last][b.class]
-	return b.state
+	b.State = internal.StateTransitionTable[b.Last][b.Class]
+	return b.State
 }
 
-func (b *buffer) string(search byte, token bool) error {
+func (b *Buffer) AsString(search byte, token bool) error {
 	if token {
-		b.last = GO
+		b.Last = internal.GO
 	}
-	for ; b.index < b.length; b.index++ {
-		b.class = b.getClasses(search)
+	for ; b.Index < b.Length; b.Index++ {
+		b.Class = b.GetClasses(search)
 
-		if b.class == __ {
-			return b.errorSymbol()
+		if b.Class == __ {
+			return b.ErrorSymbol()
 		}
-		b.state = StateTransitionTable[b.last][b.class]
-		if b.state == __ {
-			return b.errorSymbol()
+		b.State = internal.StateTransitionTable[b.Last][b.Class]
+		if b.State == __ {
+			return b.ErrorSymbol()
 		}
-		if b.state < __ {
+		if b.State < __ {
 			return nil
 		}
-		b.last = b.state
+		b.Last = b.State
 	}
-	return b.errorSymbol()
+	return b.ErrorSymbol()
 }
 
-func (b *buffer) null() error {
-	return b.word(_null)
+func (b *Buffer) AsNull() error {
+	return b.word(C_null)
 }
 
-func (b *buffer) true() error {
-	return b.word(_true)
+func (b *Buffer) AsTrue() error {
+	return b.word(C_true)
 }
 
-func (b *buffer) false() error {
-	return b.word(_false)
+func (b *Buffer) AsFalse() error {
+	return b.word(C_false)
 }
 
-func (b *buffer) word(word []byte) error {
+func (b *Buffer) word(word []byte) error {
 	var c byte
 	max := len(word)
 	index := 0
-	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
+	for ; b.Index < b.Length; b.Index++ {
+		c = b.Bytes[b.Index]
 		// if c != word[index] && c != (word[index]-32) {
 		if c != word[index] {
-			return errorSymbol(b)
+			return b.ErrorSymbol()
 		}
 		index++
 		if index >= max {
@@ -232,90 +229,90 @@ func (b *buffer) word(word []byte) error {
 		}
 	}
 	if index != max {
-		return errorEOF(b)
+		return b.ErrorEOF()
 	}
 	return nil
 }
 
-func (b *buffer) step() error {
-	if b.index+1 < b.length {
-		b.index++
+func (b *Buffer) Step() error {
+	if b.Index+1 < b.Length {
+		b.Index++
 		return nil
 	}
 	return io.EOF
 }
 
 // reads until the end of the token e.g.: `@.length`, `@['foo'].bar[(@.length - 1)].baz`
-func (b *buffer) token() (err error) {
+func (b *Buffer) token() (err error) {
 	var (
 		c     byte
 		stack = make([]byte, 0)
-		first = b.index
+		first = b.Index
 		start int
 		find  bool
 	)
 tokenLoop:
-	for ; b.index < b.length; b.index++ {
-		c = b.data[b.index]
+	for ; b.Index < b.Length; b.Index++ {
+		c = b.Bytes[b.Index]
 		switch {
-		case c == quotes:
+		case c == BQuotes:
 			fallthrough
-		case c == quote:
+		case c == BQuote:
 			find = true
-			err = b.step()
+			err = b.Step()
 			if err != nil {
-				return b.errorEOF()
+				return b.ErrorEOF()
 			}
-			err = b.skip(c)
+			err = b.Skip(c)
 			if err == io.EOF {
-				return b.errorEOF()
+				return b.ErrorEOF()
 			}
-		case c == bracketL:
+		case c == BBracketL:
 			find = true
 			stack = append(stack, c)
-		case c == bracketR:
+		case c == BBracketR:
 			find = true
 			if len(stack) == 0 {
-				if first == b.index {
-					return b.errorSymbol()
+				if first == b.Index {
+					return b.ErrorSymbol()
 				}
 				break tokenLoop
 			}
-			if stack[len(stack)-1] != bracketL {
-				return b.errorSymbol()
+			if stack[len(stack)-1] != BBracketL {
+				return b.ErrorSymbol()
 			}
 			stack = stack[:len(stack)-1]
-		case c == parenthesesL:
+		case c == BParenthesesL:
 			find = true
 			stack = append(stack, c)
-		case c == parenthesesR:
+		case c == BParenthesesR:
 			find = true
 			if len(stack) == 0 {
-				if first == b.index {
-					return b.errorSymbol()
+				if first == b.Index {
+					return b.ErrorSymbol()
 				}
 				break tokenLoop
 			}
-			if stack[len(stack)-1] != parenthesesL {
-				return b.errorSymbol()
+			if stack[len(stack)-1] != BParenthesesL {
+				return b.ErrorSymbol()
 			}
 			stack = stack[:len(stack)-1]
-		case c == dot || c == at || c == dollar || c == question || c == asterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard token name
+		case c == BDot || c == BAt || c == BDollar || c == BQuestion || c == BAsterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard token name
 			find = true
 			continue
 		case len(stack) != 0:
 			find = true
 			continue
-		case c == minus || c == plus:
+		case c == BMinus || c == BPlus:
 			if !find {
 				find = true
-				start = b.index
-				err = b.numeric(true)
+				start = b.Index
+				err = b.AsNumeric(true)
 				if err == nil || err == io.EOF {
-					b.index--
+					b.Index--
 					continue
 				}
-				b.index = start
+				b.Index = start
 			}
 			fallthrough
 		default:
@@ -323,19 +320,19 @@ tokenLoop:
 		}
 	}
 	if len(stack) != 0 {
-		return b.errorEOF()
+		return b.ErrorEOF()
 	}
-	if first == b.index {
-		return b.step()
+	if first == b.Index {
+		return b.Step()
 	}
-	if b.index >= b.length {
+	if b.Index >= b.Length {
 		return io.EOF
 	}
 	return nil
 }
 
-// Builder for `Reverse Polish notation`
-func (b *buffer) rpn() (result rpn, err error) {
+// RPN is a builder for `Reverse Polish notation`
+func (b *Buffer) RPN() (result RPN, err error) {
 	var (
 		c        byte
 		start    int
@@ -346,24 +343,24 @@ func (b *buffer) rpn() (result rpn, err error) {
 		stack    = make([]string, 0)
 	)
 	for {
-		b.reset()
-		c, err = b.first()
+		b.Reset()
+		c, err = b.First()
 		if err != nil {
 			break
 		}
 		switch true {
-		case c == asterisk || c == division || c == minus || c == plus || c == caret || c == ampersand || c == pipe || c == signL || c == signG || c == signE || c == exclamation: // operations
+		case c == BAsterisk || c == BDivision || c == BMinus || c == BPlus || c == BCaret || c == BAmpersand || c == BPipe || c == BSignL || c == BSignG || c == BSignE || c == BExclamation: // operations
 			if variable {
 				variable = false
 				current = string(c)
 
-				c, err = b.next()
+				c, err = b.Next()
 				if err == nil {
 					temp = current + string(c)
-					if priority[temp] != 0 {
+					if Priority[temp] != 0 {
 						current = temp
 					} else {
-						b.index--
+						b.Index--
 					}
 				} else {
 					err = nil
@@ -374,10 +371,10 @@ func (b *buffer) rpn() (result rpn, err error) {
 					found = false
 					if temp[0] >= 'A' && temp[0] <= 'z' { // function
 						found = true
-					} else if priority[temp] != 0 { // operation
-						if priority[temp] > priority[current] {
+					} else if Priority[temp] != 0 { // operation
+						if Priority[temp] > Priority[current] {
 							found = true
-						} else if priority[temp] == priority[current] && !rightOp[temp] {
+						} else if Priority[temp] == Priority[current] && !RightOp[temp] {
 							found = true
 						}
 					}
@@ -392,52 +389,52 @@ func (b *buffer) rpn() (result rpn, err error) {
 				stack = append(stack, current)
 				break
 			}
-			if c != minus && c != plus {
-				return nil, b.errorSymbol()
+			if c != BMinus && c != BPlus {
+				return nil, b.ErrorSymbol()
 			}
 			fallthrough // for numbers like `-1e6`
 		case (c >= '0' && c <= '9') || c == '.': // numbers
 			variable = true
-			start = b.index
-			err = b.numeric(true)
+			start = b.Index
+			err = b.AsNumeric(true)
 			if err != nil {
 				return nil, err
 			}
-			current = string(b.data[start:b.index])
+			current = string(b.Bytes[start:b.Index])
 			result = append(result, current)
-			b.index--
-		case c == quotes: // string
+			b.Index--
+		case c == BQuotes: // string
 			fallthrough
-		case c == quote: // string
+		case c == BQuote: // string
 			variable = true
-			start = b.index
-			err = b.string(c, true)
+			start = b.Index
+			err = b.AsString(c, true)
 			if err != nil {
-				return nil, b.errorEOF()
+				return nil, b.ErrorEOF()
 			}
-			current = string(b.data[start : b.index+1])
+			current = string(b.Bytes[start : b.Index+1])
 			result = append(result, current)
-		case c == dollar || c == at: // variable : like @.length , $.expensive, etc.
+		case c == BDollar || c == BAt: // variable : like @.length , $.expensive, etc.
 			variable = true
-			start = b.index
+			start = b.Index
 			err = b.token()
 			if err != nil {
 				if err != io.EOF {
 					return nil, err
 				}
 			}
-			current = string(b.data[start:b.index])
+			current = string(b.Bytes[start:b.Index])
 			result = append(result, current)
 			if err != nil {
 				err = nil
 			} else {
-				b.index--
+				b.Index--
 			}
-		case c == parenthesesL: // (
+		case c == BParenthesesL: // (
 			variable = false
 			current = string(c)
 			stack = append(stack, current)
-		case c == parenthesesR: // )
+		case c == BParenthesesR: // )
 			variable = true
 			found = false
 			for len(stack) > 0 {
@@ -449,15 +446,15 @@ func (b *buffer) rpn() (result rpn, err error) {
 				}
 				result = append(result, temp)
 			}
-			if !found { // have no parenthesesL
-				return nil, errorRequest("formula has no left parentheses")
+			if !found { // have no BParenthesesL
+				return nil, NewErrorRequest("formula has no left parentheses")
 			}
 		default: // prefix functions or etc.
-			start = b.index
+			start = b.Index
 			variable = true
-			for ; b.index < b.length; b.index++ {
-				c = b.data[b.index]
-				if c == parenthesesL { // function detection, example: sin(...), round(...), etc.
+			for ; b.Index < b.Length; b.Index++ {
+				c = b.Bytes[b.Index]
+				if c == BParenthesesL { // function detection, example: sin(...), round(...), etc.
 					variable = false
 					break
 				}
@@ -467,21 +464,21 @@ func (b *buffer) rpn() (result rpn, err error) {
 					}
 				}
 			}
-			current = strings.ToLower(string(b.data[start:b.index]))
-			b.index--
+			current = strings.ToLower(string(b.Bytes[start:b.Index]))
+			b.Index--
 			if !variable {
-				if _, found = functions[current]; !found {
-					return nil, errorRequest("wrong formula, '%s' is not a function", current)
+				if _, found = Functions[current]; !found {
+					return nil, NewErrorRequest("wrong formula, '%s' is not a function", current)
 				}
 				stack = append(stack, current)
 			} else {
-				if _, found = constants[current]; !found {
-					return nil, errorRequest("wrong formula, '%s' is not a constant", current)
+				if _, found = Constants[current]; !found {
+					return nil, NewErrorRequest("wrong formula, '%s' is not a constant", current)
 				}
 				result = append(result, current)
 			}
 		}
-		err = b.step()
+		err = b.Step()
 		if err != nil {
 			break
 		}
@@ -492,22 +489,22 @@ func (b *buffer) rpn() (result rpn, err error) {
 
 	for len(stack) > 0 {
 		temp = stack[len(stack)-1]
-		_, ok := functions[temp]
-		if priority[temp] == 0 && !ok { // operations only
-			return nil, errorRequest("wrong formula, '%s' is not an operation or function", temp)
+		_, ok := Functions[temp]
+		if Priority[temp] == 0 && !ok { // operations only
+			return nil, NewErrorRequest("wrong formula, '%s' is not an operation or function", temp)
 		}
 		result = append(result, temp)
 		stack = stack[:len(stack)-1]
 	}
 
 	if len(result) == 0 {
-		return nil, b.errorEOF()
+		return nil, b.ErrorEOF()
 	}
 
 	return
 }
 
-func (b *buffer) tokenize() (result tokens, err error) {
+func (b *Buffer) GetTokens() (result Tokens, err error) {
 	var (
 		c        byte
 		start    int
@@ -516,24 +513,24 @@ func (b *buffer) tokenize() (result tokens, err error) {
 		variable bool
 	)
 	for {
-		b.reset()
-		c, err = b.first()
+		b.Reset()
+		c, err = b.First()
 		if err != nil {
 			break
 		}
 		switch true {
-		case priorityChar[c]: // operations
-			if variable || (c != minus && c != plus) {
+		case PriorityChar[c]: // operations
+			if variable || (c != BMinus && c != BPlus) {
 				variable = false
 				current = string(c)
 
-				c, err = b.next()
+				c, err = b.Next()
 				if err == nil {
 					temp = current + string(c)
-					if priority[temp] != 0 {
+					if Priority[temp] != 0 {
 						current = temp
 					} else {
-						b.index--
+						b.Index--
 					}
 				} else {
 					err = nil
@@ -543,63 +540,63 @@ func (b *buffer) tokenize() (result tokens, err error) {
 				break
 			}
 			fallthrough // for numbers like `-1e6`
-		case (c >= '0' && c <= '9') || c == dot: // numbers
+		case (c >= '0' && c <= '9') || c == BDot: // numbers
 			variable = true
-			start = b.index
-			err = b.numeric(true)
+			start = b.Index
+			err = b.AsNumeric(true)
 			if err != nil && err != io.EOF {
-				if c == dot {
+				if c == BDot {
 					err = nil
 					result = append(result, ".")
-					b.index = start
+					b.Index = start
 					break
 				}
 				return nil, err
 			}
-			current = string(b.data[start:b.index])
+			current = string(b.Bytes[start:b.Index])
 			result = append(result, current)
-			b.index--
-		case c == quotes: // string
+			b.Index--
+		case c == BQuotes: // string
 			fallthrough
-		case c == quote: // string
+		case c == BQuote: // string
 			variable = true
-			start = b.index
-			err = b.string(c, true)
+			start = b.Index
+			err = b.AsString(c, true)
 			if err != nil {
-				return nil, b.errorEOF()
+				return nil, b.ErrorEOF()
 			}
-			current = string(b.data[start : b.index+1])
+			current = string(b.Bytes[start : b.Index+1])
 			result = append(result, current)
-		case c == dollar || c == at: // variable : like @.length , $.expensive, etc.
+		case c == BDollar || c == BAt: // variable : like @.length , $.expensive, etc.
 			variable = true
-			start = b.index
+			start = b.Index
 			err = b.token()
 			if err != nil {
 				if err != io.EOF {
 					return nil, err
 				}
 			}
-			current = string(b.data[start:b.index])
+			current = string(b.Bytes[start:b.Index])
 			result = append(result, current)
 			if err != nil {
 				err = nil
 			} else {
-				b.index--
+				b.Index--
 			}
-		case c == parenthesesL: // (
+		case c == BParenthesesL: // (
 			variable = false
 			current = string(c)
 			result = append(result, current)
-		case c == parenthesesR: // )
+		case c == BParenthesesR: // )
 			variable = true
 			current = string(c)
 			result = append(result, current)
 		default: // prefix functions or etc.
-			start = b.index
+			start = b.Index
 			variable = true
-			for ; b.index < b.length; b.index++ {
-				c = b.data[b.index]
-				if c == parenthesesL { // function detection, example: sin(...), round(...), etc.
+			for ; b.Index < b.Length; b.Index++ {
+				c = b.Bytes[b.Index]
+				if c == BParenthesesL { // function detection, example: sin(...), round(...), etc.
 					variable = false
 					break
 				}
@@ -609,22 +606,22 @@ func (b *buffer) tokenize() (result tokens, err error) {
 					}
 				}
 			}
-			if start == b.index {
-				err = b.step()
+			if start == b.Index {
+				err = b.Step()
 				if err != nil {
 					err = nil
-					current = strings.ToLower(string(b.data[start : b.index+1]))
+					current = strings.ToLower(string(b.Bytes[start : b.Index+1]))
 				} else {
-					current = strings.ToLower(string(b.data[start:b.index]))
-					b.index--
+					current = strings.ToLower(string(b.Bytes[start:b.Index]))
+					b.Index--
 				}
 			} else {
-				current = strings.ToLower(string(b.data[start:b.index]))
-				b.index--
+				current = strings.ToLower(string(b.Bytes[start:b.Index]))
+				b.Index--
 			}
 			result = append(result, current)
 		}
-		err = b.step()
+		err = b.Step()
 		if err != nil {
 			break
 		}
@@ -637,172 +634,10 @@ func (b *buffer) tokenize() (result tokens, err error) {
 	return
 }
 
-func (b *buffer) errorEOF() error {
-	return errorEOF(b)
+func (b *Buffer) ErrorEOF() error {
+	return NewErrorEOF(b)
 }
 
-func (b *buffer) errorSymbol() error {
-	return errorSymbol(b)
-}
-
-func _floats(left, right *Node) (lnum, rnum float64, err error) {
-	lnum, err = left.GetNumeric()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetNumeric()
-	return
-}
-
-func _ints(left, right *Node) (lnum, rnum int, err error) {
-	lnum, err = left.getInteger()
-	if err != nil {
-		return
-	}
-	rnum, err = right.getInteger()
-	return
-}
-
-func _bools(left, right *Node) (lnum, rnum bool, err error) {
-	lnum, err = left.GetBool()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetBool()
-	return
-}
-
-func _strings(left, right *Node) (lnum, rnum string, err error) {
-	lnum, err = left.GetString()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetString()
-	return
-}
-
-func _arrays(left, right *Node) (lnum, rnum []*Node, err error) {
-	lnum, err = left.GetArray()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetArray()
-	return
-}
-
-func _objects(left, right *Node) (lnum, rnum map[string]*Node, err error) {
-	lnum, err = left.GetObject()
-	if err != nil {
-		return
-	}
-	rnum, err = right.GetObject()
-	return
-}
-
-func boolean(node *Node) (bool, error) {
-	switch node.Type() {
-	case Bool:
-		return node.GetBool()
-	case Numeric:
-		res, err := node.GetNumeric()
-		return res != 0, err
-	case String:
-		res, err := node.GetString()
-		return res != "", err
-	case Null:
-		return false, nil
-	case Array:
-		fallthrough
-	case Object:
-		return !node.Empty(), nil
-	}
-	return false, nil
-}
-
-func tokenize(cmd string) (result tokens, err error) {
-	buf := newBuffer([]byte(cmd))
-	return buf.tokenize()
-}
-
-func (t tokens) exists(find string) bool {
-	for _, s := range t {
-		if s == find {
-			return true
-		}
-	}
-	return false
-}
-
-func (t tokens) count(find string) int {
-	i := 0
-	for _, s := range t {
-		if s == find {
-			i++
-		}
-	}
-	return i
-}
-
-func (t tokens) slice(find string) []string {
-	n := len(t)
-	result := make([]string, 0, t.count(find))
-	from := 0
-	for i := 0; i < n; i++ {
-		if t[i] == find {
-			result = append(result, strings.Join(t[from:i], ""))
-			from = i + 1
-		}
-	}
-	result = append(result, strings.Join(t[from:n], ""))
-	return result
-}
-
-func str(key string) (string, bool) {
-	bString := []byte(key)
-	from := len(bString)
-	if from > 1 && (bString[0] == quotes && bString[from-1] == quotes) {
-		return unquote(bString, quotes)
-	}
-	if from > 1 && (bString[0] == quote && bString[from-1] == quote) {
-		return unquote(bString, quote)
-	}
-	return key, true
-	// todo quote string and unquote it:
-	// {
-	// 	bString = append([]byte{quotes}, bString...)
-	// 	bString = append(bString, quotes)
-	// }
-	// return unquote(bString, quotes)
-}
-
-func numeric2float64(value interface{}) (result float64, err error) {
-	switch typed := value.(type) {
-	case float64:
-		result = typed
-	case float32:
-		result = float64(typed)
-	case int:
-		result = float64(typed)
-	case int8:
-		result = float64(typed)
-	case int16:
-		result = float64(typed)
-	case int32:
-		result = float64(typed)
-	case int64:
-		result = float64(typed)
-	case uint:
-		result = float64(typed)
-	case uint8:
-		result = float64(typed)
-	case uint16:
-		result = float64(typed)
-	case uint32:
-		result = float64(typed)
-	case uint64:
-		result = float64(typed)
-	default:
-		err = unsupportedType(value)
-	}
-	return
+func (b *Buffer) ErrorSymbol() error {
+	return NewErrorSymbol(b)
 }

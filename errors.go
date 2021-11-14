@@ -29,19 +29,19 @@ const (
 	UnsupportedType
 )
 
-func errorSymbol(b *buffer) error {
-	symbol, err := b.current()
+func NewErrorSymbol(b *Buffer) error {
+	symbol, err := b.Current()
 	if err != nil {
 		symbol = 0
 	}
 	return Error{
 		Type:  WrongSymbol,
-		Index: b.index,
+		Index: b.Index,
 		Char:  symbol,
 	}
 }
 
-func errorAt(index int, symbol byte) error {
+func NewErrorAt(index int, symbol byte) error {
 	return Error{
 		Type:  WrongSymbol,
 		Index: index,
@@ -49,33 +49,33 @@ func errorAt(index int, symbol byte) error {
 	}
 }
 
-func errorEOF(b *buffer) error {
+func NewErrorEOF(b *Buffer) error {
 	return Error{
 		Type:  UnexpectedEOF,
-		Index: b.index,
+		Index: b.Index,
 	}
 }
 
-func errorType() error {
+func NewErrorType() error {
 	return Error{
 		Type: WrongType,
 	}
 }
 
-func unsupportedType(value interface{}) error {
+func NewUnsupportedType(value interface{}) error {
 	return Error{
 		Type:  UnsupportedType,
 		Value: value,
 	}
 }
 
-func errorUnparsed() error {
+func NewErrorUnparsed() error {
 	return Error{
 		Type: Unparsed,
 	}
 }
 
-func errorRequest(format string, args ...interface{}) error {
+func NewErrorRequest(format string, args ...interface{}) error {
 	return Error{
 		Type:    WrongRequest,
 		Message: fmt.Sprintf(format, args...),

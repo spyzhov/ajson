@@ -23,41 +23,41 @@ const (
 //
 // Doesn't calculate values, just type of stored value. It will store link to the data, on all life long.
 func Unmarshal(data []byte) (root *Node, err error) {
-	buf := newBuffer(data)
+	buf := NewBuffer(data)
 	var (
 		state   States
 		key     *string
 		current *Node
 	)
 
-	_, err = buf.first()
+	_, err = buf.First()
 	if err != nil {
-		return nil, buf.errorEOF()
+		return nil, buf.ErrorEOF()
 	}
 
 	for {
-		state = buf.getState()
+		state = buf.GetState()
 		if state == __ {
-			return nil, buf.errorSymbol()
+			return nil, buf.ErrorSymbol()
 		}
 
 		if state >= GO {
 			// region Change State
-			switch buf.state {
+			switch buf.State {
 			case ST:
 				if current != nil && current.IsObject() && key == nil {
 					// Detected: Key
 					key, err = getString(buf)
-					buf.state = CO
+					buf.State = CO
 				} else {
 					// Detected: String
 					current, err = newNode(current, buf, String, &key)
 					if err != nil {
 						break
 					}
-					err = buf.string(quotes, false)
-					current.borders[1] = buf.index + 1
-					buf.state = OK
+					err = buf.AsString(BQuotes, false)
+					current.borders[1] = buf.Index + 1
+					buf.State = OK
 					if current.parent != nil {
 						current = current.parent
 					}
@@ -67,10 +67,10 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				if err != nil {
 					break
 				}
-				err = buf.numeric(false)
-				current.borders[1] = buf.index
-				buf.index -= 1
-				buf.state = OK
+				err = buf.AsNumeric(false)
+				current.borders[1] = buf.Index
+				buf.Index -= 1
+				buf.State = OK
 				if current.parent != nil {
 					current = current.parent
 				}
@@ -79,13 +79,13 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				if err != nil {
 					break
 				}
-				if buf.state == T1 {
-					err = buf.true()
+				if buf.State == T1 {
+					err = buf.AsTrue()
 				} else {
-					err = buf.false()
+					err = buf.AsFalse()
 				}
-				current.borders[1] = buf.index + 1
-				buf.state = OK
+				current.borders[1] = buf.Index + 1
+				buf.State = OK
 				if current.parent != nil {
 					current = current.parent
 				}
@@ -94,9 +94,9 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				if err != nil {
 					break
 				}
-				err = buf.null()
-				current.borders[1] = buf.index + 1
-				buf.state = OK
+				err = buf.AsNull()
+				current.borders[1] = buf.Index + 1
+				buf.State = OK
 				if current.parent != nil {
 					current = current.parent
 				}
@@ -107,75 +107,75 @@ func Unmarshal(data []byte) (root *Node, err error) {
 			switch state {
 			case ec: /* empty } */
 				if key != nil {
-					err = buf.errorSymbol()
+					err = buf.ErrorSymbol()
 				}
 				fallthrough
 			case cc: /* } */
 				if current != nil && current.IsObject() && !current.ready() {
-					current.borders[1] = buf.index + 1
+					current.borders[1] = buf.Index + 1
 					if current.parent != nil {
 						current = current.parent
 					}
 				} else {
-					err = buf.errorSymbol()
+					err = buf.ErrorSymbol()
 				}
-				buf.state = OK
+				buf.State = OK
 			case bc: /* ] */
 				if current != nil && current.IsArray() && !current.ready() {
-					current.borders[1] = buf.index + 1
+					current.borders[1] = buf.Index + 1
 					if current.parent != nil {
 						current = current.parent
 					}
 				} else {
-					err = buf.errorSymbol()
+					err = buf.ErrorSymbol()
 				}
-				buf.state = OK
+				buf.State = OK
 			case co: /* { */
 				current, err = newNode(current, buf, Object, &key)
-				buf.state = OB
+				buf.State = OB
 			case bo: /* [ */
 				current, err = newNode(current, buf, Array, &key)
-				buf.state = AR
+				buf.State = AR
 			case cm: /* , */
 				if current == nil {
-					return nil, buf.errorSymbol()
+					return nil, buf.ErrorSymbol()
 				}
 				if current.IsObject() {
-					buf.state = KE
+					buf.State = KE
 				} else if current.IsArray() {
-					buf.state = VA
+					buf.State = VA
 				} else {
-					err = buf.errorSymbol()
+					err = buf.ErrorSymbol()
 				}
 			case cl: /* : */
 				if current == nil || !current.IsObject() || key == nil {
-					err = buf.errorSymbol()
+					err = buf.ErrorSymbol()
 				} else {
-					buf.state = VA
+					buf.State = VA
 				}
 			default: /* syntax error */
-				err = buf.errorSymbol()
+				err = buf.ErrorSymbol()
 			}
 			// endregion Action
 		}
 		if err != nil {
 			return
 		}
-		if buf.step() != nil {
+		if buf.Step() != nil {
 			break
 		}
-		if _, err = buf.first(); err != nil {
+		if _, err = buf.First(); err != nil {
 			err = nil
 			break
 		}
 	}
 
-	if current == nil || buf.state != OK {
-		err = buf.errorEOF()
+	if current == nil || buf.State != OK {
+		err = buf.ErrorEOF()
 	} else {
 		root = current.root()
 		if !root.ready() {
-			err = buf.errorEOF()
+			err = buf.ErrorEOF()
 			root = nil
 		}
 	}
@@ -198,15 +198,15 @@ func Must(root *Node, err error) *Node {
 	return root
 }
 
-func getString(b *buffer) (*string, error) {
-	start := b.index
-	err := b.string(quotes, false)
+func getString(b *Buffer) (*string, error) {
+	start := b.Index
+	err := b.AsString(BQuotes, false)
 	if err != nil {
 		return nil, err
 	}
-	value, ok := unquote(b.data[start:b.index+1], quotes)
+	value, ok := Unquote(b.Bytes[start:b.Index+1], BQuotes)
 	if !ok {
-		return nil, errorSymbol(b)
+		return nil, NewErrorSymbol(b)
 	}
 	return &value, nil
 }

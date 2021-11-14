@@ -17,7 +17,7 @@ func (n *Node) Set(value interface{}) error {
 	}
 	switch result := value.(type) {
 	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		if tValue, err := numeric2float64(value); err != nil {
+		if tValue, err := CastNumericToFloat64(value); err != nil {
 			return err
 		} else {
 			return n.SetNumeric(tValue)
@@ -33,7 +33,7 @@ func (n *Node) Set(value interface{}) error {
 	case *Node:
 		return n.SetNode(result)
 	default:
-		return unsupportedType(value)
+		return NewUnsupportedType(value)
 	}
 }
 
@@ -75,7 +75,7 @@ func (n *Node) SetNode(value *Node) error {
 		return nil
 	}
 	if n.isParentOrSelfNode(value) {
-		return errorRequest("attempt to create infinite loop")
+		return NewErrorRequest("attempt to create infinite loop")
 	}
 
 	node := value.Clone()
@@ -91,7 +91,7 @@ func (n *Node) SetNode(value *Node) error {
 // AppendArray appends current Array node values with Node values
 func (n *Node) AppendArray(value ...*Node) error {
 	if !n.IsArray() {
-		return errorType()
+		return NewErrorType()
 	}
 	for _, val := range value {
 		if err := n.appendNode(nil, val); err != nil {
@@ -105,7 +105,7 @@ func (n *Node) AppendArray(value ...*Node) error {
 // AppendObject appends current Object node value with key:value
 func (n *Node) AppendObject(key string, value *Node) error {
 	if !n.IsObject() {
-		return errorType()
+		return NewErrorType()
 	}
 	err := n.appendNode(&key, value)
 	if err != nil {
@@ -229,35 +229,35 @@ func (n *Node) update(_type NodeType, value interface{}) error {
 // validate method validates stored value, before update
 func (n *Node) validate(_type NodeType, value interface{}) error {
 	if n == nil {
-		return errorUnparsed()
+		return NewErrorUnparsed()
 	}
 	switch _type {
 	case Null:
 		if value != nil {
-			return errorType()
+			return NewErrorType()
 		}
 	case Numeric:
 		if _, ok := value.(float64); !ok {
-			return errorType()
+			return NewErrorType()
 		}
 	case String:
 		if _, ok := value.(string); !ok {
-			return errorType()
+			return NewErrorType()
 		}
 	case Bool:
 		if _, ok := value.(bool); !ok {
-			return errorType()
+			return NewErrorType()
 		}
 	case Array:
 		if value != nil {
 			if _, ok := value.([]*Node); !ok {
-				return errorType()
+				return NewErrorType()
 			}
 		}
 	case Object:
 		if value != nil {
 			if _, ok := value.(map[string]*Node); !ok {
-				return errorType()
+				return NewErrorType()
 			}
 		}
 	}
@@ -267,10 +267,10 @@ func (n *Node) validate(_type NodeType, value interface{}) error {
 // remove method removes value from current container
 func (n *Node) remove(value *Node) error {
 	if !n.isContainer() {
-		return errorType()
+		return NewErrorType()
 	}
 	if value.parent != n {
-		return errorRequest("wrong parent")
+		return NewErrorRequest("wrong parent")
 	}
 	n.mark()
 	if n.IsArray() {
@@ -298,7 +298,7 @@ func (n *Node) dropindex(index int) {
 // appendNode appends current Node node value with new Node value, by key or index
 func (n *Node) appendNode(key *string, value *Node) error {
 	if n.isParentOrSelfNode(value) {
-		return errorRequest("attempt to create infinite loop")
+		return NewErrorRequest("attempt to create infinite loop")
 	}
 	if value.parent != nil {
 		if err := value.parent.remove(value); err != nil {

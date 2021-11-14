@@ -218,7 +218,7 @@ func TestOperations(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := operations[test.operation](test.left, test.right)
+			result, err := Operations[test.operation](test.left, test.right)
 			if test.fail {
 				if err == nil {
 					t.Error("Expected error: nil given")
@@ -237,37 +237,37 @@ func TestOperations(t *testing.T) {
 
 func TestAddConstant(t *testing.T) {
 	name := "new_constant_name"
-	if _, ok := constants[name]; ok {
+	if _, ok := Constants[name]; ok {
 		t.Error("test constant already exists")
 	}
 	AddConstant(name, NewNumeric(3.14))
-	if _, ok := constants[name]; !ok {
+	if _, ok := Constants[name]; !ok {
 		t.Error("test constant was not added")
 	}
 }
 
 func TestAddOperation(t *testing.T) {
 	name := "new_operation_name"
-	if _, ok := operations[name]; ok {
+	if _, ok := Operations[name]; ok {
 		t.Error("test operation already exists")
 	}
 	AddOperation(name, 1, true, func(left *Node, right *Node) (result *Node, err error) {
 		return NewNumeric(1), nil
 	})
-	if _, ok := operations[name]; !ok {
+	if _, ok := Operations[name]; !ok {
 		t.Error("test operation was not added")
 	}
 }
 
 func TestAddFunction(t *testing.T) {
 	name := "new_function_name"
-	if _, ok := functions[name]; ok {
+	if _, ok := Functions[name]; ok {
 		t.Error("test constant already exists")
 	}
 	AddFunction(name, func(node *Node) (result *Node, err error) {
 		return NewNumeric(2), nil
 	})
-	if _, ok := functions[name]; !ok {
+	if _, ok := Functions[name]; !ok {
 		t.Error("test function was not added")
 	}
 }
@@ -352,7 +352,7 @@ func TestFunctions(t *testing.T) {
 			default:
 				panic("wrong type")
 			}
-			result, err := functions[test.fname](node)
+			result, err := Functions[test.fname](node)
 			if err != nil {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if ok, err := result.Eq(expected); !ok {
@@ -446,7 +446,7 @@ func TestFunctions2(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := functions[test.fname](test.value)
+			result, err := Functions[test.fname](test.value)
 			if test.fail {
 				if err == nil {
 					t.Error("Expected error: nil given")
@@ -488,7 +488,7 @@ func TestConstants(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := constants[test.name]
+			result := Constants[test.name]
 			if ok, err := result.Eq(test.expected); !ok {
 				if err != nil {
 					t.Errorf("Unexpected error on comparation: %s", err.Error())

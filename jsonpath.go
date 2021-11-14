@@ -5,6 +5,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/spyzhov/ajson/v1/internal"
 )
 
 // JSONPath returns slice of founded elements in current JSON data, by it's JSONPath.
@@ -201,7 +203,7 @@ func recursiveChildren(node *Node) (result []*Node) {
 // 	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
 //
 func ParseJSONPath(path string) (result []string, err error) {
-	buf := newBuffer([]byte(path))
+	buf := NewBuffer([]byte(path))
 	result = make([]string, 0)
 	const (
 		fQuote  = 1 << 0
@@ -210,22 +212,22 @@ func ParseJSONPath(path string) (result []string, err error) {
 	var (
 		c           byte
 		start, stop int
-		childEnd    = map[byte]bool{dot: true, bracketL: true}
+		childEnd    = map[byte]bool{BDot: true, BBracketL: true}
 		flag        int
 		brackets    int
 	)
 	for {
-		c, err = buf.current()
+		c, err = buf.Current()
 		if err != nil {
 			break
 		}
 	parseSwitch:
 		switch true {
-		case c == dollar || c == at:
+		case c == BDollar || c == BAt:
 			result = append(result, string(c))
-		case c == dot:
-			start = buf.index
-			c, err = buf.next()
+		case c == BDot:
+			start = buf.Index
+			c, err = buf.Next()
 			if err == io.EOF {
 				err = nil
 				break
@@ -233,70 +235,70 @@ func ParseJSONPath(path string) (result []string, err error) {
 			if err != nil {
 				break
 			}
-			if c == dot {
+			if c == BDot {
 				result = append(result, "..")
-				buf.index--
+				buf.Index--
 				break
 			}
-			err = buf.skipAny(childEnd)
-			stop = buf.index
+			err = buf.SkipAny(childEnd)
+			stop = buf.Index
 			if err == io.EOF {
 				err = nil
-				stop = buf.length
+				stop = buf.Length
 			} else {
-				buf.index--
+				buf.Index--
 			}
 			if err != nil {
 				break
 			}
 			if start+1 < stop {
-				result = append(result, string(buf.data[start+1:stop]))
+				result = append(result, string(buf.Bytes[start+1:stop]))
 			}
-		case c == bracketL:
-			_, err = buf.next()
+		case c == BBracketL:
+			_, err = buf.Next()
 			if err != nil {
-				return nil, buf.errorEOF()
+				return nil, buf.ErrorEOF()
 			}
 			brackets = 1
-			start = buf.index
-			for ; buf.index < buf.length; buf.index++ {
-				c = buf.data[buf.index]
+			start = buf.Index
+			for ; buf.Index < buf.Length; buf.Index++ {
+				c = buf.Bytes[buf.Index]
 				switch c {
-				case quote:
+				case BQuote:
 					if flag&fQuotes == 0 {
 						if flag&fQuote == 0 {
 							flag |= fQuote
-						} else if !buf.backslash() {
+						} else if !buf.Backslash() {
 							flag ^= fQuote
 						}
 					}
-				case quotes:
+				case BQuotes:
 					if flag&fQuote == 0 {
 						if flag&fQuotes == 0 {
 							flag |= fQuotes
-						} else if !buf.backslash() {
+						} else if !buf.Backslash() {
 							flag ^= fQuotes
 						}
 					}
-				case bracketL:
-					if flag == 0 && !buf.backslash() {
+				case BBracketL:
+					if flag == 0 && !buf.Backslash() {
 						brackets++
 					}
-				case bracketR:
-					if flag == 0 && !buf.backslash() {
+				case BBracketR:
+					if flag == 0 && !buf.Backslash() {
 						brackets--
 					}
 					if brackets == 0 {
-						result = append(result, string(buf.data[start:buf.index]))
+						result = append(result, string(buf.Bytes[start:buf.Index]))
 						break parseSwitch
 					}
 				}
 			}
-			return nil, buf.errorEOF()
+			return nil, buf.ErrorEOF()
 		default:
-			return nil, buf.errorSymbol()
+			return nil, buf.ErrorSymbol()
 		}
-		err = buf.step()
+		err = buf.Step()
 		if err != nil {
 			if err == io.EOF {
 				err = nil
@@ -328,11 +330,11 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 		ok          bool
 		value, temp *Node
 		float       float64
-		tokens      tokens
-		expr        rpn
+		tokens      Tokens
+		expr        RPN
 	)
 	for i, cmd := range commands {
-		tokens, err = newBuffer([]byte(cmd)).tokenize()
+		tokens, err = NewBuffer([]byte(cmd)).GetTokens()
 		if err != nil {
 			return
 		}
@@ -357,30 +359,30 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 				temporary = append(temporary, element.Inheritors()...)
 			}
 			result = temporary
-		case tokens.exists(":"): // array slice operator
-			if tokens.count(":") > 3 {
-				return nil, errorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
+		case tokens.Exists(":"): // array slice operator
+			if tokens.Count(":") > 3 {
+				return nil, NewErrorRequest("slice must contains no more than 2 colons, got '%s'", cmd)
 			}
-			keys = tokens.slice(":")
+			keys = tokens.Slice(":")
 
 			temporary = make([]*Node, 0)
 			for _, element := range result {
 				if element.IsArray() && element.Size() > 0 {
 					if fkeys[0], err = getNumberIndex(element, keys[0], math.NaN()); err != nil {
-						return nil, errorRequest("wrong request: %s", cmd)
+						return nil, NewErrorRequest("wrong request: %s", cmd)
 					}
 					if fkeys[1], err = getNumberIndex(element, keys[1], math.NaN()); err != nil {
-						return nil, errorRequest("wrong request: %s", cmd)
+						return nil, NewErrorRequest("wrong request: %s", cmd)
 					}
 					if len(keys) < 3 {
 						fkeys[2] = 1
 					} else if fkeys[2], err = getNumberIndex(element, keys[2], 1); err != nil {
-						return nil, errorRequest("wrong request: %s", cmd)
+						return nil, NewErrorRequest("wrong request: %s", cmd)
 					}
 
 					ikeys[2] = int(fkeys[2])
 					if ikeys[2] == 0 {
-						return nil, errorRequest("wrong request: %s", cmd)
+						return nil, NewErrorRequest("wrong request: %s", cmd)
 					}
 
 					if math.IsNaN(fkeys[0]) {
@@ -435,9 +437,9 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "?(") && strings.HasSuffix(cmd, ")"): // applies a filter (script) expression
-			expr, err = newBuffer([]byte(cmd[2 : len(cmd)-1])).rpn()
+			expr, err = NewBuffer([]byte(cmd[2 : len(cmd)-1])).RPN()
 			if err != nil {
-				return nil, errorRequest("wrong request: %s", cmd)
+				return nil, NewErrorRequest("wrong request: %s", cmd)
 			}
 			temporary = make([]*Node, 0)
 			for _, element := range result {
@@ -445,10 +447,10 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 					for _, temp = range element.Inheritors() {
 						value, err = eval(temp, expr, cmd)
 						if err != nil {
-							return nil, errorRequest("wrong request: %s", cmd)
+							return nil, NewErrorRequest("wrong request: %s", cmd)
 						}
 						if value != nil {
-							ok, err = boolean(value)
+							ok, err = CastBoolean(value)
 							if err != nil || !ok {
 								continue
 							}
@@ -459,9 +461,9 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		case strings.HasPrefix(cmd, "(") && strings.HasSuffix(cmd, ")"): // script expression, using the underlying script engine
-			expr, err = newBuffer([]byte(cmd[1 : len(cmd)-1])).rpn()
+			expr, err = NewBuffer([]byte(cmd[1 : len(cmd)-1])).RPN()
 			if err != nil {
-				return nil, errorRequest("wrong request: %s", cmd)
+				return nil, NewErrorRequest("wrong request: %s", cmd)
 			}
 			temporary = make([]*Node, 0)
 			for _, element := range result {
@@ -470,7 +472,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 				}
 				temp, err = eval(element, expr, cmd)
 				if err != nil {
-					return nil, errorRequest("wrong request: %s", cmd)
+					return nil, NewErrorRequest("wrong request: %s", cmd)
 				}
 				if temp != nil {
 					value = nil
@@ -478,7 +480,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 					case String:
 						key, err = temp.GetString()
 						if err != nil {
-							return nil, errorRequest("wrong type convert: %s", err.Error())
+							return nil, NewErrorRequest("wrong type convert: %s", err.Error())
 						}
 						value = element.children[key]
 					case Numeric:
@@ -492,7 +494,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 						} else {
 							float, err = temp.GetNumeric()
 							if err != nil {
-								return nil, errorRequest("wrong type convert: %s", err.Error())
+								return nil, NewErrorRequest("wrong type convert: %s", err.Error())
 							}
 							key = strconv.FormatFloat(float, 'g', -1, 64)
 						}
@@ -500,7 +502,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 					case Bool:
 						ok, err = temp.GetBool()
 						if err != nil {
-							return nil, errorRequest("wrong type convert: %s", err.Error())
+							return nil, NewErrorRequest("wrong type convert: %s", err.Error())
 						}
 						if ok {
 							temporary = append(temporary, element.Inheritors()...)
@@ -515,10 +517,10 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 			}
 			result = temporary
 		default: // try to get by key & Union
-			if tokens.exists(",") {
-				keys = tokens.slice(",")
+			if tokens.Exists(",") {
+				keys = tokens.Slice(",")
 				if len(keys) == 0 {
-					return nil, errorRequest("wrong request: %s", cmd)
+					return nil, NewErrorRequest("wrong request: %s", cmd)
 				}
 			} else {
 				keys = []string{cmd}
@@ -529,7 +531,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 				for _, element := range result {
 					if element.IsArray() {
 						if key == "length" || key == "'length'" || key == "\"length\"" {
-							value, err = functions["length"](element)
+							value, err = Functions["length"](element)
 							if err != nil {
 								return
 							}
@@ -540,7 +542,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 								return nil, err
 							}
 							if math.IsNaN(fkeys[0]) {
-								return nil, errorRequest("wrong request: %s", cmd)
+								return nil, NewErrorRequest("wrong request: %s", cmd)
 							}
 							if element.Size() == 0 {
 								ok = false
@@ -550,7 +552,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 								value, ok = element.children[key]
 							}
 						} else {
-							key, _ = str(key)
+							key, _ = CastString(key)
 							num, err = strconv.Atoi(key)
 							if err != nil || element.Size() == 0 {
 								ok = false
@@ -563,7 +565,7 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 						}
 
 					} else if element.IsObject() {
-						key, _ = str(key)
+						key, _ = CastString(key)
 						value, ok = element.children[key]
 					}
 					if ok {
@@ -580,14 +582,14 @@ func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 
 // Eval evaluate expression `@.price == 19.95 && @.color == 'red'` to the result value i.e. Bool(true), Numeric(3.14), etc.
 func Eval(node *Node, cmd string) (result *Node, err error) {
-	calc, err := newBuffer([]byte(cmd)).rpn()
+	calc, err := NewBuffer([]byte(cmd)).RPN()
 	if err != nil {
 		return nil, err
 	}
 	return eval(node, calc, cmd)
 }
 
-func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
+func eval(node *Node, expression RPN, cmd string) (result *Node, err error) {
 	if node == nil {
 		return nil, nil
 	}
@@ -604,17 +606,17 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 	)
 	for _, exp := range expression {
 		size = len(stack)
-		if fn, ok = functions[exp]; ok {
+		if fn, ok = Functions[exp]; ok {
 			if size < 1 {
-				return nil, errorRequest("wrong request: %s", cmd)
+				return nil, NewErrorRequest("wrong request: %s", cmd)
 			}
 			stack[size-1], err = fn(stack[size-1])
 			if err != nil {
 				return
 			}
-		} else if op, ok = operations[exp]; ok {
+		} else if op, ok = Operations[exp]; ok {
 			if size < 2 {
-				return nil, errorRequest("wrong request: %s", cmd)
+				return nil, NewErrorRequest("wrong request: %s", cmd)
 			}
 			stack[size-2], err = op(stack[size-2], stack[size-1])
 			if err != nil {
@@ -622,7 +624,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 			}
 			stack = stack[:size-1]
 		} else if len(exp) > 0 {
-			if exp[0] == dollar || exp[0] == at {
+			if exp[0] == BDollar || exp[0] == BAt {
 				commands, err = ParseJSONPath(exp)
 				if err != nil {
 					return
@@ -639,16 +641,16 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 					// stack = append(stack, NewNull())
 					return NewNull(), nil
 				}
-			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
+			} else if constant, ok := Constants[strings.ToLower(exp)]; ok {
 				stack = append(stack, constant)
 			} else {
 				bstr = []byte(exp)
 				size = len(bstr)
-				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
-					if sstr, ok := unquote(bstr, quote); ok {
+				if size >= 2 && bstr[0] == BQuote && bstr[size-1] == BQuote {
+					if sstr, ok := internal.Unquote(bstr, BQuote); ok {
 						temp = NewString(sstr)
 					} else {
-						err = errorRequest("wrong request: %s", cmd)
+						err = NewErrorRequest("wrong request: %s", cmd)
 					}
 				} else {
 					temp, err = Unmarshal(bstr)
@@ -668,7 +670,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 	if len(stack) == 0 {
 		return NewNull(), nil
 	}
-	return nil, errorRequest("wrong request: %s", cmd)
+	return nil, NewErrorRequest("wrong request: %s", cmd)
 }
 
 func getNumberIndex(element *Node, input string, Default float64) (result float64, err error) {
@@ -678,9 +680,9 @@ func getNumberIndex(element *Node, input string, Default float64) (result float6
 	} else if input == "(@.length)" {
 		result = float64(element.Size())
 	} else if strings.HasPrefix(input, "(") && strings.HasSuffix(input, ")") {
-		var expr rpn
+		var expr RPN
 		var temp *Node
-		expr, err = newBuffer([]byte(input[1 : len(input)-1])).rpn()
+		expr, err = NewBuffer([]byte(input[1 : len(input)-1])).RPN()
 		if err != nil {
 			return 0, err
 		}

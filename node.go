@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"sync/atomic"
+
+	"github.com/spyzhov/ajson/v1/internal"
 )
 
 // Node is a main struct, presents any type of JSON node.
@@ -137,11 +139,11 @@ func NewObject(value map[string]*Node) (current *Node) {
 	return
 }
 
-func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *Node, err error) {
+func newNode(parent *Node, buf *Buffer, _type NodeType, key **string) (current *Node, err error) {
 	current = &Node{
 		parent:  parent,
-		data:    &buf.data,
-		borders: [2]int{buf.index, 0},
+		data:    &buf.Bytes,
+		borders: [2]int{buf.Index, 0},
 		_type:   _type,
 		key:     *key,
 		dirty:   false,
@@ -156,13 +158,13 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 			parent.children[strconv.Itoa(size)] = current
 		} else if parent.IsObject() {
 			if *key == nil {
-				err = errorSymbol(buf)
+				err = NewErrorSymbol(buf)
 			} else {
 				parent.children[**key] = current
 				*key = nil
 			}
 		} else {
-			err = errorSymbol(buf)
+			err = NewErrorSymbol(buf)
 		}
 	}
 	return
@@ -334,7 +336,7 @@ func (n *Node) IsBool() bool {
 // Value will be calculated only once and saved into atomic.Value.
 func (n *Node) Value() (value interface{}, err error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	switch n._type {
 	case Null:
@@ -350,7 +352,7 @@ func (n *Node) Value() (value interface{}, err error) {
 	case Object:
 		return n.GetObject()
 	}
-	return nil, errorType()
+	return nil, NewErrorType()
 }
 
 func (n *Node) getValue() (value interface{}, err error) {
@@ -367,14 +369,14 @@ func (n *Node) getValue() (value interface{}, err error) {
 			n.value.Store(value)
 		case String:
 			var ok bool
-			value, ok = unquote(n.Source(), quotes)
+			value, ok = internal.Unquote(n.Source(), BQuotes)
 			if !ok {
-				return "", errorAt(n.borders[0], (*n.data)[n.borders[0]])
+				return "", NewErrorAt(n.borders[0], (*n.data)[n.borders[0]])
 			}
 			n.value.Store(value)
 		case Bool:
 			if len(n.Source()) == 0 {
-				return nil, errorUnparsed()
+				return nil, NewErrorUnparsed()
 			}
 			b := n.Source()[0]
 			value = b == 't' || b == 'T'
@@ -401,10 +403,10 @@ func (n *Node) getValue() (value interface{}, err error) {
 // GetNull returns nil, if current type is Null, else: WrongType error
 func (n *Node) GetNull() (interface{}, error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	if n._type != Null {
-		return nil, errorType()
+		return nil, NewErrorType()
 	}
 	return nil, nil
 }
@@ -412,10 +414,10 @@ func (n *Node) GetNull() (interface{}, error) {
 // GetNumeric returns float64, if current type is Numeric, else: WrongType error
 func (n *Node) GetNumeric() (value float64, err error) {
 	if n == nil {
-		return 0, errorUnparsed()
+		return 0, NewErrorUnparsed()
 	}
 	if n._type != Numeric {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	iValue, err := n.getValue()
 	if err != nil {
@@ -423,7 +425,7 @@ func (n *Node) GetNumeric() (value float64, err error) {
 	}
 	value, ok := iValue.(float64)
 	if !ok {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	return value, nil
 }
@@ -431,10 +433,10 @@ func (n *Node) GetNumeric() (value float64, err error) {
 // GetString returns string, if current type is String, else: WrongType error
 func (n *Node) GetString() (value string, err error) {
 	if n == nil {
-		return "", errorUnparsed()
+		return "", NewErrorUnparsed()
 	}
 	if n._type != String {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	iValue, err := n.getValue()
 	if err != nil {
@@ -442,7 +444,7 @@ func (n *Node) GetString() (value string, err error) {
 	}
 	value, ok := iValue.(string)
 	if !ok {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	return value, nil
 }
@@ -450,10 +452,10 @@ func (n *Node) GetString() (value string, err error) {
 // GetBool returns bool, if current type is Bool, else: WrongType error
 func (n *Node) GetBool() (value bool, err error) {
 	if n == nil {
-		return value, errorUnparsed()
+		return value, NewErrorUnparsed()
 	}
 	if n._type != Bool {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	iValue, err := n.getValue()
 	if err != nil {
@@ -461,7 +463,7 @@ func (n *Node) GetBool() (value bool, err error) {
 	}
 	value, ok := iValue.(bool)
 	if !ok {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	return value, nil
 }
@@ -469,10 +471,10 @@ func (n *Node) GetBool() (value bool, err error) {
 // GetArray returns []*Node, if current type is Array, else: WrongType error
 func (n *Node) GetArray() (value []*Node, err error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	if n._type != Array {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	iValue, err := n.getValue()
 	if err != nil {
@@ -480,7 +482,7 @@ func (n *Node) GetArray() (value []*Node, err error) {
 	}
 	value, ok := iValue.([]*Node)
 	if !ok {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	return value, nil
 }
@@ -488,10 +490,10 @@ func (n *Node) GetArray() (value []*Node, err error) {
 // GetObject returns map[string]*Node, if current type is Object, else: WrongType error
 func (n *Node) GetObject() (value map[string]*Node, err error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	if n._type != Object {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	iValue, err := n.getValue()
 	if err != nil {
@@ -499,7 +501,7 @@ func (n *Node) GetObject() (value map[string]*Node, err error) {
 	}
 	value, ok := iValue.(map[string]*Node)
 	if !ok {
-		return value, errorType()
+		return value, NewErrorType()
 	}
 	return value, nil
 }
@@ -561,7 +563,7 @@ func (n *Node) MustObject() (value map[string]*Node) {
 // Interface will produce current node to it's interface, recursively with all underlying nodes (in contrast to Node.Value).
 func (n *Node) Interface() (value interface{}, err error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	switch n._type {
 	case Null:
@@ -569,17 +571,17 @@ func (n *Node) Interface() (value interface{}, err error) {
 	case Numeric:
 		value, err = n.Value()
 		if _, ok := value.(float64); !ok {
-			return nil, errorType()
+			return nil, NewErrorType()
 		}
 	case String:
 		value, err = n.Value()
 		if _, ok := value.(string); !ok {
-			return nil, errorType()
+			return nil, NewErrorType()
 		}
 	case Bool:
 		value, err = n.Value()
 		if _, ok := value.(bool); !ok {
-			return nil, errorType()
+			return nil, NewErrorType()
 		}
 	case Array:
 		children := make([]interface{}, len(n.children))
@@ -607,17 +609,17 @@ func (n *Node) Interface() (value interface{}, err error) {
 // GetIndex will return child node of current array node. If current node is not Array, or index is unavailable, will return error
 func (n *Node) GetIndex(index int) (*Node, error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	if n._type != Array {
-		return nil, errorType()
+		return nil, NewErrorType()
 	}
 	if index < 0 {
 		index += len(n.children)
 	}
 	child, ok := n.children[strconv.Itoa(index)]
 	if !ok {
-		return nil, errorRequest("out of index %d", index)
+		return nil, NewErrorRequest("out of index %d", index)
 	}
 	return child, nil
 }
@@ -634,14 +636,14 @@ func (n *Node) MustIndex(index int) (value *Node) {
 // GetKey will return child node of current object node. If current node is not Object, or key is unavailable, will return error
 func (n *Node) GetKey(key string) (*Node, error) {
 	if n == nil {
-		return nil, errorUnparsed()
+		return nil, NewErrorUnparsed()
 	}
 	if n._type != Object {
-		return nil, errorType()
+		return nil, NewErrorType()
 	}
 	value, ok := n.children[key]
 	if !ok {
-		return nil, errorRequest("wrong key '%s'", key)
+		return nil, NewErrorRequest("wrong key '%s'", key)
 	}
 	return value, nil
 }
@@ -689,24 +691,24 @@ func (n *Node) Path() string {
 // Eq check if nodes value are the same
 func (n *Node) Eq(node *Node) (result bool, err error) {
 	if n == nil || node == nil {
-		return false, errorUnparsed()
+		return false, NewErrorUnparsed()
 	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Bool:
-			lnum, rnum, err := _bools(n, node)
+			lnum, rnum, err := CastBools(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum == rnum
 		case Numeric:
-			lnum, rnum, err := _floats(n, node)
+			lnum, rnum, err := CastFloats(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum == rnum
 		case String:
-			lnum, rnum, err := _strings(n, node)
+			lnum, rnum, err := CastStrings(n, node)
 			if err != nil {
 				return false, err
 			}
@@ -715,7 +717,7 @@ func (n *Node) Eq(node *Node) (result bool, err error) {
 			// Null type always is the same
 			result = true
 		case Array:
-			lnum, rnum, err := _arrays(n, node)
+			lnum, rnum, err := CastArrays(n, node)
 			if err != nil {
 				return false, err
 			}
@@ -732,7 +734,7 @@ func (n *Node) Eq(node *Node) (result bool, err error) {
 				}
 			}
 		case Object:
-			lnum, rnum, err := _objects(n, node)
+			lnum, rnum, err := CastObjects(n, node)
 			if err != nil {
 				return false, err
 			}
@@ -766,24 +768,24 @@ func (n *Node) Neq(node *Node) (result bool, err error) {
 // Le check if nodes value is lesser than given
 func (n *Node) Le(node *Node) (result bool, err error) {
 	if n == nil || node == nil {
-		return false, errorUnparsed()
+		return false, NewErrorUnparsed()
 	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
-			lnum, rnum, err := _floats(n, node)
+			lnum, rnum, err := CastFloats(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum < rnum
 		case String:
-			lnum, rnum, err := _strings(n, node)
+			lnum, rnum, err := CastStrings(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum < rnum
 		default:
-			return false, errorType()
+			return false, NewErrorType()
 		}
 	}
 	return
@@ -792,24 +794,24 @@ func (n *Node) Le(node *Node) (result bool, err error) {
 // Leq check if nodes value is lesser or equal than given
 func (n *Node) Leq(node *Node) (result bool, err error) {
 	if n == nil || node == nil {
-		return false, errorUnparsed()
+		return false, NewErrorUnparsed()
 	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
-			lnum, rnum, err := _floats(n, node)
+			lnum, rnum, err := CastFloats(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum <= rnum
 		case String:
-			lnum, rnum, err := _strings(n, node)
+			lnum, rnum, err := CastStrings(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum <= rnum
 		default:
-			return false, errorType()
+			return false, NewErrorType()
 		}
 	}
 	return
@@ -818,24 +820,24 @@ func (n *Node) Leq(node *Node) (result bool, err error) {
 // Ge check if nodes value is greater than given
 func (n *Node) Ge(node *Node) (result bool, err error) {
 	if n == nil || node == nil {
-		return false, errorUnparsed()
+		return false, NewErrorUnparsed()
 	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
-			lnum, rnum, err := _floats(n, node)
+			lnum, rnum, err := CastFloats(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum > rnum
 		case String:
-			lnum, rnum, err := _strings(n, node)
+			lnum, rnum, err := CastStrings(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum > rnum
 		default:
-			return false, errorType()
+			return false, NewErrorType()
 		}
 	}
 	return
@@ -844,24 +846,24 @@ func (n *Node) Ge(node *Node) (result bool, err error) {
 // Geq check if nodes value is greater or equal than given
 func (n *Node) Geq(node *Node) (result bool, err error) {
 	if n == nil || node == nil {
-		return false, errorUnparsed()
+		return false, NewErrorUnparsed()
 	}
 	if n.Type() == node.Type() {
 		switch n.Type() {
 		case Numeric:
-			lnum, rnum, err := _floats(n, node)
+			lnum, rnum, err := CastFloats(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum >= rnum
 		case String:
-			lnum, rnum, err := _strings(n, node)
+			lnum, rnum, err := CastStrings(n, node)
 			if err != nil {
 				return false, err
 			}
 			result = lnum >= rnum
 		default:
-			return false, errorType()
+			return false, NewErrorType()
 		}
 	}
 	return
@@ -877,14 +879,14 @@ func (n *Node) isContainer() bool {
 
 func (n *Node) getInteger() (int, error) {
 	if !n.IsNumeric() {
-		return 0, errorType()
+		return 0, NewErrorType()
 	}
 	float, err := n.GetNumeric()
 	if err != nil {
 		return 0, err
 	}
 	if math.Mod(float, 1.0) != 0 {
-		return 0, errorRequest("node is not INT")
+		return 0, NewErrorRequest("node is not INT")
 	}
 	return int(float), nil
 }
@@ -895,7 +897,7 @@ func (n *Node) getUInteger() (uint, error) {
 		return 0, err
 	}
 	if result < 0 {
-		return 0, errorRequest("node is not UINT")
+		return 0, NewErrorRequest("node is not UINT")
 	}
 	return uint(result), nil
 }

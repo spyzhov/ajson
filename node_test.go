@@ -1832,7 +1832,7 @@ func Test_newNode(t *testing.T) {
 	relFillKey := &fillKey
 	type args struct {
 		parent *Node
-		buf    *buffer
+		buf    *Buffer
 		_type  NodeType
 		key    **string
 	}
@@ -1846,7 +1846,7 @@ func Test_newNode(t *testing.T) {
 			name: "blank key for Object",
 			args: args{
 				parent: NewObject(make(map[string]*Node)),
-				buf:    newBuffer(make([]byte, 10)),
+				buf:    NewBuffer(make([]byte, 10)),
 				_type:  Bool,
 				key:    &nilKey,
 			},
@@ -1857,7 +1857,7 @@ func Test_newNode(t *testing.T) {
 			name: "child for non Object/Array",
 			args: args{
 				parent: NewBool(true),
-				buf:    newBuffer(make([]byte, 10)),
+				buf:    NewBuffer(make([]byte, 10)),
 				_type:  Bool,
 				key:    &relFillKey,
 			},

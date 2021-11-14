@@ -29,7 +29,7 @@ func TestError_Error(t *testing.T) {
 	}
 }
 
-func Test_unsupportedType(t *testing.T) {
+func Test_NewUnsupportedType(t *testing.T) {
 	f := 1.
 	type args struct {
 		value interface{}
@@ -77,8 +77,8 @@ func Test_unsupportedType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := unsupportedType(tt.args.value); err.Error() != tt.result {
-				t.Errorf("unsupportedType() error = %v, wantErr %v", err, tt.result)
+			if err := NewUnsupportedType(tt.args.value); err.Error() != tt.result {
+				t.Errorf("NewUnsupportedType() error = %v, wantErr %v", err, tt.result)
 			}
 		})
 	}

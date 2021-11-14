@@ -26,7 +26,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -34,7 +34,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",
@@ -112,7 +112,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -120,7 +120,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",
@@ -198,7 +198,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -206,7 +206,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",
@@ -284,7 +284,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -292,7 +292,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",
@@ -375,7 +375,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -383,7 +383,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",
@@ -461,7 +461,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "parsed Null",
-			node: Must(Unmarshal(_null)),
+			node: Must(Unmarshal(C_null)),
 		},
 		{
 			name: "Bool",
@@ -469,7 +469,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "parsed Bool",
-			node: Must(Unmarshal(_true)),
+			node: Must(Unmarshal(C_true)),
 		},
 		{
 			name: "String",

@@ -1,4 +1,4 @@
-package ajson
+package internal
 
 import (
 	"unicode"
@@ -33,9 +33,9 @@ func getu4(s []byte) rune {
 	return r
 }
 
-// unquote converts a quoted JSON string literal s into an actual string t.
+// Unquote converts a quoted JSON string literal s into an actual string t.
 // The rules are different than for Go, so cannot use strconv.Unquote.
-func unquote(s []byte, border byte) (t string, ok bool) {
+func Unquote(s []byte, border byte) (t string, ok bool) {
 	s, ok = unquoteBytes(s, border)
 	t = string(s)
 	return
