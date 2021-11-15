@@ -64,7 +64,7 @@ func TestBuffer_Token(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			buf := NewBuffer([]byte(test.value))
-			err := buf.token()
+			err := buf.Token()
 			if !test.fail && err != nil && err != io.EOF {
 				t.Errorf("Unexpected error: %s", err.Error())
 			} else if test.fail && (err == nil || err == io.EOF) {

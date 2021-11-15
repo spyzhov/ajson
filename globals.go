@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	// Priority is an operator precedence
+	// OperationsPriority is an operator precedence
 	// From https://golang.org/ref/spec#Operator_precedence
 	//
 	//	Precedence    Operator
@@ -41,7 +41,7 @@ var (
 	//	>=  larger or equals        any
 	//	=~  equals regex string     strings
 	//
-	Priority = map[string]uint8{
+	OperationsPriority = map[string]uint8{
 		"**": 6, // additional: power
 		"*":  5,
 		"/":  5,
@@ -64,7 +64,7 @@ var (
 		"&&": 2,
 		"||": 1,
 	}
-	PriorityChar = map[byte]bool{
+	OperationsChar = map[byte]bool{
 		'*': true,
 		'/': true,
 		'%': true,

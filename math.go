@@ -1,34 +1,74 @@
 package ajson
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 )
 
-// Function - internal left function of JSONPath
+var (
+	nameRegex     = regexp.MustCompile(`^[a-z_][a-z0-9_]+$`)
+	operRegex     = regexp.MustCompile("^[`~!@#%^&*+\\-/:?\\\\\\|<=>]+$")
+	operBlackList = map[string]bool{
+		`=`: true,
+		`+`: true,
+		`-`: true,
+		`/`: true,
+		`*`: true,
+	}
+)
+
+// Function - internal left function of JSONPath.
 type Function func(node *Node) (result *Node, err error)
 
-// Operation - internal script operation of JSONPath
+// Operation - internal script operation of JSONPath.
 type Operation func(left *Node, right *Node) (result *Node, err error)
 
-// AddFunction add a function for internal JSONPath script
-func AddFunction(alias string, function Function) {
-	Functions[strings.ToLower(alias)] = function
+// SetFunction add/replace a function into the internal JSONPath script.
+// Function name should match the regexp: `^[a-z_][a-z0-9_]+$`
+// If this function already exists, it will be replaced.
+func SetFunction(alias string, function Function) error {
+	alias = strings.ToLower(alias)
+	if !nameRegex.MatchString(alias) {
+		return fmt.Errorf("function name %q should match the regexp: %q", alias, nameRegex.String())
+	}
+	Functions[alias] = function
+	return nil
 }
 
-// AddOperation add an operation for internal JSONPath script
-func AddOperation(alias string, prior uint8, right bool, operation Operation) {
+// SetOperation add an operation for internal JSONPath script.
+// Operation name should match the regexp: `^[^\w\s'",.:;]+$`
+// If this operation already exists, it will be replaced.
+// It is forbidden to use/replace some operations as soon they are the reserved identifiers:
+//
+//   + - / * =
+func SetOperation(alias string, operation Operation, prior uint8, right bool) error {
 	alias = strings.ToLower(alias)
+	if operBlackList[alias] {
+		return fmt.Errorf("operation name %q is forbidden to use as soon it is one of the reserved identifiers", alias)
+	}
+	if !operRegex.MatchString(alias) {
+		return fmt.Errorf("operation name %q should match the regexp: %q", alias, operRegex.String())
+	}
 	Operations[alias] = operation
-	Priority[alias] = prior
-	PriorityChar[alias[0]] = true
+	OperationsPriority[alias] = prior
+	OperationsChar[alias[0]] = true
 	if right {
 		RightOp[alias] = true
 	}
+	return nil
 }
 
-// AddConstant add a constant for internal JSONPath script
-func AddConstant(alias string, value *Node) {
-	Constants[strings.ToLower(alias)] = value
+// SetConstant add a constant for internal JSONPath script.
+// Constant name should match the regexp: `^[a-z_][a-z0-9_]+$`
+// If this constant already exists, it will be replaced.
+func SetConstant(alias string, value *Node) error {
+	alias = strings.ToLower(alias)
+	if !nameRegex.MatchString(alias) {
+		return fmt.Errorf("constant name %q should match the regexp: %q", alias, nameRegex.String())
+	}
+	Constants[alias] = value
+	return nil
 }
 
 func numericFunction(name string, fn func(float float64) float64) Function {

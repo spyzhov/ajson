@@ -51,7 +51,7 @@
 //
 // Predefined constant
 //
-// Package has several predefined constants. You are free to add new one with AddConstant
+// Package has several predefined constants. You are free to add new one with SetConstant
 //
 //     e       math.E     float64
 //     pi      math.Pi    float64
@@ -112,7 +112,7 @@
 //
 // Supported functions
 //
-// Package has several predefined functions. You are free to add new one with AddFunction
+// Package has several predefined functions. You are free to add new one with SetFunction
 //
 //     abs          math.Abs          integers, floats
 //     acos         math.Acos         integers, floats

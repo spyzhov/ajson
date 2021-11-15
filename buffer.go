@@ -20,15 +20,24 @@ type Buffer struct {
 const __ = -1
 
 const (
+	// USpace is a code for symbol `Space` (taken from www.json.org)
+	USpace byte = '\u0020'
+	// UNewLine is a code for symbol `New Line` or `\n` (taken from www.json.org)
+	UNewLine byte = '\u000A'
+	// UCarriageReturn is a code for symbol `Carriage Return` or `\r` (taken from www.json.org)
+	UCarriageReturn byte = '\u000D'
+	// UTab is a code for symbol `Tab` or `\t` (taken from www.json.org)
+	UTab byte = '\u0009'
+
 	BQuotes       byte = '"'
 	BQuote        byte = '\''
 	BComa         byte = ','
 	BColon        byte = ':'
 	BBackslash    byte = '\\'
-	BSkipS        byte = ' '
-	BSkipN        byte = '\n'
-	BSkipR        byte = '\r'
-	BSkipT        byte = '\t'
+	BSkipS             = USpace
+	BSkipN             = UNewLine
+	BSkipR             = UCarriageReturn
+	BSkipT             = UTab
 	BBracketL     byte = '['
 	BBracketR     byte = ']'
 	BBracesL      byte = '{'
@@ -63,10 +72,13 @@ var (
 
 func NewBuffer(body []byte) *Buffer {
 	return &Buffer{
-		Length: len(body),
 		Bytes:  body,
-		Last:   internal.GO,
-		State:  internal.GO,
+		Length: len(body),
+		Index:  0,
+
+		Last:  internal.GO,
+		State: internal.GO,
+		Class: internal.C_SPACE,
 	}
 }
 
@@ -85,11 +97,18 @@ func (b *Buffer) Next() (c byte, err error) {
 	return b.Bytes[b.Index], nil
 }
 
+func (b *Buffer) Slice(length int) ([]byte, error) {
+	if b.Index+length >= b.Length {
+		return nil, io.EOF
+	}
+	return b.Bytes[b.Index : b.Index+length], nil
+}
+
 func (b *Buffer) Reset() {
 	b.Last = internal.GO
 }
 
-func (b *Buffer) First() (c byte, err error) {
+func (b *Buffer) FirstNonSpace() (c byte, err error) {
 	for ; b.Index < b.Length; b.Index++ {
 		c = b.Bytes[b.Index]
 		if !(c == BSkipS || c == BSkipR || c == BSkipN || c == BSkipT) {
@@ -242,8 +261,14 @@ func (b *Buffer) Step() error {
 	return io.EOF
 }
 
-// reads until the end of the token e.g.: `@.length`, `@['foo'].bar[(@.length - 1)].baz`
-func (b *Buffer) token() (err error) {
+func (b *Buffer) Back() {
+	if b.Index > 0 {
+		b.Index--
+	}
+}
+
+// Token reads until the end of the token e.g.: `@.length`, `@['foo'].bar[(@.length - 1)].baz`
+func (b *Buffer) Token() (err error) {
 	var (
 		c     byte
 		stack = make([]byte, 0)
@@ -297,7 +322,7 @@ tokenLoop:
 				return b.ErrorSymbol()
 			}
 			stack = stack[:len(stack)-1]
-		case c == BDot || c == BAt || c == BDollar || c == BQuestion || c == BAsterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard token name
+		case c == BDot || c == BAt || c == BDollar || c == BQuestion || c == BAsterisk || (c >= 'A' && c <= 'z') || (c >= '0' && c <= '9'): // standard Token name
 			find = true
 			continue
 		case len(stack) != 0:
@@ -332,6 +357,8 @@ tokenLoop:
 }
 
 // RPN is a builder for `Reverse Polish notation`
+// fixme: remove
+// Deprecated
 func (b *Buffer) RPN() (result RPN, err error) {
 	var (
 		c        byte
@@ -344,7 +371,7 @@ func (b *Buffer) RPN() (result RPN, err error) {
 	)
 	for {
 		b.Reset()
-		c, err = b.First()
+		c, err = b.FirstNonSpace()
 		if err != nil {
 			break
 		}
@@ -357,7 +384,7 @@ func (b *Buffer) RPN() (result RPN, err error) {
 				c, err = b.Next()
 				if err == nil {
 					temp = current + string(c)
-					if Priority[temp] != 0 {
+					if OperationsPriority[temp] != 0 {
 						current = temp
 					} else {
 						b.Index--
@@ -371,10 +398,10 @@ func (b *Buffer) RPN() (result RPN, err error) {
 					found = false
 					if temp[0] >= 'A' && temp[0] <= 'z' { // function
 						found = true
-					} else if Priority[temp] != 0 { // operation
-						if Priority[temp] > Priority[current] {
+					} else if OperationsPriority[temp] != 0 { // operation
+						if OperationsPriority[temp] > OperationsPriority[current] {
 							found = true
-						} else if Priority[temp] == Priority[current] && !RightOp[temp] {
+						} else if OperationsPriority[temp] == OperationsPriority[current] && !RightOp[temp] {
 							found = true
 						}
 					}
@@ -417,7 +444,7 @@ func (b *Buffer) RPN() (result RPN, err error) {
 		case c == BDollar || c == BAt: // variable : like @.length , $.expensive, etc.
 			variable = true
 			start = b.Index
-			err = b.token()
+			err = b.Token()
 			if err != nil {
 				if err != io.EOF {
 					return nil, err
@@ -490,7 +517,7 @@ func (b *Buffer) RPN() (result RPN, err error) {
 	for len(stack) > 0 {
 		temp = stack[len(stack)-1]
 		_, ok := Functions[temp]
-		if Priority[temp] == 0 && !ok { // operations only
+		if OperationsPriority[temp] == 0 && !ok { // operations only
 			return nil, NewErrorRequest("wrong formula, '%s' is not an operation or function", temp)
 		}
 		result = append(result, temp)
@@ -514,12 +541,12 @@ func (b *Buffer) GetTokens() (result Tokens, err error) {
 	)
 	for {
 		b.Reset()
-		c, err = b.First()
+		c, err = b.FirstNonSpace()
 		if err != nil {
 			break
 		}
 		switch true {
-		case PriorityChar[c]: // operations
+		case OperationsChar[c]: // operations
 			if variable || (c != BMinus && c != BPlus) {
 				variable = false
 				current = string(c)
@@ -527,7 +554,7 @@ func (b *Buffer) GetTokens() (result Tokens, err error) {
 				c, err = b.Next()
 				if err == nil {
 					temp = current + string(c)
-					if Priority[temp] != 0 {
+					if OperationsPriority[temp] != 0 {
 						current = temp
 					} else {
 						b.Index--
@@ -570,7 +597,7 @@ func (b *Buffer) GetTokens() (result Tokens, err error) {
 		case c == BDollar || c == BAt: // variable : like @.length , $.expensive, etc.
 			variable = true
 			start = b.Index
-			err = b.token()
+			err = b.Token()
 			if err != nil {
 				if err != io.EOF {
 					return nil, err

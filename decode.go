@@ -30,7 +30,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 		current *Node
 	)
 
-	_, err = buf.First()
+	_, err = buf.FirstNonSpace()
 	if err != nil {
 		return nil, buf.ErrorEOF()
 	}
@@ -164,7 +164,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 		if buf.Step() != nil {
 			break
 		}
-		if _, err = buf.First(); err != nil {
+		if _, err = buf.FirstNonSpace(); err != nil {
 			err = nil
 			break
 		}

@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func ExampleAddFunction() {
-	AddFunction("array_sum", func(node *Node) (result *Node, err error) {
+func ExampleSetFunction() {
+	_ = SetFunction("array_sum", func(node *Node) (result *Node, err error) {
 		if node.IsArray() {
 			var (
 				sum, num float64
@@ -34,7 +34,7 @@ func ExampleAddFunction() {
 	})
 }
 
-func ExampleAddFunction_usage() {
+func ExampleSetFunction_usage() {
 	json := []byte(`{"prices": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}`)
 	root, err := Unmarshal(json)
 	if err != nil {
@@ -49,11 +49,11 @@ func ExampleAddFunction_usage() {
 	// Avg price: 5.5
 }
 
-func ExampleAddConstant() {
-	AddConstant("SqrtPi", NewNumeric(math.SqrtPi))
+func ExampleSetConstant() {
+	_ = SetConstant("SqrtPi", NewNumeric(math.SqrtPi))
 }
 
-func ExampleAddConstant_using() {
+func ExampleSetConstant_using() {
 	json := []byte(`{"foo": [true, null, false, 1, "bar", true, 1e3], "bar": [true, "baz", false]}`)
 	result, err := JSONPath(json, `$..[?(@ == true)]`)
 	if err != nil {
@@ -64,7 +64,7 @@ func ExampleAddConstant_using() {
 	// Count of `true` values: 3
 }
 
-func ExampleAddConstant_eval() {
+func ExampleSetConstant_eval() {
 	json := []byte(`{"radius": 50, "position": [56.4772531, 84.9918139]}`)
 	root, err := Unmarshal(json)
 	if err != nil {
@@ -79,17 +79,17 @@ func ExampleAddConstant_eval() {
 	// Circumference: 314.159 m.
 }
 
-func ExampleAddOperation() {
-	AddOperation("<>", 3, false, func(left *Node, right *Node) (node *Node, err error) {
+func ExampleSetOperation() {
+	_ = SetOperation("<>", func(left *Node, right *Node) (node *Node, err error) {
 		res, err := left.Eq(right)
 		if err != nil {
 			return nil, err
 		}
 		return NewBool(!res), nil
-	})
+	}, 3, false)
 }
 
-func ExampleAddOperation_regex() {
+func ExampleSetOperation_regex() {
 	json := []byte(`[{"name":"Foo","mail":"foo@example.com"},{"name":"bar","mail":"bar@example.org"}]`)
 	result, err := JSONPath(json, `$.[?(@.mail =~ '.+@example\\.com')]`)
 	if err != nil {
@@ -239,21 +239,31 @@ func TestAddConstant(t *testing.T) {
 	name := "new_constant_name"
 	if _, ok := Constants[name]; ok {
 		t.Error("test constant already exists")
+		return
 	}
-	AddConstant(name, NewNumeric(3.14))
+	err := SetConstant(name, NewNumeric(3.14))
+	if err != nil {
+		t.Errorf("SetConstant() error: %s", err)
+		return
+	}
 	if _, ok := Constants[name]; !ok {
 		t.Error("test constant was not added")
 	}
 }
 
-func TestAddOperation(t *testing.T) {
-	name := "new_operation_name"
+func TestSetOperation(t *testing.T) {
+	name := "!!!!!!"
 	if _, ok := Operations[name]; ok {
 		t.Error("test operation already exists")
+		return
 	}
-	AddOperation(name, 1, true, func(left *Node, right *Node) (result *Node, err error) {
+	err := SetOperation(name, func(left *Node, right *Node) (result *Node, err error) {
 		return NewNumeric(1), nil
-	})
+	}, 1, true)
+	if err != nil {
+		t.Errorf("SetOperation() error: %s", err)
+		return
+	}
 	if _, ok := Operations[name]; !ok {
 		t.Error("test operation was not added")
 	}
@@ -263,10 +273,15 @@ func TestAddFunction(t *testing.T) {
 	name := "new_function_name"
 	if _, ok := Functions[name]; ok {
 		t.Error("test constant already exists")
+		return
 	}
-	AddFunction(name, func(node *Node) (result *Node, err error) {
+	err := SetFunction(name, func(node *Node) (result *Node, err error) {
 		return NewNumeric(2), nil
 	})
+	if err != nil {
+		t.Errorf("SetFunction() error: %s", err)
+		return
+	}
 	if _, ok := Functions[name]; !ok {
 		t.Error("test function was not added")
 	}
