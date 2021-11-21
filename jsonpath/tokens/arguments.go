@@ -28,15 +28,22 @@ func (t *Arguments) Type() string {
 
 func (t *Arguments) String() string {
 	if t == nil {
-		return "Arguments(<nil>)"
+		return "<nil>"
 	}
 	parts := make([]string, 0, len(t.Tokens))
 	for _, token := range t.Tokens {
 		parts = append(parts, token.String())
 	}
-	return fmt.Sprintf("Arguments(%s)", strings.Join(parts, ", "))
+	return strings.Join(parts, ", ")
 }
 
 func (t *Arguments) Token() string {
-	return t.String()
+	if t == nil {
+		return "Arguments(<nil>)"
+	}
+	parts := make([]string, 0, len(t.Tokens))
+	for _, token := range t.Tokens {
+		parts = append(parts, token.Token())
+	}
+	return fmt.Sprintf("Arguments(%s)", strings.Join(parts, ", "))
 }

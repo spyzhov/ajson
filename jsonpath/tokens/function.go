@@ -31,13 +31,16 @@ func (t *Function) Type() string {
 
 func (t *Function) String() string {
 	if t == nil {
-		return "Function(<nil>, <nil>)"
+		return "<nil>"
 	}
-	return fmt.Sprintf("Function(%s, %s)", t.Alias, t.Arguments.String())
+	return fmt.Sprintf("%s(%s)", t.Alias, t.Arguments.String())
 }
 
 func (t *Function) Token() string {
-	return t.String()
+	if t == nil {
+		return "Function(<nil>, <nil>)"
+	}
+	return fmt.Sprintf("Function(%s, %s)", t.Alias, t.Arguments.Token())
 }
 
 func (t *Function) Function() ajson.Function {

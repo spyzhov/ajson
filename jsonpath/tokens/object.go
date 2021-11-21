@@ -8,7 +8,7 @@ import (
 )
 
 type Object struct {
-	Tokens []Token
+	Tokens map[Token]Token
 }
 
 var _ Token = (*Object)(nil)
@@ -17,7 +17,7 @@ func NewObject(token string) (result *Object, err error) {
 	return newObject(internal.NewBuffer([]byte(token)))
 }
 
-func newObject(b *internal.Buffer) (result *Object, err error) {
+func newObject(_ *internal.Buffer) (result *Object, err error) {
 	// todo
 	panic("not implemented")
 }
@@ -28,15 +28,22 @@ func (t *Object) Type() string {
 
 func (t *Object) String() string {
 	if t == nil {
-		return "Object(<nil>)"
+		return "<nil>"
 	}
 	parts := make([]string, 0, len(t.Tokens))
-	for _, token := range t.Tokens {
-		parts = append(parts, token.String())
+	for key, value := range t.Tokens {
+		parts = append(parts, fmt.Sprintf(`%s: %s`, key.String(), value.String()))
 	}
-	return fmt.Sprintf("Object(%s)", strings.Join(parts, ", "))
+	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
 func (t *Object) Token() string {
-	return t.String()
+	if t == nil {
+		return "Object(<nil>)"
+	}
+	parts := make([]string, 0, len(t.Tokens))
+	for key, value := range t.Tokens {
+		parts = append(parts, fmt.Sprintf(`%s:%s`, key.Token(), value.Token()))
+	}
+	return fmt.Sprintf("Object(%s)", strings.Join(parts, ","))
 }

@@ -29,13 +29,16 @@ func (t *Operation) Type() string {
 
 func (t *Operation) String() string {
 	if t == nil {
-		return "Operation(<nil>)"
+		return "<nil>"
 	}
-	return fmt.Sprintf("Operation(%s)", t.Alias)
+	return t.Alias
 }
 
 func (t *Operation) Token() string {
-	return t.String()
+	if t == nil {
+		return "Operation(<nil>)"
+	}
+	return fmt.Sprintf("Operation(%s)", t.Alias)
 }
 
 func (t *Operation) Operation() ajson.Operation {

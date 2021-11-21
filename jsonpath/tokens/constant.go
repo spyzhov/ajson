@@ -29,11 +29,14 @@ func (t *Constant) Type() string {
 
 func (t *Constant) String() string {
 	if t == nil {
-		return "Constant(<nil>)"
+		return "<nil>"
 	}
-	return fmt.Sprintf("Constant(%s)", t.Alias)
+	return t.Alias
 }
 
 func (t *Constant) Token() string {
-	return t.String()
+	if t == nil {
+		return "Constant(<nil>)"
+	}
+	return fmt.Sprintf("Constant(%s)", t.Alias)
 }

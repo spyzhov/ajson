@@ -32,11 +32,14 @@ func (t parentheses) IsOpen() bool {
 
 func (t parentheses) String() string {
 	if t.IsOpen() {
-		return "parentheses(Open)"
+		return "("
 	}
-	return "parentheses(Close)"
+	return ")"
 }
 
 func (t parentheses) Token() string {
-	return t.String()
+	if t.IsOpen() {
+		return "parentheses(Open)"
+	}
+	return "parentheses(Close)"
 }

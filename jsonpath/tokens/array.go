@@ -28,15 +28,22 @@ func (t *Array) Type() string {
 
 func (t *Array) String() string {
 	if t == nil {
-		return "Array(<nil>)"
+		return "<nil>"
 	}
 	parts := make([]string, 0, len(t.Tokens))
 	for _, token := range t.Tokens {
 		parts = append(parts, token.String())
 	}
-	return fmt.Sprintf("Array(%s)", strings.Join(parts, ", "))
+	return fmt.Sprintf("[%s]", strings.Join(parts, ", "))
 }
 
 func (t *Array) Token() string {
-	return t.String()
+	if t == nil {
+		return "Array(<nil>)"
+	}
+	parts := make([]string, 0, len(t.Tokens))
+	for _, token := range t.Tokens {
+		parts = append(parts, token.Token())
+	}
+	return fmt.Sprintf("Array(%s)", strings.Join(parts, ", "))
 }

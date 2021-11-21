@@ -13,6 +13,9 @@ type String struct {
 var _ Token = (*String)(nil)
 
 func NewString(value []byte) (*String, error) {
+	if len(value) < 2 {
+		return nil, fmt.Errorf("value %q is too short to be a string", value)
+	}
 	str, ok := internal.Unquote(value, value[0])
 	if !ok {
 		return nil, fmt.Errorf("value %q can't be parsed as string", value)
@@ -37,11 +40,14 @@ func (t *String) Type() string {
 
 func (t *String) String() string {
 	if t == nil {
-		return "String(<nil>)"
+		return "<nil>"
 	}
-	return fmt.Sprintf("String(%q)", t.Value)
+	return fmt.Sprintf("%q", t.Value)
 }
 
 func (t *String) Token() string {
-	return t.String()
+	if t == nil {
+		return "String(<nil>)"
+	}
+	return fmt.Sprintf("String(%q)", t.Value)
 }

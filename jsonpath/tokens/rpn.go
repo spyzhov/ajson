@@ -15,10 +15,6 @@ type RPN struct {
 
 var _ Token = (*RPN)(nil)
 
-const (
-	rpnErrFmt = "RPN builder found an error starting from the %d next to %q: %w"
-)
-
 func NewRPN(token string) (result *RPN, err error) {
 	return newRPN(internal.NewBuffer([]byte(token)))
 }
@@ -46,6 +42,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 			isVariable = true
 			return nil
 		}
+		rpnErrFmt = fmt.Sprintf("RPN(starts from %d) found an error at %%d (%%q): %%w", entrance)
 	)
 	result = &RPN{Tokens: make([]Token, 0)}
 	for {
@@ -265,7 +262,19 @@ func (t *RPN) Type() string {
 	return "RPN"
 }
 
+// todo: display it as applied line # ((4 + 6) / sin(pi))
 func (t *RPN) String() string {
+	if t == nil {
+		return "<nil>"
+	}
+	parts := make([]string, 0, len(t.Tokens))
+	for _, token := range t.Tokens {
+		parts = append(parts, token.String())
+	}
+	return fmt.Sprintf("%s", strings.Join(parts, " "))
+}
+
+func (t *RPN) Token() string {
 	if t == nil {
 		return "RPN(<nil>)"
 	}
@@ -274,8 +283,4 @@ func (t *RPN) String() string {
 		parts = append(parts, token.String())
 	}
 	return fmt.Sprintf("RPN(%s)", strings.Join(parts, ", "))
-}
-
-func (t *RPN) Token() string {
-	return t.String()
 }

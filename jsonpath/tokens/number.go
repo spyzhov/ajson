@@ -44,11 +44,14 @@ func (t *Number) Type() string {
 
 func (t *Number) String() string {
 	if t == nil {
-		return "Number(<nil>)"
+		return "<nil>"
 	}
-	return fmt.Sprintf("Number(%s)", t.Alias)
+	return t.Alias
 }
 
 func (t *Number) Token() string {
-	return t.String()
+	if t == nil {
+		return "Number(<nil>)"
+	}
+	return fmt.Sprintf("Number(%s)", t.Alias)
 }
