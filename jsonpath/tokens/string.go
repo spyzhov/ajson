@@ -22,9 +22,26 @@ func NewString(value []byte) (*String, error) {
 	}, nil
 }
 
-func (o *String) String() string {
-	if o == nil {
-		return "<nil>"
+func newString(b *internal.Buffer) (*String, error) {
+	start := b.Index
+	err := b.AsString(b.Bytes[b.Index], true)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse string value: %w", err)
 	}
-	return fmt.Sprintf("%q", o.Value)
+	return NewString(b.Bytes[start : b.Index+1] /* with quotes */)
+}
+
+func (t *String) Type() string {
+	return "String"
+}
+
+func (t *String) String() string {
+	if t == nil {
+		return "String(<nil>)"
+	}
+	return fmt.Sprintf("String(%q)", t.Value)
+}
+
+func (t *String) Token() string {
+	return t.String()
 }

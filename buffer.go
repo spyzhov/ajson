@@ -7,6 +7,8 @@ import (
 	"github.com/spyzhov/ajson/v1/internal"
 )
 
+// Buffer
+// Deprecated
 type Buffer struct {
 	Bytes  []byte
 	Length int
@@ -70,6 +72,8 @@ var (
 	C_false = []byte("false")
 )
 
+// NewBuffer
+// Deprecated
 func NewBuffer(body []byte) *Buffer {
 	return &Buffer{
 		Bytes:  body,
@@ -104,6 +108,14 @@ func (b *Buffer) Slice(length int) ([]byte, error) {
 	return b.Bytes[b.Index : b.Index+length], nil
 }
 
+func (b *Buffer) Move(length int) error {
+	if b.Index+length >= b.Length {
+		return io.EOF
+	}
+	b.Index += length
+	return nil
+}
+
 func (b *Buffer) Reset() {
 	b.Last = internal.GO
 }
@@ -116,6 +128,17 @@ func (b *Buffer) FirstNonSpace() (c byte, err error) {
 		}
 	}
 	return 0, io.EOF
+}
+
+// Word method moves Index to the first symbol which does not match [a-zA-Z0-9_]
+func (b *Buffer) Word() {
+	var c byte
+	for ; b.Index < b.Length; b.Index++ {
+		c = b.Bytes[b.Index]
+		if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' {
+			break
+		}
+	}
 }
 
 func (b *Buffer) Backslash() (result bool) {
@@ -221,18 +244,18 @@ func (b *Buffer) AsString(search byte, token bool) error {
 }
 
 func (b *Buffer) AsNull() error {
-	return b.word(C_null)
+	return b.strict(C_null)
 }
 
 func (b *Buffer) AsTrue() error {
-	return b.word(C_true)
+	return b.strict(C_true)
 }
 
 func (b *Buffer) AsFalse() error {
-	return b.word(C_false)
+	return b.strict(C_false)
 }
 
-func (b *Buffer) word(word []byte) error {
+func (b *Buffer) strict(word []byte) error {
 	var c byte
 	max := len(word)
 	index := 0

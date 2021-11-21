@@ -23,30 +23,38 @@ func NewOperation(alias string) (*Operation, error) {
 	}, nil
 }
 
-func (o *Operation) String() string {
-	if o == nil {
-		return "<nil>"
-	}
-	return o.Alias
+func (t *Operation) Type() string {
+	return "Operation"
 }
 
-func (o *Operation) Operation() ajson.Operation {
-	if o == nil {
+func (t *Operation) String() string {
+	if t == nil {
+		return "Operation(<nil>)"
+	}
+	return fmt.Sprintf("Operation(%s)", t.Alias)
+}
+
+func (t *Operation) Token() string {
+	return t.String()
+}
+
+func (t *Operation) Operation() ajson.Operation {
+	if t == nil {
 		return nil
 	}
-	return ajson.Operations[o.Alias]
+	return ajson.Operations[t.Alias]
 }
 
-func (o *Operation) Priority() uint8 {
-	if o == nil {
+func (t *Operation) Priority() uint8 {
+	if t == nil {
 		return 0
 	}
-	return ajson.OperationsPriority[o.Alias]
+	return ajson.OperationsPriority[t.Alias]
 }
 
-func (o *Operation) IsRight() bool {
-	if o == nil {
+func (t *Operation) IsRight() bool {
+	if t == nil {
 		return false
 	}
-	return ajson.RightOp[o.Alias]
+	return ajson.RightOp[t.Alias]
 }

@@ -4,5 +4,6 @@ import "fmt"
 
 type Token interface {
 	fmt.Stringer
-	// Exec() error
+	Type() string
+	Token() string
 }
