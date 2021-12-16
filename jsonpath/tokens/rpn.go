@@ -6,17 +6,20 @@ import (
 
 	"github.com/spyzhov/ajson/v1"
 	"github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/jerrors"
 )
 
 // RPN is a `Reverse Polish notation`
 type RPN struct {
+	parent Token
 	Tokens []Token
 }
 
 var _ Token = (*RPN)(nil)
 
 func NewRPN(token string) (result *RPN, err error) {
-	return newRPN(internal.NewBuffer([]byte(token)))
+	panic("not implemented")
+	//return newRPN(internal.NewBuffer([]byte(token)))
 }
 
 // fixme: found the way how to stop when part of the other Buffer is given
@@ -71,7 +74,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 					}
 				}
 				if current == "" {
-					return nil, fmt.Errorf(rpnErrFmt, start, string(c), ErrUnknownToken)
+					return nil, fmt.Errorf(rpnErrFmt, start, string(c), jerrors.ErrUnknownToken)
 				}
 
 				// Create and validate a new operation instance.
@@ -98,7 +101,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 				break
 			}
 			if c != internal.BMinus && c != internal.BPlus {
-				return nil, fmt.Errorf(rpnErrFmt, start, string(c), ErrUnknownToken)
+				return nil, fmt.Errorf(rpnErrFmt, start, string(c), jerrors.ErrUnknownToken)
 			}
 			fallthrough // for numbers like `-1e6`, `+100500`
 		// numbers
@@ -141,7 +144,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 			result.Tokens = append(result.Tokens, cToken)
 		// ( : Parenthesis open
 		case c == internal.BParenthesesL:
-			var cToken parentheses
+			var cToken *parentheses
 			isVariable = false
 			cToken, err = newParentheses(c)
 			if err != nil {
@@ -159,7 +162,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 			for len(stack) > 0 {
 				cToken = pop()
 				switch token := cToken.(type) {
-				case parentheses:
+				case *parentheses:
 					if token.IsOpen() {
 						found = true
 						break stackCycle
@@ -199,6 +202,8 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 			}
 			result.Tokens = append(result.Tokens, cToken)
 		// function or constant
+		// todo: add an ability to use letters in operations (# `in`).
+		// todo: There could be intersections between operations and function or constant (# `x in [a,b,c]` and `in(1, [1,2,3])`)
 		default:
 			if err = foundVariable(); err != nil {
 				return nil, fmt.Errorf(rpnErrFmt, start, string(b.Bytes[start]), err)
@@ -206,7 +211,7 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 			start = b.Index
 			b.Word()
 			if start == b.Index {
-				return nil, fmt.Errorf(rpnErrFmt, start, string(c), ErrUnknownToken)
+				return nil, fmt.Errorf(rpnErrFmt, start, string(c), jerrors.ErrUnknownToken)
 			}
 			current = strings.ToLower(string(b.Bytes[start:b.Index]))
 			c, eof = b.FirstNonSpace()
@@ -247,12 +252,12 @@ func newRPN(b *internal.Buffer) (result *RPN, err error) {
 		case *Function: // fixme: validate this twice. check for constants and variables
 			result.Tokens = append(result.Tokens, cToken)
 		default:
-			return nil, fmt.Errorf(rpnErrFmt, entrance, string(b.Bytes[entrance:b.Index]), ErrIncorrectFormula)
+			return nil, fmt.Errorf(rpnErrFmt, entrance, string(b.Bytes[entrance:b.Index]), jerrors.ErrIncorrectFormula)
 		}
 	}
 
 	if len(result.Tokens) == 0 {
-		return nil, fmt.Errorf(rpnErrFmt, entrance, string(b.Bytes[entrance:b.Index]), ErrIncorrectFormula)
+		return nil, fmt.Errorf(rpnErrFmt, entrance, string(b.Bytes[entrance:b.Index]), jerrors.ErrIncorrectFormula)
 	}
 
 	return
@@ -283,4 +288,11 @@ func (t *RPN) Token() string {
 		parts = append(parts, token.String())
 	}
 	return fmt.Sprintf("RPN(%s)", strings.Join(parts, ", "))
+}
+
+func (t *RPN) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

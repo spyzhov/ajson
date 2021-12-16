@@ -10,9 +10,10 @@ import (
 
 // Number is a temporary token
 type Number struct {
-	Alias string
-	Value float64
-	IsInt bool
+	parent Token
+	Alias  string
+	Value  float64
+	IsInt  bool
 }
 
 var _ Token = (*Number)(nil)
@@ -54,4 +55,11 @@ func (t *Number) Token() string {
 		return "Number(<nil>)"
 	}
 	return fmt.Sprintf("Number(%s)", t.Alias)
+}
+
+func (t *Number) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

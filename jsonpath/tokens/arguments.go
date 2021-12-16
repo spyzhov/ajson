@@ -8,13 +8,14 @@ import (
 )
 
 type Arguments struct {
+	parent Token
 	Tokens []Token
 }
 
 var _ Token = (*Arguments)(nil)
 
 func NewArguments(token string) (result *Arguments, err error) {
-	return newArguments(internal.NewBuffer([]byte(token)))
+	panic("not implemented")
 }
 
 func newArguments(b *internal.Buffer) (result *Arguments, err error) {
@@ -46,4 +47,11 @@ func (t *Arguments) Token() string {
 		parts = append(parts, token.Token())
 	}
 	return fmt.Sprintf("Arguments(%s)", strings.Join(parts, ", "))
+}
+
+func (t *Arguments) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

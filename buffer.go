@@ -14,9 +14,9 @@ type Buffer struct {
 	Length int
 	Index  int
 
-	Last  internal.States
-	State internal.States
-	Class internal.Classes
+	Last  internal.State
+	State internal.State
+	Class internal.Class
 }
 
 const __ = -1
@@ -201,17 +201,17 @@ func (b *Buffer) AsNumeric(token bool) error {
 	return nil
 }
 
-func (b *Buffer) GetClasses(search byte) internal.Classes {
+func (b *Buffer) GetClasses(search byte) internal.Class {
 	if b.Bytes[b.Index] >= 128 {
 		return internal.C_ETC
 	}
-	if search == BQuote {
-		return internal.QuoteAsciiClasses[b.Bytes[b.Index]]
-	}
+	//if search == BQuote {
+	//	return internal.QuoteAsciiClasses[b.Bytes[b.Index]]
+	//}
 	return internal.AsciiClasses[b.Bytes[b.Index]]
 }
 
-func (b *Buffer) GetState() internal.States {
+func (b *Buffer) GetState() internal.State {
 	b.Last = b.State
 	b.Class = b.GetClasses(BQuotes)
 	if b.Class == __ {

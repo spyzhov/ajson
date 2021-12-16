@@ -1,11 +1,14 @@
 package tokens
 
-type RecursiveDescent struct{}
+type RecursiveDescent struct {
+	parent Token
+}
 
 var _ Path = (*RecursiveDescent)(nil)
 
 func NewRecursiveDescent() *RecursiveDescent {
-	return new(RecursiveDescent)
+	panic("not implemented")
+	return &RecursiveDescent{}
 }
 
 func (t *RecursiveDescent) Type() string {
@@ -25,4 +28,11 @@ func (t *RecursiveDescent) Token() string {
 
 func (t *RecursiveDescent) Path() string {
 	return ".."
+}
+
+func (t *RecursiveDescent) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

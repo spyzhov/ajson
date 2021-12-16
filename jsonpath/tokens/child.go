@@ -6,15 +6,16 @@ import (
 )
 
 type Child struct {
+	parent Token
 	Tokens []Token
 }
 
 var _ Token = (*Child)(nil)
 
-func NewChild(tokens []Token) (*Child, error) {
+func NewChild(tokens ...Token) *Child {
 	return &Child{
 		Tokens: tokens,
-	}, nil
+	}
 }
 
 func (t *Child) Type() string {
@@ -56,4 +57,11 @@ func (t *Child) Path() string {
 		}
 	}
 	return fmt.Sprintf("[%s]", strings.Join(parts, ","))
+}
+
+func (t *Child) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

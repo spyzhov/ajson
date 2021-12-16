@@ -4,22 +4,29 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/jerrors"
 )
 
 type Object struct {
-	Tokens map[Token]Token
+	parent Token
+	Tokens []*ObjectElement
 }
 
 var _ Token = (*Object)(nil)
 
-func NewObject(token string) (result *Object, err error) {
-	return newObject(internal.NewBuffer([]byte(token)))
+func NewObject(parent Token) (*Object, error) {
+	return &Object{
+		parent: parent,
+		Tokens: make([]*ObjectElement, 0),
+	}, nil
 }
 
-func newObject(_ *internal.Buffer) (result *Object, err error) {
-	// todo
-	panic("not implemented")
+func (t *Object) Append(token Token) error {
+	if element, ok := token.(*ObjectElement); ok {
+		t.Tokens = append(t.Tokens, element)
+		return nil
+	}
+	return fmt.Errorf("%w: for Object only ObjectElement is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
 }
 
 func (t *Object) Type() string {
@@ -31,8 +38,8 @@ func (t *Object) String() string {
 		return "<nil>"
 	}
 	parts := make([]string, 0, len(t.Tokens))
-	for key, value := range t.Tokens {
-		parts = append(parts, fmt.Sprintf(`%s: %s`, key.String(), value.String()))
+	for _, value := range t.Tokens {
+		parts = append(parts, value.String())
 	}
 	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
@@ -42,8 +49,15 @@ func (t *Object) Token() string {
 		return "Object(<nil>)"
 	}
 	parts := make([]string, 0, len(t.Tokens))
-	for key, value := range t.Tokens {
-		parts = append(parts, fmt.Sprintf(`%s:%s`, key.Token(), value.Token()))
+	for _, value := range t.Tokens {
+		parts = append(parts, value.Token())
 	}
 	return fmt.Sprintf("Object(%s)", strings.Join(parts, ","))
+}
+
+func (t *Object) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

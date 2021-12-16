@@ -7,12 +7,13 @@ import (
 )
 
 type String struct {
-	Value string
+	parent Token
+	Value  string
 }
 
 var _ Token = (*String)(nil)
 
-func NewString(value []byte) (*String, error) {
+func NewByteString(value []byte, parent Token) (*String, error) {
 	if len(value) < 2 {
 		return nil, fmt.Errorf("value %q is too short to be a string", value)
 	}
@@ -21,17 +22,16 @@ func NewString(value []byte) (*String, error) {
 		return nil, fmt.Errorf("value %q can't be parsed as string", value)
 	}
 	return &String{
-		Value: str,
+		parent: parent,
+		Value:  str,
 	}, nil
 }
 
-func newString(b *internal.Buffer) (*String, error) {
-	start := b.Index
-	err := b.AsString(b.Bytes[b.Index], true)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse string value: %w", err)
+func NewString(value string, parent Token) *String {
+	return &String{
+		parent: parent,
+		Value:  value,
 	}
-	return NewString(b.Bytes[start : b.Index+1] /* with quotes */)
 }
 
 func (t *String) Type() string {
@@ -50,4 +50,11 @@ func (t *String) Token() string {
 		return "String(<nil>)"
 	}
 	return fmt.Sprintf("String(%q)", t.Value)
+}
+
+func (t *String) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

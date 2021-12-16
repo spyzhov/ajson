@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 	"io"
+
+	"github.com/spyzhov/ajson/v1/jerrors"
 )
 
 const (
@@ -52,18 +54,34 @@ type Buffer struct {
 	Length int
 	Index  int
 
-	Last  States
-	State States
-	Class Classes
+	Last  State
+	State State
+	Class Class
+
+	StateTransitionTable SST
+}
+
+type SST interface {
+	GetState(state State, class Class) State
+	GetClass(index byte) Class
 }
 
 var (
 	C_null  = []byte("null")
 	C_true  = []byte("true")
 	C_false = []byte("false")
+
+	brackets = map[byte]byte{
+		BBracketL:     BBracketR,
+		BBracesL:      BBracesR,
+		BParenthesesL: BParenthesesR,
+	}
 )
 
-func NewBuffer(body []byte) *Buffer {
+func NewBuffer(body []byte, sst SST) *Buffer {
+	if sst == nil {
+		sst = StateTransitionTable
+	}
 	return &Buffer{
 		Bytes:  body,
 		Length: len(body),
@@ -130,6 +148,8 @@ func (b *Buffer) Word() {
 	}
 }
 
+// Backslash
+// todo: add a lot of tests
 func (b *Buffer) Backslash() (result bool) {
 	for i := b.Index - 1; i >= 0; i-- {
 		if b.Bytes[i] == BBackslash {
@@ -159,17 +179,48 @@ func (b *Buffer) SkipAny(s map[byte]bool) error {
 	return io.EOF
 }
 
+func (b *Buffer) SkipBrackets() error {
+	open := b.Bytes[b.Index]
+	closed := brackets[open]
+	if closed == 0 {
+		return b.ErrorSymbol()
+	}
+	panic("not implemented")
+	for ; b.Index < b.Length; b.Index++ {
+		// todo: b.AsString()
+	}
+	return io.EOF
+}
+
+func (b *Buffer) GetClass() Class {
+	return b.StateTransitionTable.GetClass(b.Bytes[b.Index])
+}
+
+func (b *Buffer) GetState() State {
+	return b.State
+}
+
+func (b *Buffer) GetNextState() State {
+	b.Last = b.State
+	b.Class = b.GetClass()
+	if b.Class == __ {
+		return __
+	}
+	b.State = b.StateTransitionTable.GetState(b.Last, b.Class)
+	return b.State
+}
+
 // AsNumeric if token is true - skip error from StateTransitionTable, just stop on unknown state
 func (b *Buffer) AsNumeric(token bool) error {
 	if token {
 		b.Last = GO
 	}
 	for ; b.Index < b.Length; b.Index++ {
-		b.Class = b.GetClasses(BQuotes)
+		b.Class = b.GetClass()
 		if b.Class == __ {
 			return b.ErrorSymbol()
 		}
-		b.State = StateTransitionTable[b.Last][b.Class]
+		b.State = b.StateTransitionTable.GetState(b.Last, b.Class)
 		if b.State == __ {
 			if token {
 				break
@@ -190,46 +241,33 @@ func (b *Buffer) AsNumeric(token bool) error {
 	return nil
 }
 
-func (b *Buffer) GetClasses(search byte) Classes {
-	if b.Bytes[b.Index] >= 128 {
-		return C_ETC
+func (b *Buffer) AsString(border byte) error {
+	if current, err := b.Current(); err != nil {
+		return b.ErrorEOF()
+	} else if current != border {
+		return b.ErrorSymbol()
 	}
-	if search == BQuote {
-		return QuoteAsciiClasses[b.Bytes[b.Index]]
-	}
-	return AsciiClasses[b.Bytes[b.Index]]
-}
-
-func (b *Buffer) GetState() States {
-	b.Last = b.State
-	b.Class = b.GetClasses(BQuotes)
-	if b.Class == __ {
-		return __
-	}
-	b.State = StateTransitionTable[b.Last][b.Class]
-	return b.State
-}
-
-func (b *Buffer) AsString(search byte, token bool) error {
-	if token {
-		b.Last = GO
-	}
+	start := b.Index
 	for ; b.Index < b.Length; b.Index++ {
-		b.Class = b.GetClasses(search)
-
+		b.Class = b.GetClass()
+		if b.Class == C_QUOTE {
+			if b.Bytes[b.Index] != border {
+				b.Class = b.StateTransitionTable.GetClass(-1) // C_ETC
+			}
+		}
 		if b.Class == __ {
 			return b.ErrorSymbol()
 		}
-		b.State = StateTransitionTable[b.Last][b.Class]
+		b.State = b.StateTransitionTable.GetState(b.Last, b.Class)
 		if b.State == __ {
 			return b.ErrorSymbol()
 		}
-		if b.State < __ {
+		if b.State < __ { // goto:action
 			return nil
 		}
 		b.Last = b.State
 	}
-	return b.ErrorSymbol()
+	return b.ErrorUnfinished(start)
 }
 
 func (b *Buffer) AsNull() error {
@@ -279,22 +317,34 @@ func (b *Buffer) Back() {
 	}
 }
 
-func (b *Buffer) StringFrom(start int) string {
+func (b *Buffer) BytesFrom(start, end int) []byte {
 	if start < 0 {
 		start = 0
+	} else if start > b.Length {
+		start = b.Length
 	}
-	end := b.Index
 	if end > b.Length {
 		end = b.Length
 	}
+	if start > end {
+		start = end
+	}
 
-	return string(b.Bytes[start:end])
+	return b.Bytes[start:end]
+}
+
+func (b *Buffer) StringFrom(start int) string {
+	return string(b.BytesFrom(start, b.Index))
 }
 
 func (b *Buffer) ErrorSymbol() error {
-	return fmt.Errorf("error at %d next to %q: %w", b.Index, b.Bytes[b.Index], ErrWrongSymbol)
+	return fmt.Errorf("%w at %d next to %q", jerrors.ErrWrongSymbol, b.Index, b.Bytes[b.Index])
 }
 
 func (b *Buffer) ErrorEOF() error {
-	return fmt.Errorf("error at %d: %w", b.Index, ErrUnexpectedEof)
+	return fmt.Errorf("%w at %d", jerrors.ErrUnexpectedEOF, b.Index)
+}
+
+func (b *Buffer) ErrorUnfinished(start int) error {
+	return fmt.Errorf("%w started from at %d", jerrors.ErrUnfinishedToken, start)
 }

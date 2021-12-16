@@ -8,13 +8,15 @@ import (
 )
 
 type Operation struct {
-	Alias string
+	parent Token
+	Alias  string
 }
 
 var _ Token = (*Operation)(nil)
 
 func NewOperation(alias string) (*Operation, error) {
 	alias = strings.ToLower(alias)
+	// fixme: m.b. remove this dependency
 	if _, ok := ajson.Operations[alias]; !ok {
 		return nil, fmt.Errorf("operation %q not found", alias)
 	}
@@ -60,4 +62,11 @@ func (t *Operation) IsRight() bool {
 		return false
 	}
 	return ajson.RightOp[t.Alias]
+}
+
+func (t *Operation) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

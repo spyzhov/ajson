@@ -5,14 +5,16 @@ import (
 )
 
 type Filter struct {
+	parent Token
 	*RPN
 }
 
 var _ Token = (*Filter)(nil)
 
-func NewFilter(rpn *RPN) (*Filter, error) {
+func NewFilter(rpn *RPN, parent Token) (*Filter, error) {
 	return &Filter{
-		RPN: rpn,
+		parent: parent,
+		RPN:    rpn,
 	}, nil
 }
 
@@ -39,4 +41,11 @@ func (t *Filter) Path() string {
 		return "?(<nil>)"
 	}
 	return fmt.Sprintf("?(%s)", t.RPN.String())
+}
+
+func (t *Filter) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

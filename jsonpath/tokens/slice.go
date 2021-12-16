@@ -6,32 +6,34 @@ import (
 )
 
 type Slice struct {
-	Start Token
-	Stop  Token
-	Step  Token
+	parent Token
+	Start  Token
+	Stop   Token
+	Step   Token
 }
 
 var _ Path = (*Slice)(nil)
 
 func NewSlice(start, stop, step Token) (*Slice, error) {
-	for key, token := range map[string]Token{"start": start, "stop": stop, "step": step} {
-		if token == nil {
-			continue
-		}
-		switch token.(type) {
-		case *Number:
-		case *Script:
-			break
-		default:
-			return nil, fmt.Errorf("slice argument %q has wrong type: %s", key, token.Type())
-		}
-	}
-
-	return &Slice{
-		Start: start,
-		Stop:  stop,
-		Step:  step,
-	}, nil
+	panic("not implemented")
+	//for key, token := range map[string]Token{"start": start, "stop": stop, "step": step} {
+	//	if token == nil {
+	//		continue
+	//	}
+	//	switch token.(type) {
+	//	case *Number:
+	//	case *Script:
+	//		break
+	//	default:
+	//		return nil, fmt.Errorf("slice argument %q has wrong type: %s", key, token.Type())
+	//	}
+	//}
+	//
+	//return &Slice{
+	//	Start: start,
+	//	Stop:  stop,
+	//	Step:  step,
+	//}, nil
 }
 
 func (t *Slice) Type() string {
@@ -84,4 +86,11 @@ func (t *Slice) Path() string {
 	}
 
 	return fmt.Sprintf("[%s]", strings.Join(parts, ":"))
+}
+
+func (t *Slice) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

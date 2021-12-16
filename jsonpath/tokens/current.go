@@ -1,11 +1,14 @@
 package tokens
 
-type Current struct{}
+type Current struct {
+	parent Token
+}
 
 var _ Path = (*Current)(nil)
 
 func NewCurrent() *Current {
-	return new(Current)
+	panic("not implemented")
+	//return new(Current)
 }
 
 func (t *Current) Type() string {
@@ -28,4 +31,11 @@ func (t *Current) Token() string {
 
 func (t *Current) Path() string {
 	return "@"
+}
+
+func (t *Current) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

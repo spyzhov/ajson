@@ -2,23 +2,25 @@ package tokens
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/jerrors"
 )
 
 type JSONPath struct {
+	parent Token
 	Tokens []Path
 }
 
 var _ Token = (*JSONPath)(nil)
 
 func NewJSONPath(token string) (result *JSONPath, err error) {
-	return newJSONPath(internal.NewBuffer([]byte(token)))
+	panic("not implemented")
+	//return newJSONPath(internal.NewBuffer([]byte(token)))
 }
 
-// todo
+// fixme: found the way how to stop when part of the other Buffer is given
 func newJSONPath(b *internal.Buffer) (result *JSONPath, err error) {
 	result = &JSONPath{Tokens: make([]Path, 0)}
 	const (
@@ -26,13 +28,13 @@ func newJSONPath(b *internal.Buffer) (result *JSONPath, err error) {
 		fQuotes = 1 << 1
 	)
 	var (
-		c              byte
-		eof            error
-		start, stop    int
-		entrance       = b.Index
-		childEnd       = map[byte]bool{internal.BDot: true, internal.BBracketL: true}
-		flag           int
-		brackets       int
+		c           byte
+		eof         error
+		start, stop int
+		entrance    = b.Index
+		childEnd    = map[byte]bool{internal.BDot: true, internal.BBracketL: true}
+		//flag           int
+		//brackets       int
 		jsonpathErrFmt = fmt.Sprintf("JSONPath(starts from %d) found an error at %%d (%%q): %%w", entrance)
 	)
 bufferLoop:
@@ -40,25 +42,25 @@ bufferLoop:
 		if c, eof = b.Current(); eof != nil {
 			break
 		}
-	parseSwitch:
+		//parseSwitch:
 		switch true {
 		// $ : get root
 		case c == internal.BDollar:
 			if len(result.Tokens) != 0 {
-				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), ErrIncorrectJSONPath)
+				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), jerrors.ErrIncorrectJSONPath)
 			}
-			result.Tokens = append(result.Tokens, NewRoot())
+			result.append(NewRoot())
 		// @ : get current; works only inside filters
 		case c == internal.BAt:
 			if len(result.Tokens) != 0 {
-				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), ErrIncorrectJSONPath)
+				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), jerrors.ErrIncorrectJSONPath)
 			}
-			result.Tokens = append(result.Tokens, NewCurrent())
-		// .  : get child
+			result.append(NewCurrent())
+		// .  : get child with raw string key
 		// .. : get all children
 		case c == internal.BDot:
 			if len(result.Tokens) == 0 {
-				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), ErrIncorrectJSONPath)
+				return nil, fmt.Errorf(jsonpathErrFmt, b.Index, string(c), jerrors.ErrIncorrectJSONPath)
 			}
 			start = b.Index
 			if c, eof = b.Next(); eof != nil {
@@ -66,66 +68,63 @@ bufferLoop:
 				break bufferLoop
 			}
 			if c == internal.BDot {
-				result.Tokens = append(result.Tokens, NewRecursiveDescent())
+				result.append(NewRecursiveDescent())
 				b.Index--
 				break
 			}
-			// todo: tbd
-			err = b.SkipAny(childEnd)
-			stop = b.Index
-			if err == io.EOF {
-				err = nil
+			if eof = b.SkipAny(childEnd); eof != nil { // fixme: here could be space in the string `$.foo.bar baz.biz`
 				stop = b.Length
 			} else {
+				stop = b.Index
 				b.Index--
 			}
-			if err != nil {
-				break
-			}
 			if start+1 < stop {
-				result = append(result, string(b.Bytes[start+1:stop]))
+				result.append(NewChild(NewRawString(string(b.Bytes[start+1 : stop]))))
 			}
+		// [ : get child ...
+		// todo
 		case c == internal.BBracketL:
-			_, err = b.Next()
-			if err != nil {
-				return nil, b.ErrorEOF()
-			}
-			brackets = 1
-			start = b.Index
-			for ; b.Index < b.Length; b.Index++ {
-				c = b.Bytes[b.Index]
-				switch c {
-				case internal.BQuote:
-					if flag&fQuotes == 0 {
-						if flag&fQuote == 0 {
-							flag |= fQuote
-						} else if !b.Backslash() {
-							flag ^= fQuote
-						}
-					}
-				case internal.BQuotes:
-					if flag&fQuote == 0 {
-						if flag&fQuotes == 0 {
-							flag |= fQuotes
-						} else if !b.Backslash() {
-							flag ^= fQuotes
-						}
-					}
-				case internal.BBracketL:
-					if flag == 0 && !b.Backslash() {
-						brackets++
-					}
-				case internal.BBracketR:
-					if flag == 0 && !b.Backslash() {
-						brackets--
-					}
-					if brackets == 0 {
-						result = append(result, string(b.Bytes[start:b.Index]))
-						break parseSwitch
-					}
-				}
-			}
-			return nil, b.ErrorEOF()
+			panic("not implemented")
+			//_, err = b.Next()
+			//if err != nil {
+			//	return nil, b.ErrorEOF()
+			//}
+			//brackets = 1
+			//start = b.Index
+			//for ; b.Index < b.Length; b.Index++ {
+			//	c = b.Bytes[b.Index]
+			//	switch c {
+			//	case internal.BQuote:
+			//		if flag&fQuotes == 0 {
+			//			if flag&fQuote == 0 {
+			//				flag |= fQuote
+			//			} else if !b.Backslash() {
+			//				flag ^= fQuote
+			//			}
+			//		}
+			//	case internal.BQuotes:
+			//		if flag&fQuote == 0 {
+			//			if flag&fQuotes == 0 {
+			//				flag |= fQuotes
+			//			} else if !b.Backslash() {
+			//				flag ^= fQuotes
+			//			}
+			//		}
+			//	case internal.BBracketL:
+			//		if flag == 0 && !b.Backslash() {
+			//			brackets++
+			//		}
+			//	case internal.BBracketR:
+			//		if flag == 0 && !b.Backslash() {
+			//			brackets--
+			//		}
+			//		if brackets == 0 {
+			//			result = append(result, string(b.Bytes[start:b.Index]))
+			//			break parseSwitch
+			//		}
+			//	}
+			//}
+			//return nil, b.ErrorEOF()
 		default:
 			return nil, b.ErrorSymbol()
 		}
@@ -171,4 +170,15 @@ func (t *JSONPath) Path() string {
 		parts = append(parts, token.Path())
 	}
 	return strings.Join(parts, "")
+}
+
+func (t *JSONPath) append(path Path) {
+	t.Tokens = append(t.Tokens, path)
+}
+
+func (t *JSONPath) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

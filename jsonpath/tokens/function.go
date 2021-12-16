@@ -8,6 +8,7 @@ import (
 )
 
 type Function struct {
+	parent    Token
 	Alias     string
 	Arguments *Arguments
 }
@@ -48,4 +49,11 @@ func (t *Function) Function() ajson.Function {
 		return nil
 	}
 	return ajson.Functions[t.Alias]
+}
+
+func (t *Function) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

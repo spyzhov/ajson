@@ -1,7 +1,7 @@
 package ajson
 
 import (
-	. "github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/internal"
 )
 
 /*
@@ -9,14 +9,14 @@ import (
 	Copy from `internal/state.go:144`
 */
 const (
-	cl States = -2 /* colon           */
-	cm States = -3 /* comma           */
-	//qt States = -4 /* quote           */
-	bo States = -5 /* bracket open    */
-	co States = -6 /* curly br. open  */
-	bc States = -7 /* bracket close   */
-	cc States = -8 /* curly br. close */
-	ec States = -9 /* curly br. empty */
+	cl internal.State = -2 /* colon           */
+	cm internal.State = -3 /* comma           */
+	//qt internal.State = -4 /* quote           */
+	bo internal.State = -5 /* bracket open    */
+	co internal.State = -6 /* curly br. open  */
+	bc internal.State = -7 /* bracket close   */
+	cc internal.State = -8 /* curly br. close */
+	ec internal.State = -9 /* curly br. empty */
 )
 
 // Unmarshal parses the JSON-encoded data and return the root node of struct.
@@ -25,7 +25,7 @@ const (
 func Unmarshal(data []byte) (root *Node, err error) {
 	buf := NewBuffer(data)
 	var (
-		state   States
+		state   internal.State
 		key     *string
 		current *Node
 	)
@@ -41,14 +41,14 @@ func Unmarshal(data []byte) (root *Node, err error) {
 			return nil, buf.ErrorSymbol()
 		}
 
-		if state >= GO {
+		if state >= internal.GO {
 			// region Change State
 			switch buf.State {
-			case ST:
+			case internal.ST:
 				if current != nil && current.IsObject() && key == nil {
 					// Detected: Key
 					key, err = getString(buf)
-					buf.State = CO
+					buf.State = internal.CO
 				} else {
 					// Detected: String
 					current, err = newNode(current, buf, String, &key)
@@ -57,12 +57,12 @@ func Unmarshal(data []byte) (root *Node, err error) {
 					}
 					err = buf.AsString(BQuotes, false)
 					current.borders[1] = buf.Index + 1
-					buf.State = OK
+					buf.State = internal.OK
 					if current.parent != nil {
 						current = current.parent
 					}
 				}
-			case MI, ZE, IN:
+			case internal.MI, internal.ZE, internal.IN:
 				current, err = newNode(current, buf, Numeric, &key)
 				if err != nil {
 					break
@@ -70,33 +70,33 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				err = buf.AsNumeric(false)
 				current.borders[1] = buf.Index
 				buf.Index -= 1
-				buf.State = OK
+				buf.State = internal.OK
 				if current.parent != nil {
 					current = current.parent
 				}
-			case T1, F1:
+			case internal.T1, internal.F1:
 				current, err = newNode(current, buf, Bool, &key)
 				if err != nil {
 					break
 				}
-				if buf.State == T1 {
+				if buf.State == internal.T1 {
 					err = buf.AsTrue()
 				} else {
 					err = buf.AsFalse()
 				}
 				current.borders[1] = buf.Index + 1
-				buf.State = OK
+				buf.State = internal.OK
 				if current.parent != nil {
 					current = current.parent
 				}
-			case N1:
+			case internal.N1:
 				current, err = newNode(current, buf, Null, &key)
 				if err != nil {
 					break
 				}
 				err = buf.AsNull()
 				current.borders[1] = buf.Index + 1
-				buf.State = OK
+				buf.State = internal.OK
 				if current.parent != nil {
 					current = current.parent
 				}
@@ -119,7 +119,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				} else {
 					err = buf.ErrorSymbol()
 				}
-				buf.State = OK
+				buf.State = internal.OK
 			case bc: /* ] */
 				if current != nil && current.IsArray() && !current.ready() {
 					current.borders[1] = buf.Index + 1
@@ -129,21 +129,21 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				} else {
 					err = buf.ErrorSymbol()
 				}
-				buf.State = OK
+				buf.State = internal.OK
 			case co: /* { */
 				current, err = newNode(current, buf, Object, &key)
-				buf.State = OB
+				buf.State = internal.OB
 			case bo: /* [ */
 				current, err = newNode(current, buf, Array, &key)
-				buf.State = AR
+				buf.State = internal.AR
 			case cm: /* , */
 				if current == nil {
 					return nil, buf.ErrorSymbol()
 				}
 				if current.IsObject() {
-					buf.State = KE
+					buf.State = internal.KE
 				} else if current.IsArray() {
-					buf.State = VA
+					buf.State = internal.VA
 				} else {
 					err = buf.ErrorSymbol()
 				}
@@ -151,7 +151,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 				if current == nil || !current.IsObject() || key == nil {
 					err = buf.ErrorSymbol()
 				} else {
-					buf.State = VA
+					buf.State = internal.VA
 				}
 			default: /* syntax error */
 				err = buf.ErrorSymbol()
@@ -170,7 +170,7 @@ func Unmarshal(data []byte) (root *Node, err error) {
 		}
 	}
 
-	if current == nil || buf.State != OK {
+	if current == nil || buf.State != internal.OK {
 		err = buf.ErrorEOF()
 	} else {
 		root = current.root()
@@ -204,9 +204,9 @@ func getString(b *Buffer) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	value, ok := Unquote(b.Bytes[start:b.Index+1], BQuotes)
+	value, ok := internal.Unquote(b.Bytes[start:b.Index+1], BQuotes)
 	if !ok {
-		return nil, NewErrorSymbol(b)
+		return nil, b.ErrorSymbol()
 	}
 	return &value, nil
 }

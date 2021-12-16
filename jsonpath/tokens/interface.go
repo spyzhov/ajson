@@ -7,6 +7,7 @@ type Token interface {
 	fmt.Stringer
 	Type() string
 	Token() string
+	Parent() Token
 }
 
 // Path fixme

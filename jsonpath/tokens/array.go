@@ -8,13 +8,15 @@ import (
 )
 
 type Array struct {
+	parent Token
 	Tokens []Token
 }
 
 var _ Token = (*Array)(nil)
 
 func NewArray(token string) (result *Array, err error) {
-	return newArray(internal.NewBuffer([]byte(token)))
+	panic("not implemented")
+	//return newArray(internal.NewBuffer([]byte(token)))
 }
 
 func newArray(b *internal.Buffer) (result *Array, err error) {
@@ -46,4 +48,11 @@ func (t *Array) Token() string {
 		parts = append(parts, token.Token())
 	}
 	return fmt.Sprintf("Array(%s)", strings.Join(parts, ", "))
+}
+
+func (t *Array) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }

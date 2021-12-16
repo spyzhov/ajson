@@ -8,13 +8,15 @@ import (
 )
 
 type Constant struct {
-	Alias string
+	parent Token
+	Alias  string
 }
 
 var _ Token = (*Constant)(nil)
 
 func NewConstant(alias string) (*Constant, error) {
 	alias = strings.ToLower(alias)
+	// fixme: m.b. remove this dependency?
 	if _, ok := ajson.Constants[alias]; !ok {
 		return nil, fmt.Errorf("constant %q not found", alias)
 	}
@@ -39,4 +41,11 @@ func (t *Constant) Token() string {
 		return "Constant(<nil>)"
 	}
 	return fmt.Sprintf("Constant(%s)", t.Alias)
+}
+
+func (t *Constant) Parent() Token {
+	if t == nil {
+		return nil
+	}
+	return t.parent
 }
