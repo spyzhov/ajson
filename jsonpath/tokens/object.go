@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/spyzhov/ajson/v1/jerrors"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Object struct {
@@ -21,12 +22,10 @@ func NewObject(parent Token) (*Object, error) {
 	}, nil
 }
 
-func (t *Object) Append(token Token) error {
-	if element, ok := token.(*ObjectElement); ok {
-		t.Tokens = append(t.Tokens, element)
-		return nil
-	}
-	return fmt.Errorf("%w: for Object only ObjectElement is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+func (t *Object) NewObjectElement() *ObjectElement {
+	element := &ObjectElement{parent: t}
+	t.Tokens = append(t.Tokens, element)
+	return element
 }
 
 func (t *Object) Type() string {
@@ -60,4 +59,24 @@ func (t *Object) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Object) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Object) Append(token Token) error {
+	if element, ok := token.(*ObjectElement); ok {
+		token.SetParent(t)
+		t.Tokens = append(t.Tokens, element)
+		return nil
+	}
+	return fmt.Errorf("%w: for Object only ObjectElement is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *Object) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

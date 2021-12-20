@@ -70,3 +70,10 @@ func (t *Operation) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *Operation) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

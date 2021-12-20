@@ -2,19 +2,22 @@ package tokens
 
 import (
 	"fmt"
-	"strings"
+
+	"github.com/spyzhov/ajson/v1/jerrors"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Child struct {
-	parent Token
-	Tokens []Token
+	parent   Token
+	Selector Token
 }
 
 var _ Token = (*Child)(nil)
 
-func NewChild(tokens ...Token) *Child {
+func NewChild(token Token, parent Token) *Child {
 	return &Child{
-		Tokens: tokens,
+		parent:   parent,
+		Selector: token,
 	}
 }
 
@@ -26,37 +29,24 @@ func (t *Child) String() string {
 	if t == nil {
 		return "<nil>"
 	}
-	parts := make([]string, 0, len(t.Tokens))
-	for _, filter := range t.Tokens {
-		parts = append(parts, filter.String())
-	}
-	return fmt.Sprintf("[%s]", strings.Join(parts, ","))
+	return fmt.Sprintf("[%s]", t.Selector.String())
 }
 
 func (t *Child) Token() string {
 	if t == nil {
 		return "Child(<nil>)"
 	}
-	parts := make([]string, 0, len(t.Tokens))
-	for _, token := range t.Tokens {
-		parts = append(parts, token.Token())
-	}
-	return fmt.Sprintf("Child(%s)", strings.Join(parts, ","))
+	return fmt.Sprintf("Child(%s)", t.Selector.Token())
 }
 
 func (t *Child) Path() string {
 	if t == nil {
 		return "[<nil>]"
 	}
-	parts := make([]string, 0, len(t.Tokens))
-	for _, token := range t.Tokens {
-		if path, ok := token.(Path); ok {
-			parts = append(parts, path.Path())
-		} else {
-			parts = append(parts, token.String())
-		}
+	if path, ok := t.Selector.(Path); ok {
+		return fmt.Sprintf("[%s]", path.Path())
 	}
-	return fmt.Sprintf("[%s]", strings.Join(parts, ","))
+	return fmt.Sprintf("[%s]", t.Selector.String())
 }
 
 func (t *Child) Parent() Token {
@@ -64,4 +54,24 @@ func (t *Child) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Child) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Child) Append(token Token) error {
+	if t.Selector != nil {
+		return fmt.Errorf("%w: child selection already filled with %q, new element %q given", jerrors.ErrIncorrectJSONPath, t.Selector.Token(), token.Token())
+	}
+	t.Selector = token
+	token.SetParent(t)
+	return nil
+}
+
+func (t *Child) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

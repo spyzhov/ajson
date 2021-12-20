@@ -58,3 +58,10 @@ func (t *String) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *String) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

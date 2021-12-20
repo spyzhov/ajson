@@ -94,3 +94,10 @@ func (t *Slice) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *Slice) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

@@ -57,3 +57,10 @@ func (t *parentheses) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *parentheses) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

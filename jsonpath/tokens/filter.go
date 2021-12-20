@@ -2,11 +2,14 @@ package tokens
 
 import (
 	"fmt"
+
+	"github.com/spyzhov/ajson/v1/jerrors"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Filter struct {
 	parent Token
-	*RPN
+	RPN    *RPN
 }
 
 var _ Token = (*Filter)(nil)
@@ -48,4 +51,24 @@ func (t *Filter) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Filter) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Filter) Append(token Token) error {
+	if rpn, ok := token.(*RPN); ok {
+		token.SetParent(t)
+		t.RPN = rpn
+		return nil
+	}
+	return fmt.Errorf("%w: for Filter only RPN is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *Filter) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

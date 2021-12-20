@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math"
 	"strconv"
-
-	"github.com/spyzhov/ajson/v1/internal"
 )
 
 // Number is a temporary token
@@ -28,15 +26,6 @@ func NewNumber(value string) (*Number, error) {
 		Value: float,
 		IsInt: math.Mod(float, 1) == 0,
 	}, nil
-}
-
-func newNumber(b *internal.Buffer, token bool) (*Number, error) {
-	start := b.Index
-	err := b.AsNumeric(token)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse numeric value: %w", err)
-	}
-	return NewNumber(string(b.Bytes[start:b.Index]))
 }
 
 func (t *Number) Type() string {
@@ -62,4 +51,11 @@ func (t *Number) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Number) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
 }

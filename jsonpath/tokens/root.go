@@ -39,3 +39,10 @@ func (t *Root) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *Root) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

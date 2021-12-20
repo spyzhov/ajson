@@ -36,3 +36,10 @@ func (t *RecursiveDescent) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *RecursiveDescent) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

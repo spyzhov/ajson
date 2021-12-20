@@ -182,3 +182,23 @@ func (t *JSONPath) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *JSONPath) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *JSONPath) Append(token Token) error {
+	if path, ok := token.(Path); ok {
+		token.SetParent(t)
+		t.Tokens = append(t.Tokens, path)
+		return nil
+	}
+	return fmt.Errorf("%w: for JSONPath only Path is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *JSONPath) GetState(_ internal.State) internal.State {
+	return -1 // fixme
+}

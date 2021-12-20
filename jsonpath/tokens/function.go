@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/spyzhov/ajson/v1"
+	"github.com/spyzhov/ajson/v1/jerrors"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Function struct {
@@ -56,4 +58,24 @@ func (t *Function) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Function) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Function) Append(token Token) error {
+	if arguments, ok := token.(*Arguments); ok {
+		token.SetParent(t)
+		t.Arguments = arguments
+		return nil
+	}
+	return fmt.Errorf("%w: for Function only Arguments is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *Function) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

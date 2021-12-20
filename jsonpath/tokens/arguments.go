@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Arguments struct {
@@ -15,11 +15,6 @@ type Arguments struct {
 var _ Token = (*Arguments)(nil)
 
 func NewArguments(token string) (result *Arguments, err error) {
-	panic("not implemented")
-}
-
-func newArguments(b *internal.Buffer) (result *Arguments, err error) {
-	// todo
 	panic("not implemented")
 }
 
@@ -54,4 +49,21 @@ func (t *Arguments) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Arguments) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Arguments) Append(token Token) error {
+	t.Tokens = append(t.Tokens, token)
+	token.SetParent(t)
+	return nil
+}
+
+func (t *Arguments) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

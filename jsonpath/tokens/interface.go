@@ -1,6 +1,10 @@
 package tokens
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
+)
 
 // Token fixme
 type Token interface {
@@ -8,6 +12,7 @@ type Token interface {
 	Type() string
 	Token() string
 	Parent() Token
+	SetParent(token Token)
 }
 
 // Path fixme
@@ -15,4 +20,11 @@ type Token interface {
 type Path interface {
 	Token
 	Path() string
+}
+
+// Container fixme
+type Container interface {
+	Token
+	Append(Token) error
+	GetState(internal.State) internal.State
 }

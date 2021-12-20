@@ -49,3 +49,10 @@ func (t *Constant) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *Constant) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

@@ -39,3 +39,10 @@ func (t *Wildcard) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *Wildcard) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spyzhov/ajson/v1/internal"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type Array struct {
@@ -17,11 +17,6 @@ var _ Token = (*Array)(nil)
 func NewArray(token string) (result *Array, err error) {
 	panic("not implemented")
 	//return newArray(internal.NewBuffer([]byte(token)))
-}
-
-func newArray(b *internal.Buffer) (result *Array, err error) {
-	// todo
-	panic("not implemented")
 }
 
 func (t *Array) Type() string {
@@ -55,4 +50,21 @@ func (t *Array) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *Array) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *Array) Append(token Token) error {
+	t.Tokens = append(t.Tokens, token)
+	token.SetParent(t)
+	return nil
+}
+
+func (t *Array) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }

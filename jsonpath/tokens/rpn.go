@@ -296,3 +296,21 @@ func (t *RPN) Parent() Token {
 	}
 	return t.parent
 }
+
+func (t *RPN) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+// fixme: m.b. implement from ?newRPN?
+func (t *RPN) Append(token Token) error {
+	t.Tokens = append(t.Tokens, token)
+	token.SetParent(t)
+	return nil
+}
+
+func (t *RPN) GetState(_ internal.State) internal.State {
+	return -1 // fixme
+}

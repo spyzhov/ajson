@@ -1,6 +1,8 @@
 package jsonpath
 
 import (
+	"fmt"
+
 	ainternal "github.com/spyzhov/ajson/v1/internal"
 	"github.com/spyzhov/ajson/v1/jerrors"
 	"github.com/spyzhov/ajson/v1/jsonpath/internal"
@@ -28,12 +30,13 @@ func New(jsonpath []byte) (*JSONPath, error) {
 		if state >= internal.GO {
 			// region Change State
 			switch buf.State {
+			// String
 			case internal.ST:
-				switch current.(type) {
+				switch token := current.(type) {
 				case *tokens.Object:
 					// Detected: Key
 					start := buf.Index
-					err := buf.AsString(ainternal.BQuotes)
+					err := buf.AsStringBordered(ainternal.BQuotes)
 					if err != nil {
 						return nil, err
 					}
@@ -41,66 +44,79 @@ func New(jsonpath []byte) (*JSONPath, error) {
 					if !ok {
 						return nil, buf.ErrorSymbol()
 					}
-
-					current, err = tokens.NewObjectElement(nil, nil, current)
-					if err != nil {
-						return nil, err
-					}
+					current = token.NewObjectElement()
 					current.(*tokens.ObjectElement).Key = tokens.NewString(value, current)
 					if buf.State == qt {
 						buf.State = internal.CO
 					}
-				default: // fixme:here
+				case tokens.Container:
 					// Detected: String
-					current, err = newNode(current, buf, String, &key)
+					start := buf.Index
+					err := buf.AsString()
 					if err != nil {
-						break
+						return nil, err
 					}
-					err = buf.AsString(BQuotes, false)
-					current.borders[1] = buf.Index + 1
-					buf.State = internal.OK
-					if current.Parent() != nil {
-						current = current.Parent()
+					value, ok := ainternal.Unquote(buf.BytesFrom(start, buf.Index+1), ainternal.BQuotes)
+					if !ok {
+						return nil, buf.ErrorSymbol()
 					}
+					err = token.Append(tokens.NewString(value, current))
+					if err != nil {
+						return nil, err
+					}
+					buf.State = token.GetState(buf.State)
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
 				}
+			// Number
 			case internal.MI, internal.ZE, internal.IN:
-				current, err = newNode(current, buf, Numeric, &key)
-				if err != nil {
-					break
+				switch token := current.(type) {
+				case tokens.Container:
+					start := buf.Index
+					err := buf.AsNumeric()
+					if err != nil {
+						return nil, err
+					}
+					value, err := tokens.NewNumber(buf.StringFrom(start))
+					if err != nil {
+						return nil, fmt.Errorf("%w started from %d: %s", jerrors.ErrIncorrectJSONPath, start, err)
+					}
+					err = token.Append(value)
+					if err != nil {
+						return nil, err
+					}
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
 				}
-				err = buf.AsNumeric(false)
-				current.borders[1] = buf.Index
-				buf.Index -= 1
-				buf.State = internal.OK
-				if current.parent != nil {
-					current = current.parent
+			// Bool and Null
+			case internal.T1, internal.F1, internal.N1:
+				switch token := current.(type) {
+				case tokens.Container:
+					var (
+						value *tokens.Constant
+						err   error
+					)
+					switch buf.State {
+					case internal.T1:
+						value, err = tokens.NewConstant("true")
+					case internal.F1:
+						value, err = tokens.NewConstant("false")
+					case internal.N1:
+						value, err = tokens.NewConstant("null")
+					}
+					if err != nil {
+						return nil, err
+					}
+					err = token.Append(value)
+					if err != nil {
+						return nil, err
+					}
+
+					buf.State = token.GetState(buf.State)
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
 				}
-			case internal.T1, internal.F1:
-				current, err = newNode(current, buf, Bool, &key)
-				if err != nil {
-					break
-				}
-				if buf.State == internal.T1 {
-					err = buf.AsTrue()
-				} else {
-					err = buf.AsFalse()
-				}
-				current.borders[1] = buf.Index + 1
-				buf.State = internal.OK
-				if current.parent != nil {
-					current = current.parent
-				}
-			case internal.N1:
-				current, err = newNode(current, buf, Null, &key)
-				if err != nil {
-					break
-				}
-				err = buf.AsNull()
-				current.borders[1] = buf.Index + 1
-				buf.State = internal.OK
-				if current.parent != nil {
-					current = current.parent
-				}
+				// todo: here
 			}
 			// endregion Change State
 		} else {

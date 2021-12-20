@@ -211,10 +211,7 @@ func (b *Buffer) GetNextState() State {
 }
 
 // AsNumeric if token is true - skip error from StateTransitionTable, just stop on unknown state
-func (b *Buffer) AsNumeric(token bool) error {
-	if token {
-		b.Last = GO
-	}
+func (b *Buffer) AsNumeric() error {
 	for ; b.Index < b.Length; b.Index++ {
 		b.Class = b.GetClass()
 		if b.Class == __ {
@@ -222,9 +219,6 @@ func (b *Buffer) AsNumeric(token bool) error {
 		}
 		b.State = b.StateTransitionTable.GetState(b.Last, b.Class)
 		if b.State == __ {
-			if token {
-				break
-			}
 			return b.ErrorSymbol()
 		}
 		if b.State < __ {
@@ -235,13 +229,23 @@ func (b *Buffer) AsNumeric(token bool) error {
 		}
 		b.Last = b.State
 	}
-	if b.Last != ZE && b.Last != IN && b.Last != FR && b.Last != E3 {
+	// fixme: add tests
+	if b.Class == C_MINUS || b.Class == C_PLUS || b.Class == C_POINT {
+		//if b.Last == MI || b.Last == DT {
 		return b.ErrorSymbol()
 	}
 	return nil
 }
 
-func (b *Buffer) AsString(border byte) error {
+func (b *Buffer) AsString() error {
+	if current, eof := b.Current(); eof != nil {
+		return b.ErrorEOF()
+	} else {
+		return b.AsStringBordered(current)
+	}
+}
+
+func (b *Buffer) AsStringBordered(border byte) error {
 	if current, err := b.Current(); err != nil {
 		return b.ErrorEOF()
 	} else if current != border {
@@ -346,5 +350,9 @@ func (b *Buffer) ErrorEOF() error {
 }
 
 func (b *Buffer) ErrorUnfinished(start int) error {
-	return fmt.Errorf("%w started from at %d", jerrors.ErrUnfinishedToken, start)
+	return fmt.Errorf("%w started from %d", jerrors.ErrUnfinishedToken, start)
+}
+
+func (b *Buffer) ErrorIncorrectJSONPath() error {
+	return fmt.Errorf("%w started from %d", jerrors.ErrIncorrectJSONPath, b.Index)
 }

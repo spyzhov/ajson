@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spyzhov/ajson/v1/jerrors"
+	"github.com/spyzhov/ajson/v1/jsonpath/internal"
 )
 
 type ObjectElement struct {
@@ -48,4 +49,24 @@ func (t *ObjectElement) Parent() Token {
 		return nil
 	}
 	return t.parent
+}
+
+func (t *ObjectElement) SetParent(parent Token) {
+	if t == nil {
+		return
+	}
+	t.parent = parent
+}
+
+func (t *ObjectElement) Append(token Token) error {
+	if t.Value != nil {
+		return fmt.Errorf("%w: object element value already filled with %q, new element %q given", jerrors.ErrIncorrectJSONPath, t.Value.Token(), token.Token())
+	}
+	t.Value = token
+	token.SetParent(t)
+	return nil
+}
+
+func (t *ObjectElement) GetState(_ internal.State) internal.State {
+	return internal.ѢѢ // fixme
 }
