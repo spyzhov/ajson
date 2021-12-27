@@ -409,7 +409,7 @@ var (
 			}
 			return valueNode(nil, "Rand", Numeric, randFunc()*num), nil
 		},
-		"randInt": func(node *Node) (result *Node, err error) {
+		"randint": func(node *Node) (result *Node, err error) {
 			num, err := node.getInteger()
 			if err != nil {
 				return

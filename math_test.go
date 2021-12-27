@@ -348,7 +348,7 @@ func TestFunctions(t *testing.T) {
 		{name: "not_0", fname: "not", value: float64(0), result: true},
 
 		{name: "rand 50", fname: "rand", value: 50, result: expectedRandomFloat * 50},
-		{name: "randInt 50", fname: "randInt", value: 50, result: expectedRandomInt},
+		{name: "randint 50", fname: "randint", value: 50, result: expectedRandomInt},
 	}
 
 	for _, test := range tests {
