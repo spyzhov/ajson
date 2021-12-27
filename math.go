@@ -2,6 +2,7 @@ package ajson
 
 import (
 	"math"
+	"math/rand"
 	"regexp"
 	"strings"
 )
@@ -286,6 +287,9 @@ var (
 		},
 	}
 
+	randFunc    = rand.Float64
+	randIntFunc = rand.Intn
+
 	functions = map[string]Function{
 		"abs":         numericFunction("Abs", math.Abs),
 		"acos":        numericFunction("Acos", math.Acos),
@@ -397,6 +401,20 @@ var (
 			} else {
 				return valueNode(nil, "not", Bool, !value), nil
 			}
+		},
+		"rand": func(node *Node) (result *Node, err error) {
+			num, err := node.GetNumeric()
+			if err != nil {
+				return
+			}
+			return valueNode(nil, "Rand", Numeric, randFunc()*num), nil
+		},
+		"randInt": func(node *Node) (result *Node, err error) {
+			num, err := node.getInteger()
+			if err != nil {
+				return
+			}
+			return valueNode(nil, "RandInt", Numeric, float64(randIntFunc(num))), nil
 		},
 	}
 
