@@ -323,6 +323,8 @@ Package has several predefined functions.
     logb         math.Logb         integers, floats
     not          not               any
     pow10        math.Pow10        integer
+    rand         N*rand.Float64    float
+    randint      rand.Intn         integer
     round        math.Round        integers, floats
     roundtoeven  math.RoundToEven  integers, floats
     sin          math.Sin          integers, floats
