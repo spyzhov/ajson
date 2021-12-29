@@ -14,9 +14,8 @@ type Child struct {
 
 var _ Token = (*Child)(nil)
 
-func NewChild(token Token, parent Token) *Child {
+func NewChild(token Token) *Child {
 	return &Child{
-		parent:   parent,
 		Selector: token,
 	}
 }
@@ -70,6 +69,10 @@ func (t *Child) Append(token Token) error {
 	t.Selector = token
 	token.SetParent(t)
 	return nil
+}
+
+func (t *Child) IsEmpty() bool {
+	return t.Selector == nil
 }
 
 func (t *Child) GetState(_ internal.State) internal.State {

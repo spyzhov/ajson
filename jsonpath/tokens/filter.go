@@ -14,10 +14,9 @@ type Filter struct {
 
 var _ Token = (*Filter)(nil)
 
-func NewFilter(rpn *RPN, parent Token) (*Filter, error) {
+func NewFilter(rpn *RPN) (*Filter, error) {
 	return &Filter{
-		parent: parent,
-		RPN:    rpn,
+		RPN: rpn,
 	}, nil
 }
 
@@ -67,6 +66,10 @@ func (t *Filter) Append(token Token) error {
 		return nil
 	}
 	return fmt.Errorf("%w: for Filter only RPN is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *Filter) IsEmpty() bool {
+	return t.RPN == nil
 }
 
 func (t *Filter) GetState(_ internal.State) internal.State {

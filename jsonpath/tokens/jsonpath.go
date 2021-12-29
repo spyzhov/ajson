@@ -199,6 +199,10 @@ func (t *JSONPath) Append(token Token) error {
 	return fmt.Errorf("%w: for JSONPath only Path is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
 }
 
+func (t *JSONPath) IsEmpty() bool {
+	return len(t.Tokens) == 0
+}
+
 func (t *JSONPath) GetState(_ internal.State) internal.State {
 	return -1 // fixme
 }

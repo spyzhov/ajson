@@ -76,6 +76,10 @@ func (t *Function) Append(token Token) error {
 	return fmt.Errorf("%w: for Function only Arguments is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
 }
 
+func (t *Function) IsEmpty() bool {
+	return t.Arguments == nil
+}
+
 func (t *Function) GetState(_ internal.State) internal.State {
 	return internal.ѢѢ // fixme
 }

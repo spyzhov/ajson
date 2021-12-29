@@ -67,6 +67,10 @@ func (t *ObjectElement) Append(token Token) error {
 	return nil
 }
 
+func (t *ObjectElement) IsEmpty() bool {
+	return t.Value == nil
+}
+
 func (t *ObjectElement) GetState(_ internal.State) internal.State {
 	return internal.ѢѢ // fixme
 }

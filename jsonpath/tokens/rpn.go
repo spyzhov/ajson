@@ -17,9 +17,10 @@ type RPN struct {
 
 var _ Token = (*RPN)(nil)
 
-func NewRPN(token string) (result *RPN, err error) {
-	panic("not implemented")
-	//return newRPN(internal.NewBuffer([]byte(token)))
+func NewRPN() *RPN {
+	return &RPN{
+		Tokens: make([]Token, 0),
+	}
 }
 
 // fixme: found the way how to stop when part of the other Buffer is given
@@ -309,6 +310,10 @@ func (t *RPN) Append(token Token) error {
 	t.Tokens = append(t.Tokens, token)
 	token.SetParent(t)
 	return nil
+}
+
+func (t *RPN) IsEmpty() bool {
+	return len(t.Tokens) == 0
 }
 
 func (t *RPN) GetState(_ internal.State) internal.State {

@@ -15,11 +15,10 @@ type Object struct {
 
 var _ Token = (*Object)(nil)
 
-func NewObject(parent Token) (*Object, error) {
+func NewObject() *Object {
 	return &Object{
-		parent: parent,
 		Tokens: make([]*ObjectElement, 0),
-	}, nil
+	}
 }
 
 func (t *Object) NewObjectElement() *ObjectElement {
@@ -75,6 +74,10 @@ func (t *Object) Append(token Token) error {
 		return nil
 	}
 	return fmt.Errorf("%w: for Object only ObjectElement is available, %s given", jerrors.ErrUnexpectedStatement, token.Type())
+}
+
+func (t *Object) IsEmpty() bool {
+	return len(t.Tokens) == 0
 }
 
 func (t *Object) GetState(_ internal.State) internal.State {

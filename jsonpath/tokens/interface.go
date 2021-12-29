@@ -26,5 +26,6 @@ type Path interface {
 type Container interface {
 	Token
 	Append(Token) error
+	IsEmpty() bool
 	GetState(internal.State) internal.State
 }

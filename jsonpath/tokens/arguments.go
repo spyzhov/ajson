@@ -64,6 +64,10 @@ func (t *Arguments) Append(token Token) error {
 	return nil
 }
 
+func (t *Arguments) IsEmpty() bool {
+	return len(t.Tokens) == 0
+}
+
 func (t *Arguments) GetState(_ internal.State) internal.State {
 	return internal.ѢѢ // fixme
 }

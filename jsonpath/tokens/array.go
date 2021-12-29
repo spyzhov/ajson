@@ -14,9 +14,10 @@ type Array struct {
 
 var _ Token = (*Array)(nil)
 
-func NewArray(token string) (result *Array, err error) {
-	panic("not implemented")
-	//return newArray(internal.NewBuffer([]byte(token)))
+func NewArray() *Array {
+	return &Array{
+		Tokens: make([]Token, 0),
+	}
 }
 
 func (t *Array) Type() string {
@@ -63,6 +64,10 @@ func (t *Array) Append(token Token) error {
 	t.Tokens = append(t.Tokens, token)
 	token.SetParent(t)
 	return nil
+}
+
+func (t *Array) IsEmpty() bool {
+	return len(t.Tokens) == 0
 }
 
 func (t *Array) GetState(_ internal.State) internal.State {

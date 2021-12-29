@@ -116,90 +116,120 @@ func New(jsonpath []byte) (*JSONPath, error) {
 				default:
 					return nil, buf.ErrorIncorrectJSONPath()
 				}
-				// todo: here
+			case internal.SS:
+				switch token := current.(type) {
+				case tokens.Container:
+					err := token.Append(tokens.NewScript())
+					if err != nil {
+						return nil, err
+					}
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
+				}
 			}
 			// endregion Change State
 		} else {
 			// region Action
 			switch state {
-			case ec: /* empty } */
-				if key != nil {
-					err = buf.ErrorSymbol()
+			case co: /* { */
+				switch token := current.(type) {
+				case tokens.Container:
+					err := token.Append(tokens.NewObject())
+					if err != nil {
+						return nil, err
+					}
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
 				}
+				buf.State = internal.OB
+			case ec: /* empty } */
 				fallthrough
 			case cc: /* } */
-				if current != nil && current.IsObject() && !current.ready() {
-					current.borders[1] = buf.Index + 1
-					if current.parent != nil {
-						current = current.parent
-					}
-				} else {
-					err = buf.ErrorSymbol()
-				}
-				buf.State = internal.OK
-			case bc: /* ] */
-				if current != nil && current.IsArray() && !current.ready() {
-					current.borders[1] = buf.Index + 1
-					if current.parent != nil {
-						current = current.parent
-					}
-				} else {
-					err = buf.ErrorSymbol()
-				}
-				buf.State = internal.OK
-			case co: /* { */
-				current, err = newNode(current, buf, Object, &key)
-				buf.State = internal.OB
-			case bo: /* [ */
-				current, err = newNode(current, buf, Array, &key)
-				buf.State = internal.AR
-			case cm: /* , */
-				if current == nil {
+				_, ok := current.(*tokens.Object)
+				if !ok {
 					return nil, buf.ErrorSymbol()
 				}
-				if current.IsObject() {
-					buf.State = internal.KE
-				} else if current.IsArray() {
-					buf.State = internal.VA
+				current = current.Parent()
+				if token, ok := current.(tokens.Container); ok {
+					buf.State = token.GetState(buf.State)
 				} else {
-					err = buf.ErrorSymbol()
+					return nil, buf.ErrorIncorrectJSONPath()
+				}
+				// todo: here
+			case bo: /* [ */
+				switch token := current.(type) {
+				case tokens.Container:
+					err := token.Append(tokens.NewArray())
+					if err != nil {
+						return nil, err
+					}
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
+				}
+				buf.State = internal.AR
+			case bc: /* ] */
+				switch token := current.(type) {
+				case *tokens.Array:
+					break
+				case *tokens.Slice:
+					if token.Start == nil {
+						return nil, buf.ErrorIncorrectJSONPath()
+					}
+				case *tokens.Child:
+					if token.IsEmpty() {
+						return nil, buf.ErrorIncorrectJSONPath()
+					}
+				default:
+					return nil, buf.ErrorIncorrectJSONPath()
+				}
+
+				// todo: here
+
+				current = current.Parent()
+				if token, ok := current.(tokens.Container); ok {
+					buf.State = token.GetState(buf.State)
+				} else {
+					return nil, buf.ErrorIncorrectJSONPath()
+				}
+			case cm: /* , */
+				switch current.(type) {
+				case *tokens.Array:
+					buf.State = internal.VA
+				case *tokens.Object:
+					buf.State = internal.KE
+				default:
+					return nil, buf.ErrorSymbol()
 				}
 			case cl: /* : */
-				if current == nil || !current.IsObject() || key == nil {
-					err = buf.ErrorSymbol()
-				} else {
+				switch token := current.(type) {
+				case *tokens.ObjectElement:
+					if token.Key == nil {
+						return nil, buf.ErrorSymbol()
+					}
 					buf.State = internal.VA
+				default:
+					return nil, buf.ErrorSymbol()
 				}
 			default: /* syntax error */
-				err = buf.ErrorSymbol()
+				return nil, buf.ErrorIncorrectJSONPath()
 			}
 			// endregion Action
-		}
-		if err != nil {
-			return
 		}
 		if buf.Step() != nil {
 			break
 		}
-		if _, err = buf.FirstNonSpace(); err != nil {
-			err = nil
-			break
-		}
 	}
 
-	if current == nil || buf.State != internal.OK {
-		err = buf.ErrorEOF()
-	} else {
-		root = current.root()
-		if !root.ready() {
-			err = buf.ErrorEOF()
-			root = nil
-		}
+	if current == nil {
+		return nil, buf.ErrorEOF()
+	}
+	if buf.State != internal.OK {
+		return nil, buf.ErrorEOF()
 	}
 
-	// todo
-	panic("not implemented")
-	return nil, nil
+	return &JSONPath{
+		Root: current,
+	}, nil
 }
 
 func Compile(jsonpath string) (*JSONPath, error) {
