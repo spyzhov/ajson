@@ -273,6 +273,16 @@ func TestAddFunction(t *testing.T) {
 }
 
 func TestFunctions(t *testing.T) {
+	var (
+		expectedRandomFloat = 0.912
+		expectedRandomInt   = 45
+	)
+	randFunc = func() float64 {
+		return expectedRandomFloat
+	}
+	randIntFunc = func(n int) int {
+		return expectedRandomInt
+	}
 	tests := []struct {
 		name   string
 		fname  string
@@ -336,6 +346,9 @@ func TestFunctions(t *testing.T) {
 
 		{name: "not_1", fname: "not", value: float64(1), result: false},
 		{name: "not_0", fname: "not", value: float64(0), result: true},
+
+		{name: "rand 50", fname: "rand", value: 50, result: expectedRandomFloat * 50},
+		{name: "randint 50", fname: "randint", value: 50, result: expectedRandomInt},
 	}
 
 	for _, test := range tests {
