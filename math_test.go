@@ -456,6 +456,9 @@ func TestFunctions2(t *testing.T) {
 			"e": NumericNode("", 3),
 		}), result: NumericNode("", 6)},
 		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+
+		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
+		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
