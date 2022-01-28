@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -192,5 +193,27 @@ func TestMarshal_Errors(t *testing.T) {
 				t.Errorf("wrong result")
 			}
 		})
+	}
+}
+
+func TestMarshal_ObjectKeyOrdering(t *testing.T) {
+	in := map[string]interface{}{
+		"c": 123,
+		"a": map[string]interface{}{
+			"z": "bar",
+			"h": 123,
+		},
+		"b": 2.6,
+	}
+	expect := `{"a":{"h":123,"z":"bar"},"b":2.6,"c":123}`
+
+	ij, _ := json.Marshal(in)
+	node := Must(Unmarshal(ij))
+
+	value, err := Marshal(node)
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	} else if string(value) != expect {
+		t.Errorf("wrong result: '%s', expected '%s'", value, expect)
 	}
 }

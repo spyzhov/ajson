@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"sort"
 	"strconv"
 )
 
@@ -63,7 +64,14 @@ func Marshal(node *Node) (result []byte, err error) {
 		case Object:
 			result = append(result, bracesL)
 			bValue = false
-			for key, child := range node.children {
+			keys := make([]string, 0)
+			for key, _ := range node.children {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+
+			for _, key := range keys {
+				child := node.children[key]
 				if bValue {
 					result = append(result, coma)
 				} else {
