@@ -76,6 +76,26 @@ func TestBuffer_Token(t *testing.T) {
 	}
 }
 
+func TestBuffer_RPN_long_operations_name(t *testing.T) {
+	jsonpath := `@.key !@#$%^&* 1`
+	_, err := newBuffer([]byte(jsonpath)).rpn()
+	if err == nil {
+		t.Errorf("Expected error, got nothing")
+		return
+	}
+
+	expected := []string{"@.key", "1", "!@#$%^&*"}
+	AddOperation(`!@#$%^&*`, 3, false, func(left *Node, right *Node) (result *Node, err error) {
+		return NullNode(""), nil
+	})
+	result, err := newBuffer([]byte(jsonpath)).rpn()
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	} else if !sliceEqual(expected, result) {
+		t.Errorf("Error on RPN(%s): result doesn't match\nExpected: %s\nActual:   %s", jsonpath, sliceString(expected), sliceString(result))
+	}
+}
+
 func TestBuffer_RPN(t *testing.T) {
 	tests := []struct {
 		name     string

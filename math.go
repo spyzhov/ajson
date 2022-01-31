@@ -4,6 +4,7 @@ import (
 	"math"
 	"math/rand"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -478,4 +479,16 @@ func mathFactorial(x uint) uint {
 		return 1
 	}
 	return x * mathFactorial(x-1)
+}
+
+func comparisonOperationsOrder() []string {
+	result := make([]string, 0, len(operations))
+	for operation := range operations {
+		result = append(result, operation)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return len(result[i]) > len(result[j])
+	})
+	return result
 }
