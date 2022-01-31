@@ -247,15 +247,27 @@ func TestAddConstant(t *testing.T) {
 }
 
 func TestAddOperation(t *testing.T) {
-	name := "new_operation_name"
+	name := "_one_to_rule_them_all_"
 	if _, ok := operations[name]; ok {
 		t.Error("test operation already exists")
+		return
 	}
 	AddOperation(name, 1, true, func(left *Node, right *Node) (result *Node, err error) {
 		return NumericNode("example", 1), nil
 	})
 	if _, ok := operations[name]; !ok {
 		t.Error("test operation was not added")
+		return
+	}
+	result, err := Eval(NullNode(""), `@ _one_to_rule_them_all_ 100500`)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+		return
+	}
+	if ok, err := result.Eq(NumericNode("", 1)); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	} else if !ok {
+		t.Errorf("Should be one")
 	}
 }
 
