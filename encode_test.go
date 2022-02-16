@@ -47,11 +47,11 @@ func TestMarshal_Primitive(t *testing.T) {
 		},
 		{
 			name: "true",
-			node: BoolNode("", true),
+			node: NewBool(true),
 		},
 		{
 			name: "false",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: `"string"`,

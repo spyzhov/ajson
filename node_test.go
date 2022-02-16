@@ -1623,7 +1623,7 @@ func TestStringNode(t *testing.T) {
 }
 
 func TestBoolNode(t *testing.T) {
-	node := BoolNode("test", true)
+	node := NewBool(true)
 	if !node.MustBool() {
 		t.Errorf("Failed")
 	}
@@ -1807,8 +1807,8 @@ func TestNode_IsDirty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "BoolNode",
-			node:     BoolNode("", false),
+			name:     "NewBool",
+			node:     NewBool(false),
 			expected: true,
 		},
 		{
@@ -1856,7 +1856,7 @@ func Test_newNode(t *testing.T) {
 		{
 			name: "child for non Object/Array",
 			args: args{
-				parent: BoolNode("", true),
+				parent: NewBool(true),
 				buf:    newBuffer(make([]byte, 10)),
 				_type:  Bool,
 				key:    &relFillKey,
@@ -1929,7 +1929,7 @@ func TestNode_Value(t *testing.T) {
 		},
 		{
 			name:      "bool",
-			node:      BoolNode("", true),
+			node:      NewBool(true),
 			wantValue: true,
 			wantErr:   false,
 		},

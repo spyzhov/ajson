@@ -85,7 +85,7 @@ func ExampleAddOperation() {
 		if err != nil {
 			return nil, err
 		}
-		return BoolNode("neq", !res), nil
+		return NewBool(!res), nil
 	})
 }
 
@@ -121,20 +121,20 @@ func testNumOperation(operator string, results [3]float64) []*operationTest {
 
 func testBoolOperation(operator string, results [4]bool) []*operationTest {
 	return []*operationTest{
-		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: BoolNode("", results[0])},
-		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: BoolNode("", results[1])},
-		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: BoolNode("", results[2])},
-		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: BoolNode("", results[3])},
+		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewBool(results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewBool(results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: NewBool(results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: NewBool(results[3])},
 		{name: "left error: " + operator, operation: operator, left: valueNode(nil, "", Numeric, "foo"), right: NewNumeric(10), fail: true},
 		{name: "right error: " + operator, operation: operator, left: NewNumeric(10), right: valueNode(nil, "", Numeric, "foo"), fail: true},
 	}
 }
 func testBooleanOperation(operator string, results [4]bool) []*operationTest {
 	return []*operationTest{
-		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: BoolNode("", results[0])},
-		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: BoolNode("", results[1])},
-		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: BoolNode("", results[2])},
-		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: BoolNode("", results[3])},
+		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewBool(results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewBool(results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: NewBool(results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: NewBool(results[3])},
 	}
 }
 
@@ -172,8 +172,8 @@ func TestOperations(t *testing.T) {
 	_e := valueNode(nil, "", Numeric, "foo")
 	_t := NewNumeric(1)
 	_f := NewNumeric(0)
-	_false := BoolNode("", false)
-	_true := BoolNode("", true)
+	_false := NewBool(false)
+	_true := NewBool(true)
 	_null := NewNull()
 	tests = append(
 		tests,
@@ -376,7 +376,7 @@ func TestFunctions(t *testing.T) {
 			case float64:
 				expected = NewNumeric(test.result.(float64))
 			case bool:
-				expected = BoolNode(test.fname, test.result.(bool))
+				expected = NewBool(test.result.(bool))
 			default:
 				panic("wrong type")
 			}
@@ -421,7 +421,7 @@ func TestFunctions2(t *testing.T) {
 		{name: "length string", fname: "length", value: NewString("foo_bar"), result: NewNumeric(7)},
 		{name: "length string error", fname: "length", value: _s, fail: true},
 		{name: "length numeric", fname: "length", value: NewNumeric(123), result: NewNumeric(1)},
-		{name: "length bool", fname: "length", value: BoolNode("", false), result: NewNumeric(1)},
+		{name: "length bool", fname: "length", value: NewBool(false), result: NewNumeric(1)},
 		{name: "length null", fname: "length", value: NewNull(), result: NewNumeric(1)},
 
 		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
@@ -513,8 +513,8 @@ func TestConstants(t *testing.T) {
 		{name: "ln10", expected: NewNumeric(float64(math.Ln10))},
 		{name: "log10e", expected: NewNumeric(float64(math.Log10E))},
 
-		{name: "true", expected: BoolNode("true", true)},
-		{name: "false", expected: BoolNode("false", false)},
+		{name: "true", expected: NewBool(true)},
+		{name: "false", expected: NewBool(false)},
 		{name: "null", expected: NewNull()},
 	}
 	for _, test := range tests {

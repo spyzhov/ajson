@@ -30,7 +30,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -56,7 +56,7 @@ func TestNode_SetNull(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -68,7 +68,7 @@ func TestNode_SetNull(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},
@@ -116,7 +116,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -142,7 +142,7 @@ func TestNode_SetNumeric(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -154,7 +154,7 @@ func TestNode_SetNumeric(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},
@@ -202,7 +202,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -228,7 +228,7 @@ func TestNode_SetString(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -240,7 +240,7 @@ func TestNode_SetString(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},
@@ -288,7 +288,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -314,7 +314,7 @@ func TestNode_SetBool(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -326,7 +326,7 @@ func TestNode_SetBool(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},
@@ -361,7 +361,7 @@ func TestNode_SetBool(t *testing.T) {
 func TestNode_SetArray(t *testing.T) {
 	expected := []*Node{
 		withKey(NewNull(), "0"),
-		BoolNode("1", false),
+		NewBool(false),
 		withKey(NewString("Foo"), "2"),
 		withKey(NewNumeric(1), "3"),
 	}
@@ -379,7 +379,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -405,7 +405,7 @@ func TestNode_SetArray(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -417,7 +417,7 @@ func TestNode_SetArray(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},
@@ -449,7 +449,7 @@ func TestNode_SetArray(t *testing.T) {
 func TestNode_SetObject(t *testing.T) {
 	expected := map[string]*Node{
 		"foo": NewNull(),
-		"bar": BoolNode("bar", false),
+		"bar": NewBool(false),
 	}
 	tests := []struct {
 		name string
@@ -465,7 +465,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "Bool",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: "parsed Bool",
@@ -491,7 +491,7 @@ func TestNode_SetObject(t *testing.T) {
 			name: "Array",
 			node: ArrayNode("", []*Node{
 				NewNumeric(123.456),
-				BoolNode("1", false),
+				NewBool(false),
 				NewNull(),
 			}),
 		},
@@ -503,7 +503,7 @@ func TestNode_SetObject(t *testing.T) {
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
 				"foo": NewNumeric(123.456),
-				"bar": BoolNode("bar", false),
+				"bar": NewBool(false),
 				"baz": NewNull(),
 			}),
 		},

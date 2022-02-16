@@ -88,11 +88,10 @@ func NewString(value string) (current *Node) {
 	return
 }
 
-// BoolNode is constructor for Node with a Bool value
-func BoolNode(key string, value bool) (current *Node) {
+// NewBool is constructor for Node with a Bool value
+func NewBool(value bool) (current *Node) {
 	current = &Node{
 		_type: Bool,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)

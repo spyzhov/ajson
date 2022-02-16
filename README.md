@@ -249,7 +249,7 @@ You are free to add new one with function `AddOperation`:
 		if err != nil {
 			return nil, err
 		}
-		return BoolNode("neq", !result), nil
+		return NewBool(!result), nil
 	})
 ```
 
@@ -466,6 +466,27 @@ Each type has its own constructor and list of applicable methods.
    * Casting `String` typed `Node` object to `Bool` type gives `false` as result for `string("")` value and `true` otherwise;
 2. Any `string` value in `JSON` and `JSONPath` will be parsed as the `String` typed `Node` object;
 3. Any `String` typed `Node` object can contain only `string` typed value;
+
+## `Node`:`Bool`
+
+`Bool` is the `Node` object that has the underlying value of `bool` type.
+
+### Related methods
+
+| Name | Method | Description |
+| --- | --- | --- |
+| Constructor | `NewBool(bool) *Node` | Creates new `Node` object with the underlying value of `bool` |
+| Getter#1 | `Node.GetBool() (bool, error)` | Returns `bool` value if type is `Bool`, otherwise returns an error  |
+| Getter#2 | `Node.MustBool() (bool)` | Returns `bool` value if type is `Bool`, otherwise `panic` |
+| Getter#3 | `Node.Value() (interface{}, error)` | Alias for `Node.GetBool() (bool, error)` method |
+
+### Comments
+
+1. Comparison:
+   * Any `Bool` typed `Node` object can be compared with only any other `Bool` type of `Node`;
+   * Any other type can be cast to `Bool` typed `Node` in the `JSONPath` request;
+2. Any `bool` value in `JSON` and `JSONPath` will be parsed as the `Bool` typed `Node` object;
+3. Any `Bool` typed `Node` object can contain only `bool` typed value;
 
 # Examples
 
