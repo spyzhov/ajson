@@ -99,38 +99,37 @@ func NewBool(value bool) (current *Node) {
 }
 
 // NewArray is constructor for Node with an Array value
-func NewArray(value []*Node) (current *Node) {
+func NewArray(values []*Node) (current *Node) {
 	current = &Node{
 		data:  nil,
 		_type: Array,
 		dirty: true,
 	}
-	current.children = make(map[string]*Node, len(value))
-	if value != nil {
-		current.value.Store(value)
-		for i, val := range value {
+	current.children = make(map[string]*Node, len(values))
+	if values != nil {
+		current.value.Store(values)
+		for i, value := range values {
 			var index = i
-			current.children[strconv.Itoa(i)] = val
-			val.parent = current
-			val.index = &index
+			current.children[strconv.Itoa(i)] = value
+			value.parent = current
+			value.index = &index
 		}
 	}
 	return
 }
 
-// ObjectNode is constructor for Node with an Object value
-func ObjectNode(key string, value map[string]*Node) (current *Node) {
+// NewObject is constructor for Node with an Object value
+func NewObject(values map[string]*Node) (current *Node) {
 	current = &Node{
 		_type:    Object,
-		key:      &key,
-		children: value,
+		children: values,
 		dirty:    true,
 	}
-	if value != nil {
-		current.value.Store(value)
-		for key, val := range value {
-			val.parent = current
-			val.key = &key
+	if values != nil {
+		current.value.Store(values)
+		for key, value := range values {
+			value.parent = current
+			value.key = &key
 		}
 	} else {
 		current.children = make(map[string]*Node)

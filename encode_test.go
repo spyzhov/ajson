@@ -83,7 +83,7 @@ func TestMarshal_Primitive(t *testing.T) {
 		},
 		{
 			name: `{"foo":"bar"}`,
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewString("bar"),
 			}),
 		},
@@ -179,7 +179,7 @@ func TestMarshal_Errors(t *testing.T) {
 		{
 			name: "Object",
 			node: func() (node *Node) {
-				return ObjectNode("", map[string]*Node{"key": valueNode(nil, "key", Bool, 1)})
+				return NewObject(map[string]*Node{"key": valueNode(nil, "key", Bool, 1)})
 			},
 		},
 	}

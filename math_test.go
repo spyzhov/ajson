@@ -188,20 +188,20 @@ func TestOperations(t *testing.T) {
 			name:      "[] && {} == false",
 			operation: "&&",
 			left:      NewArray([]*Node{}),
-			right:     ObjectNode("", map[string]*Node{}),
+			right:     NewObject(map[string]*Node{}),
 			result:    _false,
 		},
 		&operationTest{
 			name:      "{} || [] == false",
 			operation: "||",
-			left:      ObjectNode("", map[string]*Node{}),
+			left:      NewObject(map[string]*Node{}),
 			right:     NewArray([]*Node{}),
 			result:    _false,
 		},
 		&operationTest{
 			name:      `{"foo":"bar"} || [1] == true`,
 			operation: "&&",
-			left:      ObjectNode("", map[string]*Node{"foo": NewString("bar")}),
+			left:      NewObject(map[string]*Node{"foo": NewString("bar")}),
 			right:     NewArray([]*Node{NewNumeric(1)}),
 			result:    _true,
 		},
@@ -414,7 +414,7 @@ func TestFunctions2(t *testing.T) {
 			valueNode(nil, "", Numeric, "foo"),
 		}), result: NewNumeric(3)},
 		{name: "length blank array", fname: "length", value: NewArray([]*Node{}), result: NewNumeric(0)},
-		{name: "length object", fname: "length", value: ObjectNode("test", map[string]*Node{
+		{name: "length object", fname: "length", value: NewObject(map[string]*Node{
 			"foo": NewNumeric(1),
 			"bar": NewNumeric(1),
 		}), result: NewNumeric(2)},
@@ -441,7 +441,7 @@ func TestFunctions2(t *testing.T) {
 			NewNumeric(2),
 			NewNumeric(3),
 		}), result: NewNumeric(2)},
-		{name: "avg object", fname: "avg", value: ObjectNode("test", map[string]*Node{
+		{name: "avg object", fname: "avg", value: NewObject(map[string]*Node{
 			"q": NewNumeric(1),
 			"w": NewNumeric(2),
 			"e": NewNumeric(3),
@@ -465,7 +465,7 @@ func TestFunctions2(t *testing.T) {
 			NewNumeric(2),
 			NewNumeric(3),
 		}), result: NewNumeric(6)},
-		{name: "sum object", fname: "sum", value: ObjectNode("test", map[string]*Node{
+		{name: "sum object", fname: "sum", value: NewObject(map[string]*Node{
 			"q": NewNumeric(1),
 			"w": NewNumeric(2),
 			"e": NewNumeric(3),

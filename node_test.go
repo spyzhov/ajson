@@ -479,7 +479,7 @@ func TestNode_Index(t *testing.T) {
 	if NewNull().Index() != -1 {
 		t.Errorf("Wrong value for Null.Index()")
 	}
-	if ObjectNode("", nil).Index() != -1 {
+	if NewObject(nil).Index() != -1 {
 		t.Errorf("Wrong value for Null.Index()")
 	}
 }
@@ -1147,8 +1147,8 @@ func TestNode_Ge(t *testing.T) {
 		},
 		{
 			name:  "object",
-			left:  ObjectNode("", nil),
-			right: ObjectNode("", nil),
+			left:  NewObject(nil),
+			right: NewObject(nil),
 			error: true,
 		},
 		{
@@ -1265,8 +1265,8 @@ func TestNode_Geq(t *testing.T) {
 		},
 		{
 			name:  "object",
-			left:  ObjectNode("", nil),
-			right: ObjectNode("", nil),
+			left:  NewObject(nil),
+			right: NewObject(nil),
 			error: true,
 		},
 		{
@@ -1384,8 +1384,8 @@ func TestNode_Le(t *testing.T) {
 		},
 		{
 			name:  "object",
-			left:  ObjectNode("", nil),
-			right: ObjectNode("", nil),
+			left:  NewObject(nil),
+			right: NewObject(nil),
 			error: true,
 		},
 		{
@@ -1503,8 +1503,8 @@ func TestNode_Leq(t *testing.T) {
 		},
 		{
 			name:  "object",
-			left:  ObjectNode("", nil),
-			right: ObjectNode("", nil),
+			left:  NewObject(nil),
+			right: NewObject(nil),
 			error: true,
 		},
 		{
@@ -1656,7 +1656,7 @@ func TestObjectNode(t *testing.T) {
 		"foo":  NewNumeric(1),
 		"bar":  NewString("foo"),
 	}
-	node := ObjectNode("test", objects)
+	node := NewObject(objects)
 	result := node.MustObject()
 	if len(result) != len(objects) {
 		t.Errorf("Failed: length")
@@ -1679,7 +1679,7 @@ func TestNode_Inheritors(t *testing.T) {
 	}{
 		{
 			name: "object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"zero": NewNull(),
 				"foo":  NewNumeric(1),
 				"bar":  NewString("foo"),
@@ -1845,7 +1845,7 @@ func Test_newNode(t *testing.T) {
 		{
 			name: "blank key for Object",
 			args: args{
-				parent: ObjectNode("", make(map[string]*Node)),
+				parent: NewObject(make(map[string]*Node)),
 				buf:    newBuffer(make([]byte, 10)),
 				_type:  Bool,
 				key:    &nilKey,
@@ -1887,7 +1887,7 @@ func TestNode_Value(t *testing.T) {
 		NewNumeric(0),
 		NewString("bar"),
 	})
-	object := ObjectNode("", map[string]*Node{
+	object := NewObject(map[string]*Node{
 		"foo": NewNumeric(0),
 		"bar": NewString("bar"),
 	})

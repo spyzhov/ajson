@@ -66,7 +66,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -152,7 +152,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -238,7 +238,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -324,7 +324,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -415,7 +415,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -501,7 +501,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "Object",
-			node: ObjectNode("", map[string]*Node{
+			node: NewObject(map[string]*Node{
 				"foo": NewNumeric(123.456),
 				"bar": NewBool(false),
 				"baz": NewNull(),
@@ -1379,7 +1379,7 @@ func TestNode_Clone(t *testing.T) {
 	node := NewNumeric(1.1)
 	null := NewNull()
 	array := NewArray([]*Node{node, null})
-	object := ObjectNode("", map[string]*Node{"array": array})
+	object := NewObject(map[string]*Node{"array": array})
 
 	tests := []struct {
 		name string
