@@ -23,14 +23,14 @@ Check the [cburgmer/json-path-comparison](https://cburgmer.github.io/json-path-c
 
 # Usage
 
-[Playground](https://play.golang.com/p/iIxkktxN0SK)
+[Playground](https://play.golang.com/)
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -154,7 +154,7 @@ You are free to add new one with function `AddConstant`:
 <details>
 <summary>Using `true` in path</summary>
 
-[Playground](https://play.golang.org/p/h0oFLaE11Tn)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -162,7 +162,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -179,7 +179,7 @@ Count of `true` values: 3
 <details>
 <summary>Using `null` in eval</summary>
 
-[Playground](https://play.golang.org/p/wpqh1Fw5vWE)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -187,7 +187,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -258,7 +258,7 @@ You are free to add new one with function `AddOperation`:
 <details>
 <summary>Using `regex` operator</summary>
 
-[Playground](https://play.golang.org/p/Lm_F4OGTMWl)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -266,7 +266,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -353,7 +353,7 @@ You are free to add new one with function `AddFunction`:
 <details>
 <summary>Using `avg` for array</summary>
 
-[Playground](https://play.golang.org/p/cM66hTE-CX1)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -361,7 +361,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -431,13 +431,14 @@ Calculating `AVG(price)` when object is heterogeneous.
 
 ## Unmarshal
 
-[Playground](https://play.golang.org/p/xny93dzjZCK)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -479,13 +480,14 @@ func main() {
 
 ## JSONPath:
 
-[Playground](https://play.golang.org/p/7twZHOd6dbT)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -517,13 +519,14 @@ func main() {
 
 ## Eval
 
-[Playground](https://play.golang.org/p/lTXnlRU3sgR)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -547,13 +550,14 @@ func main() {
 
 ## Marshal
 
-[Playground](https://play.golang.org/p/i4gXXcA2VLU)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
