@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"reflect"
+	"sync/atomic"
 	"testing"
 )
 
@@ -2001,4 +2002,121 @@ func TestNode_Value(t *testing.T) {
 func withKey(node *Node, key string) *Node {
 	node.key = &key
 	return node
+}
+
+func TestNewNode(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    interface{}
+		wantNode *Node
+		wantErr  bool
+	}{
+		{
+			name:     "null",
+			value:    nil,
+			wantNode: NewNull(),
+			wantErr:  false,
+		},
+		{
+			name:     "numeric(0)",
+			value:    0,
+			wantNode: NewNumeric(0),
+			wantErr:  false,
+		},
+		{
+			name:     "numeric(1)",
+			value:    uint8(78),
+			wantNode: NewNumeric(78),
+			wantErr:  false,
+		},
+		{
+			name:     "string(0)",
+			value:    "",
+			wantNode: NewString(""),
+			wantErr:  false,
+		},
+		{
+			name:     "string(1)",
+			value:    "foo-bar",
+			wantNode: NewString("foo-bar"),
+			wantErr:  false,
+		},
+		{
+			name:     "bool(true)",
+			value:    true,
+			wantNode: NewBool(true),
+			wantErr:  false,
+		},
+		{
+			name:     "bool(false)",
+			value:    false,
+			wantNode: NewBool(false),
+			wantErr:  false,
+		},
+		{
+			name:     "array(blank)",
+			value:    []*Node{},
+			wantNode: NewArray([]*Node{}),
+			wantErr:  false,
+		},
+		{
+			name:     "array(nil, true)",
+			value:    []*Node{NewNull(), NewBool(true)},
+			wantNode: NewArray([]*Node{NewNull(), NewBool(true)}),
+			wantErr:  false,
+		},
+		{
+			name:     "object(blank)",
+			value:    map[string]*Node{},
+			wantNode: NewObject(map[string]*Node{}),
+			wantErr:  false,
+		},
+		{
+			name:     "object(foo:bar)",
+			value:    map[string]*Node{"foo": NewString("bar")},
+			wantNode: NewObject(map[string]*Node{"foo": NewString("bar")}),
+			wantErr:  false,
+		},
+		{
+			name:     "*Node",
+			value:    NewString("foo/bar"),
+			wantNode: NewString("foo/bar"),
+			wantErr:  false,
+		},
+		{
+			name:     "*Node",
+			value:    NewString("foo/bar"),
+			wantNode: NewString("foo/bar"),
+			wantErr:  false,
+		},
+		{
+			name:     "error#1",
+			value:    struct{}{},
+			wantNode: nil,
+			wantErr:  true,
+		},
+		{
+			name:     "error#2",
+			value:    atomic.Value{},
+			wantNode: nil,
+			wantErr:  true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotNode, err := NewNode(tt.value)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewNode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+			if result, err := gotNode.Eq(tt.wantNode); err != nil {
+				t.Errorf("Node.Eq() unexpected error = %v", err)
+			} else if !result {
+				t.Errorf("NewNode() gotNode = %s, want %s", gotNode, tt.wantNode)
+			}
+		})
+	}
 }

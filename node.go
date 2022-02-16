@@ -137,6 +137,27 @@ func NewObject(values map[string]*Node) (current *Node) {
 	return
 }
 
+// NewNode is constructor for any suitable type/value.
+// List of applicable types:
+//
+//    	Result NodeType   Underlying value type(s)
+//      Null              nil.(interface{})
+//      Numeric           float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64
+//      String            string
+//		Bool              bool
+//		Array             []*Node
+//		Object            map[string]*Node
+//
+// Returns an error for any other value.
+func NewNode(value interface{}) (node *Node, err error) {
+	node = NewNull()
+	err = node.Set(value)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *Node, err error) {
 	current = &Node{
 		parent:  parent,
