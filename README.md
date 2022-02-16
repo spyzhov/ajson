@@ -1,4 +1,4 @@
-# Abstract JSON 
+# Abstract JSON (v1) 
 
 [![Build Status](https://travis-ci.com/spyzhov/ajson.svg?branch=master)](https://travis-ci.com/spyzhov/ajson)
 [![Go Report Card](https://goreportcard.com/badge/github.com/spyzhov/ajson)](https://goreportcard.com/report/github.com/spyzhov/ajson)
