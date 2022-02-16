@@ -276,7 +276,7 @@ func (n *Node) remove(value *Node) error {
 	if n.IsArray() {
 		delete(n.children, strconv.Itoa(*value.index))
 		n.dropindex(*value.index)
-	} else {
+	} else if value.key != nil {
 		delete(n.children, *value.key)
 	}
 	value.parent = nil
@@ -366,8 +366,11 @@ func (n *Node) setReference(parent *Node, key *string, index *int) {
 	if key == nil {
 		n.key = nil
 	} else {
-		temp := *key
-		n.key = &temp
+		n.key = strptr(*key)
 	}
-	n.index = index
+	if index == nil {
+		n.index = nil
+	} else {
+		n.index = intptr(*index)
+	}
 }

@@ -15,7 +15,7 @@ Method `Marshal` will serialize current `Node` object to JSON structure.
 Each `Node` has its own type and calculated value, which will be calculated on demand. 
 Calculated value saves in `atomic.Value`, so it's thread safe.
 
-Method `JSONPath` will returns slice of found elements in current JSON data, by [JSONPath](http://goessner.net/articles/JsonPath/) request.
+Method `JSONPath` will return a slice of found elements in current JSON data, by [JSONPath](http://goessner.net/articles/JsonPath/) request.
 
 ## Compare with other solutions
 
@@ -384,6 +384,44 @@ Output:
 Avg price: 5.5
 ```
 </details>
+
+# `Node` structure
+
+`ajson` works with the structures of `Node` type only. 
+`Node` is the container to be able to store any suitable value.
+The value is stored as the `atomic.Value` object, so it has thread-safe value mutations.
+
+`Node` structure can contain different type of value, such as:
+
+* `Null` type with the internal representation as `nil.(interface{})`;
+* `Numeric` type with the internal representation as `float64`;
+* `String` type with the internal representation as `string`;
+* `Bool` type with the internal representation as `bool`;
+* `Array` type with the internal representation as `[]*Node`;
+* `Object` type with the internal representation as `map[string]*Node`.
+
+Each type has its own constructor and list of applicable methods.
+
+## `Node`:`Null`
+
+`Null` is the `Node` object that has the underlying value `nil.(interface{})`.
+
+### Related methods
+
+| Name | Method | Description |
+| --- | --- | --- |
+| Constructor | `NewNull() *Node` | Creates new `Node` object with the underlying value: `nil.(interface{})` |
+| Getter#1 | `Node.GetNull() (interface{}, error)` | Returns `nil.(interface{})` if type is `Null`, otherwise returns an error  |
+| Getter#2 | `Node.MustNull() (interface{})` | Returns `nil.(interface{})` if type is `Null`, otherwise `panic` |
+| Getter#3 | `Node.Value() (interface{}, error)` | Alias for `Node.GetNull() (interface{}, error)` method |
+
+### Comments
+
+1. Comparison:
+   * Any `Null` typed `Node` object is only equal to any other `Null` typed `Node` object;
+   * Casting `Null` typed `Node` object to `Bool` type always gives `false` as result;
+2. Any `null` value in `JSON` will be parsed as the `Null` typed `Node` object;
+3. `JSONPath` has the constant named `null` which is the representation of `Null` typed `Node` object;
 
 # Examples
 

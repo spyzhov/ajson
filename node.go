@@ -60,11 +60,10 @@ const (
 	Object
 )
 
-// NullNode is constructor for Node with Null value
-func NullNode(key string) *Node {
+// NewNull is constructor for Node with Null value
+func NewNull() *Node {
 	return &Node{
 		_type: Null,
-		key:   &key,
 		dirty: true,
 	}
 }
@@ -946,4 +945,12 @@ func (n *Node) root() (node *Node) {
 		node = node.parent
 	}
 	return node
+}
+
+func strptr(value string) *string {
+	return &value
+}
+
+func intptr(value int) *int {
+	return &value
 }

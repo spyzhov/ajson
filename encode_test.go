@@ -43,7 +43,7 @@ func TestMarshal_Primitive(t *testing.T) {
 	}{
 		{
 			name: "null",
-			node: NullNode(""),
+			node: NewNull(),
 		},
 		{
 			name: "true",
@@ -166,7 +166,7 @@ func TestMarshal_Errors(t *testing.T) {
 			name: "Array_1",
 			node: func() (node *Node) {
 				node = ArrayNode("", nil)
-				node.children["1"] = NullNode("1")
+				node.children["1"] = withKey(NewNull(), "1")
 				return
 			},
 		},

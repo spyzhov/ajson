@@ -171,10 +171,10 @@ func TestNode_GetArray(t *testing.T) {
 		t.Errorf("root.GetArray() is corrupted")
 	}
 
-	root = NullNode("")
+	root = NewNull()
 	_, err = root.GetArray()
 	if err == nil {
-		t.Errorf("Error on root.GetArray(): NullNode")
+		t.Errorf("Error on root.GetArray(): NewNull")
 	}
 	if _, err := (*Node)(nil).GetArray(); err == nil {
 		t.Errorf("(nil).GetArray() should be an error")
@@ -207,10 +207,10 @@ func TestNode_GetBool(t *testing.T) {
 		t.Errorf("root.GetBool() is corrupted")
 	}
 
-	root = NullNode("")
+	root = NewNull()
 	_, err = root.GetBool()
 	if err == nil {
-		t.Errorf("Error on root.GetBool(): NullNode")
+		t.Errorf("Error on root.GetBool(): NewNull")
 	}
 	if _, err := (*Node)(nil).GetBool(); err == nil {
 		t.Errorf("(nil).GetBool() should be an error")
@@ -400,10 +400,10 @@ func TestNode_GetObject(t *testing.T) {
 		t.Errorf("root.GetObject() is corrupted: bar")
 	}
 
-	root = NullNode("")
+	root = NewNull()
 	_, err = root.GetObject()
 	if err == nil {
-		t.Errorf("Error on root.GetArray(): NullNode")
+		t.Errorf("Error on root.GetArray(): NewNull")
 	}
 	if _, err := (*Node)(nil).GetObject(); err == nil {
 		t.Errorf("(nil).GetObject() should be an error")
@@ -476,7 +476,7 @@ func TestNode_Index(t *testing.T) {
 	if (*Node)(nil).Index() != -1 {
 		t.Errorf("Wrong value for (*Node)(nil).Index()")
 	}
-	if NullNode("").Index() != -1 {
+	if NewNull().Index() != -1 {
 		t.Errorf("Wrong value for Null.Index()")
 	}
 	if ObjectNode("", nil).Index() != -1 {
@@ -765,10 +765,10 @@ func TestNode_String(t *testing.T) {
 		t.Errorf("Wrong (StringNode) root.String()")
 	}
 
-	root = NullNode("")
+	root = NewNull()
 	value = root.String()
 	if value != "null" {
-		t.Errorf("Wrong (NullNode) root.String()")
+		t.Errorf("Wrong (NewNull) root.String()")
 	}
 	if (*Node)(nil).String() != "" {
 		t.Errorf("Wrong value for (*Node)(nil).String()")
@@ -1135,8 +1135,8 @@ func TestNode_Ge(t *testing.T) {
 	}{
 		{
 			name:  "null",
-			left:  NullNode(""),
-			right: NullNode(""),
+			left:  NewNull(),
+			right: NewNull(),
 			error: true,
 		},
 		{
@@ -1253,8 +1253,8 @@ func TestNode_Geq(t *testing.T) {
 	}{
 		{
 			name:  "null",
-			left:  NullNode(""),
-			right: NullNode(""),
+			left:  NewNull(),
+			right: NewNull(),
 			error: true,
 		},
 		{
@@ -1372,8 +1372,8 @@ func TestNode_Le(t *testing.T) {
 	}{
 		{
 			name:  "null",
-			left:  NullNode(""),
-			right: NullNode(""),
+			left:  NewNull(),
+			right: NewNull(),
 			error: true,
 		},
 		{
@@ -1491,8 +1491,8 @@ func TestNode_Leq(t *testing.T) {
 	}{
 		{
 			name:  "null",
-			left:  NullNode(""),
-			right: NullNode(""),
+			left:  NewNull(),
+			right: NewNull(),
 			error: true,
 		},
 		{
@@ -1602,7 +1602,7 @@ func TestNode_Leq(t *testing.T) {
 }
 
 func TestNullNode(t *testing.T) {
-	node := NullNode("test")
+	node := NewNull()
 	if node.MustNull() != nil {
 		t.Errorf("Failed")
 	}
@@ -1631,7 +1631,7 @@ func TestBoolNode(t *testing.T) {
 
 func TestArrayNode(t *testing.T) {
 	array := []*Node{
-		NullNode("0"),
+		withKey(NewNull(), "0"),
 		NumericNode("1", 1),
 		StringNode("str", "foo"),
 	}
@@ -1652,7 +1652,7 @@ func TestArrayNode(t *testing.T) {
 
 func TestObjectNode(t *testing.T) {
 	objects := map[string]*Node{
-		"zero": NullNode("0"),
+		"zero": NewNull(),
 		"foo":  NumericNode("1", 1),
 		"bar":  StringNode("str", "foo"),
 	}
@@ -1680,25 +1680,25 @@ func TestNode_Inheritors(t *testing.T) {
 		{
 			name: "object",
 			node: ObjectNode("", map[string]*Node{
-				"zero": NullNode("0"),
+				"zero": NewNull(),
 				"foo":  NumericNode("1", 1),
 				"bar":  StringNode("str", "foo"),
 			}),
 			expected: []*Node{
 				StringNode("str", "foo"),
 				NumericNode("1", 1),
-				NullNode("0"),
+				withKey(NewNull(), "0"),
 			},
 		},
 		{
 			name: "array",
 			node: ArrayNode("", []*Node{
-				NullNode("0"),
+				NewNull(),
 				NumericNode("1", 1),
 				StringNode("str", "foo"),
 			}),
 			expected: []*Node{
-				NullNode("0"),
+				withKey(NewNull(), "0"),
 				NumericNode("1", 1),
 				StringNode("str", "foo"),
 			},
@@ -1792,8 +1792,8 @@ func TestNode_IsDirty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "NullNode",
-			node:     NullNode(""),
+			name:     "NewNull",
+			node:     NewNull(),
 			expected: true,
 		},
 		{
@@ -1899,7 +1899,7 @@ func TestNode_Value(t *testing.T) {
 	}{
 		{
 			name:      "null",
-			node:      NullNode(""),
+			node:      NewNull(),
 			wantValue: nil,
 			wantErr:   false,
 		},
@@ -1996,4 +1996,9 @@ func TestNode_Value(t *testing.T) {
 			}
 		})
 	}
+}
+
+func withKey(node *Node, key string) *Node {
+	node.key = &key
+	return node
 }

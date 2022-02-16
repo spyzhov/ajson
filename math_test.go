@@ -259,7 +259,7 @@ func TestAddOperation(t *testing.T) {
 		t.Error("test operation was not added")
 		return
 	}
-	result, err := Eval(NullNode(""), `@ _one_to_rule_them_all_ 100500`)
+	result, err := Eval(NewNull(), `@ _one_to_rule_them_all_ 100500`)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
@@ -419,14 +419,14 @@ func TestFunctions2(t *testing.T) {
 		{name: "length string error", fname: "length", value: _s, fail: true},
 		{name: "length numeric", fname: "length", value: NumericNode("", 123), result: NumericNode("", 1)},
 		{name: "length bool", fname: "length", value: BoolNode("", false), result: NumericNode("", 1)},
-		{name: "length null", fname: "length", value: NullNode(""), result: NumericNode("", 1)},
+		{name: "length null", fname: "length", value: NewNull(), result: NumericNode("", 1)},
 
 		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NullNode("")},
+		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NewNull()},
 		{name: "avg array 1", fname: "avg", value: ArrayNode("test", []*Node{
 			NumericNode("", 1),
 			NumericNode("", 1),
@@ -450,7 +450,7 @@ func TestFunctions2(t *testing.T) {
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NullNode("")},
+		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NewNull()},
 		{name: "sum array 1", fname: "sum", value: ArrayNode("test", []*Node{
 			NumericNode("", 1),
 			NumericNode("", 1),
@@ -512,7 +512,7 @@ func TestConstants(t *testing.T) {
 
 		{name: "true", expected: BoolNode("true", true)},
 		{name: "false", expected: BoolNode("false", false)},
-		{name: "null", expected: NullNode("null")},
+		{name: "null", expected: NewNull()},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
