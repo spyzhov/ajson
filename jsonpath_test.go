@@ -663,7 +663,7 @@ func TestEval(t *testing.T) {
 			name:     "avg($..price)",
 			root:     Must(Unmarshal(json)),
 			eval:     "avg($..price)",
-			expected: NumericNode("", 14.774000000000001),
+			expected: NewNumeric(14.774000000000001),
 			wantErr:  false,
 		},
 		{
@@ -684,7 +684,7 @@ func TestEval(t *testing.T) {
 			name:     "round(avg($..price)+pi)",
 			root:     Must(Unmarshal(json)),
 			eval:     "round(avg($..price)+pi)",
-			expected: NumericNode("", 18),
+			expected: NewNumeric(18),
 			wantErr:  false,
 		},
 		{
@@ -1418,8 +1418,8 @@ func TestJSONPath_special_requests(t *testing.T) {
 }
 
 func TestApplyJSONPath(t *testing.T) {
-	node1 := NumericNode("", 1.)
-	node2 := NumericNode("", 2.)
+	node1 := NewNumeric(1.)
+	node2 := NewNumeric(2.)
 	cpy := func(n Node) *Node {
 		return &n
 	}

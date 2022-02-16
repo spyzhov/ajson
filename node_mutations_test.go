@@ -46,7 +46,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -55,7 +55,7 @@ func TestNode_SetNull(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -67,7 +67,7 @@ func TestNode_SetNull(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -132,7 +132,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -141,7 +141,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -153,7 +153,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -218,7 +218,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -227,7 +227,7 @@ func TestNode_SetString(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -239,7 +239,7 @@ func TestNode_SetString(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -304,7 +304,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -313,7 +313,7 @@ func TestNode_SetBool(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -325,7 +325,7 @@ func TestNode_SetBool(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -363,7 +363,7 @@ func TestNode_SetArray(t *testing.T) {
 		withKey(NewNull(), "0"),
 		BoolNode("1", false),
 		StringNode("2", "Foo"),
-		NumericNode("3", 1),
+		withKey(NewNumeric(1), "3"),
 	}
 	tests := []struct {
 		name string
@@ -395,7 +395,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -404,7 +404,7 @@ func TestNode_SetArray(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -416,7 +416,7 @@ func TestNode_SetArray(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -481,7 +481,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "Numeric",
-			node: NumericNode("", 123.456),
+			node: NewNumeric(123.456),
 		},
 		{
 			name: "parsed Numeric",
@@ -490,7 +490,7 @@ func TestNode_SetObject(t *testing.T) {
 		{
 			name: "Array",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 123.456),
+				NewNumeric(123.456),
 				BoolNode("1", false),
 				NewNull(),
 			}),
@@ -502,7 +502,7 @@ func TestNode_SetObject(t *testing.T) {
 		{
 			name: "Object",
 			node: ObjectNode("", map[string]*Node{
-				"foo": NumericNode("foo", 123.456),
+				"foo": NewNumeric(123.456),
 				"bar": BoolNode("bar", false),
 				"baz": NewNull(),
 			}),
@@ -600,7 +600,7 @@ func TestNode_AppendArray(t *testing.T) {
 	}
 
 	if err := root.AppendArray(
-		NumericNode("", 1),
+		NewNumeric(1),
 		StringNode("", "foo"),
 		Must(Unmarshal([]byte(`[0,1,null,true,"example"]`))),
 		Must(Unmarshal([]byte(`{"foo": true, "bar": null, "baz": 123}`))),
@@ -710,7 +710,7 @@ func TestNode_AppendObject(t *testing.T) {
 		t.Errorf("Marshal returns wrong value: %s", string(value))
 	}
 
-	if err := root.AppendObject("foo", NumericNode("", 1)); err != nil {
+	if err := root.AppendObject("foo", NewNumeric(1)); err != nil {
 		t.Errorf("AppendArray returns error: %v", err)
 	}
 	if value, err := Marshal(root); err != nil {
@@ -1041,7 +1041,7 @@ func TestNode_DeleteNode(t *testing.T) {
 
 func TestIssue22_SetArray_not_working(t *testing.T) {
 	data := []byte(`{"key": [1, 2, 3]}`)
-	node := NumericNode("", 4)
+	node := NewNumeric(4)
 	expected := `{"key":[1,2,4]}`
 
 	root := Must(Unmarshal(data))
@@ -1083,7 +1083,7 @@ func TestNode_SetArray1(t *testing.T) {
 			name:     "null -> [1,2,3]",
 			json:     `null`,
 			path:     `$`,
-			value:    []*Node{NumericNode("", 1), NumericNode("", 2), NumericNode("", 3)},
+			value:    []*Node{NewNumeric(1), NewNumeric(2), NewNumeric(3)},
 			wantErr:  false,
 			expected: `[1,2,3]`,
 		},
@@ -1091,7 +1091,7 @@ func TestNode_SetArray1(t *testing.T) {
 			name:     `{"key": null} -> {"key": [1,2,3]}`,
 			json:     `{"key": null}`,
 			path:     `$.key`,
-			value:    []*Node{NumericNode("", 1), NumericNode("", 2), NumericNode("", 3)},
+			value:    []*Node{NewNumeric(1), NewNumeric(2), NewNumeric(3)},
 			wantErr:  false,
 			expected: `{"key":[1,2,3]}`,
 		},
@@ -1099,7 +1099,7 @@ func TestNode_SetArray1(t *testing.T) {
 			name:     `{"key": [1,2,3]} -> {"key": [1,4,3]}`,
 			json:     `{"key": [1,2,3]}`,
 			path:     `$.key`,
-			value:    []*Node{NumericNode("", 1), NumericNode("", 4), NumericNode("", 3)},
+			value:    []*Node{NewNumeric(1), NewNumeric(4), NewNumeric(3)},
 			wantErr:  false,
 			expected: `{"key":[1,4,3]}`,
 		},
@@ -1107,7 +1107,7 @@ func TestNode_SetArray1(t *testing.T) {
 			name:     `{"key": [[1,2,3],2,3]} -> {"key": [[4,5,6],2,3]}`,
 			json:     `{"key": [[1,2,3],2,3]}`,
 			path:     `$.key[0]`,
-			value:    []*Node{NumericNode("", 4), NumericNode("", 5), NumericNode("", 6)},
+			value:    []*Node{NewNumeric(4), NewNumeric(5), NewNumeric(6)},
 			wantErr:  false,
 			expected: `{"key":[[4,5,6],2,3]}`,
 		},
@@ -1376,7 +1376,7 @@ func TestNode_update_fail(t *testing.T) {
 }
 
 func TestNode_Clone(t *testing.T) {
-	node := NumericNode("", 1.1)
+	node := NewNumeric(1.1)
 	null := NewNull()
 	array := ArrayNode("", []*Node{node, null})
 	object := ObjectNode("", map[string]*Node{"array": array})
@@ -1503,7 +1503,7 @@ func TestNode_SetNode(t *testing.T) {
 			name:    "Null->Numeric(1)",
 			root:    NewNull(),
 			getter:  proxy,
-			value:   NumericNode("", 1),
+			value:   NewNumeric(1),
 			result:  `1`,
 			wantErr: false,
 		},

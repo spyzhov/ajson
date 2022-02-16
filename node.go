@@ -68,11 +68,10 @@ func NewNull() *Node {
 	}
 }
 
-// NumericNode is constructor for Node with a Numeric value
-func NumericNode(key string, value float64) (current *Node) {
+// NewNumeric is constructor for Node with a Numeric value
+func NewNumeric(value float64) (current *Node) {
 	current = &Node{
 		_type: Numeric,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)

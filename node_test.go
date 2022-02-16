@@ -319,10 +319,10 @@ func TestNode_GetNull(t *testing.T) {
 		t.Errorf("root.GetNull() is corrupted")
 	}
 
-	root = NumericNode("", 1)
+	root = NewNumeric(1)
 	_, err = root.GetNull()
 	if err == nil {
-		t.Errorf("Error expected on root.GetNull() using NumericNode")
+		t.Errorf("Error expected on root.GetNull() using NewNumeric")
 	}
 	if _, err := (*Node)(nil).GetNull(); err == nil {
 		t.Errorf("(nil).GetNull() should be an error")
@@ -439,10 +439,10 @@ func TestNode_GetString(t *testing.T) {
 		t.Errorf("root.GetString() is corrupted")
 	}
 
-	root = NumericNode("", 1)
+	root = NewNumeric(1)
 	_, err = root.GetString()
 	if err == nil {
-		t.Errorf("Error on root.GetString(): NumericNode")
+		t.Errorf("Error on root.GetString(): NewNumeric")
 	}
 	if _, err := (*Node)(nil).GetString(); err == nil {
 		t.Errorf("(nil).GetString() should be an error")
@@ -919,8 +919,8 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:     "filled arrays",
-			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
-			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			left:     valueNode(nil, "[]", Array, []*Node{NewNumeric(1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NewNumeric(1)}),
 			expected: true,
 		},
 		{
@@ -937,8 +937,8 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:     "filled arrays: different",
-			left:     valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
-			right:    valueNode(nil, "[]", Array, []*Node{NumericNode("0", 2)}),
+			left:     valueNode(nil, "[]", Array, []*Node{NewNumeric(1)}),
+			right:    valueNode(nil, "[]", Array, []*Node{NewNumeric(2)}),
 			expected: false,
 		},
 		{
@@ -949,32 +949,32 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:  "filled arrays: errors",
-			left:  valueNode(nil, "[]", Array, []*Node{NumericNode("0", 1)}),
+			left:  valueNode(nil, "[]", Array, []*Node{NewNumeric(1)}),
 			right: valueNode(nil, "[]", Array, []*Node{valueNode(nil, "", Numeric, "foo")}),
 			error: true,
 		},
 		{
 			name:     "floats 1",
-			left:     NumericNode("", 1.1),
-			right:    NumericNode("", 1.2),
+			left:     NewNumeric(1.1),
+			right:    NewNumeric(1.2),
 			expected: false,
 		},
 		{
 			name:     "floats 2",
-			left:     NumericNode("", -1),
-			right:    NumericNode("", 1),
+			left:     NewNumeric(-1),
+			right:    NewNumeric(1),
 			expected: false,
 		},
 		{
 			name:     "floats 3",
-			left:     NumericNode("", 1.0001),
-			right:    NumericNode("", 1.00011),
+			left:     NewNumeric(1.0001),
+			right:    NewNumeric(1.00011),
 			expected: false,
 		},
 		{
 			name:  "error 1",
 			left:  valueNode(nil, "", Numeric, "foo"),
-			right: NumericNode("", 1.00011),
+			right: NewNumeric(1.00011),
 			error: true,
 		},
 		{
@@ -1081,20 +1081,20 @@ func TestNode_Neq(t *testing.T) {
 		},
 		{
 			name:     "floats 1",
-			left:     NumericNode("", 1.1),
-			right:    NumericNode("", 1.2),
+			left:     NewNumeric(1.1),
+			right:    NewNumeric(1.2),
 			expected: true,
 		},
 		{
 			name:     "floats 2",
-			left:     NumericNode("", -1),
-			right:    NumericNode("", 1),
+			left:     NewNumeric(-1),
+			right:    NewNumeric(1),
 			expected: true,
 		},
 		{
 			name:     "floats 3",
-			left:     NumericNode("", 1.0001),
-			right:    NumericNode("", 1.00011),
+			left:     NewNumeric(1.0001),
+			right:    NewNumeric(1.00011),
 			expected: true,
 		},
 		{
@@ -1153,32 +1153,32 @@ func TestNode_Ge(t *testing.T) {
 		},
 		{
 			name:     "float 1",
-			left:     NumericNode("", 3.1),
-			right:    NumericNode("", 3),
+			left:     NewNumeric(3.1),
+			right:    NewNumeric(3),
 			expected: true,
 		},
 		{
 			name:     "float 2",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", -3),
+			left:     NewNumeric(0),
+			right:    NewNumeric(-3),
 			expected: true,
 		},
 		{
 			name:     "float 3",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", 0),
+			left:     NewNumeric(0),
+			right:    NewNumeric(0),
 			expected: false,
 		},
 		{
 			name:     "float 4",
-			left:     NumericNode("", math.MaxFloat64),
-			right:    NumericNode("", math.SmallestNonzeroFloat64),
+			left:     NewNumeric(math.MaxFloat64),
+			right:    NewNumeric(math.SmallestNonzeroFloat64),
 			expected: true,
 		},
 		{
 			name:     "float 5",
-			left:     NumericNode("", math.SmallestNonzeroFloat64),
-			right:    NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.SmallestNonzeroFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
@@ -1196,19 +1196,19 @@ func TestNode_Ge(t *testing.T) {
 		{
 			name:     "wrong type 1",
 			left:     StringNode("", "z"),
-			right:    NumericNode("", math.MaxFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
-			left:     NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.MaxFloat64),
 			right:    StringNode("", "z"),
 			expected: false,
 		},
 		{
 			name:  "error 1",
 			left:  valueNode(nil, "e1", Numeric, string("e1")),
-			right: NumericNode("", 1),
+			right: NewNumeric(1),
 			error: true,
 		},
 		{
@@ -1271,32 +1271,32 @@ func TestNode_Geq(t *testing.T) {
 		},
 		{
 			name:     "float 1",
-			left:     NumericNode("", 3.1),
-			right:    NumericNode("", 3),
+			left:     NewNumeric(3.1),
+			right:    NewNumeric(3),
 			expected: true,
 		},
 		{
 			name:     "float 2",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", -3),
+			left:     NewNumeric(0),
+			right:    NewNumeric(-3),
 			expected: true,
 		},
 		{
 			name:     "float 3",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", 0),
+			left:     NewNumeric(0),
+			right:    NewNumeric(0),
 			expected: true,
 		},
 		{
 			name:     "float 4",
-			left:     NumericNode("", math.MaxFloat64),
-			right:    NumericNode("", math.SmallestNonzeroFloat64),
+			left:     NewNumeric(math.MaxFloat64),
+			right:    NewNumeric(math.SmallestNonzeroFloat64),
 			expected: true,
 		},
 		{
 			name:     "float 5",
-			left:     NumericNode("", math.SmallestNonzeroFloat64),
-			right:    NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.SmallestNonzeroFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
@@ -1314,19 +1314,19 @@ func TestNode_Geq(t *testing.T) {
 		{
 			name:     "wrong type 1",
 			left:     StringNode("", "z"),
-			right:    NumericNode("", math.MaxFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
-			left:     NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.MaxFloat64),
 			right:    StringNode("", "z"),
 			expected: false,
 		},
 		{
 			name:  "error 1",
 			left:  valueNode(nil, "e1", Numeric, string("e1")),
-			right: NumericNode("", 1),
+			right: NewNumeric(1),
 			error: true,
 		},
 		{
@@ -1390,32 +1390,32 @@ func TestNode_Le(t *testing.T) {
 		},
 		{
 			name:     "float 1",
-			left:     NumericNode("", 3.1),
-			right:    NumericNode("", 3),
+			left:     NewNumeric(3.1),
+			right:    NewNumeric(3),
 			expected: false,
 		},
 		{
 			name:     "float 2",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", -3),
+			left:     NewNumeric(0),
+			right:    NewNumeric(-3),
 			expected: false,
 		},
 		{
 			name:     "float 3",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", 0),
+			left:     NewNumeric(0),
+			right:    NewNumeric(0),
 			expected: false,
 		},
 		{
 			name:     "float 4",
-			left:     NumericNode("", math.MaxFloat64),
-			right:    NumericNode("", math.SmallestNonzeroFloat64),
+			left:     NewNumeric(math.MaxFloat64),
+			right:    NewNumeric(math.SmallestNonzeroFloat64),
 			expected: false,
 		},
 		{
 			name:     "float 5",
-			left:     NumericNode("", math.SmallestNonzeroFloat64),
-			right:    NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.SmallestNonzeroFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: true,
 		},
 		{
@@ -1433,19 +1433,19 @@ func TestNode_Le(t *testing.T) {
 		{
 			name:     "wrong type 1",
 			left:     StringNode("", "z"),
-			right:    NumericNode("", math.MaxFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
-			left:     NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.MaxFloat64),
 			right:    StringNode("", "z"),
 			expected: false,
 		},
 		{
 			name:  "error 1",
 			left:  valueNode(nil, "e1", Numeric, string("e1")),
-			right: NumericNode("", 1),
+			right: NewNumeric(1),
 			error: true,
 		},
 		{
@@ -1509,32 +1509,32 @@ func TestNode_Leq(t *testing.T) {
 		},
 		{
 			name:     "float 1",
-			left:     NumericNode("", 3.1),
-			right:    NumericNode("", 3),
+			left:     NewNumeric(3.1),
+			right:    NewNumeric(3),
 			expected: false,
 		},
 		{
 			name:     "float 2",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", -3),
+			left:     NewNumeric(0),
+			right:    NewNumeric(-3),
 			expected: false,
 		},
 		{
 			name:     "float 3",
-			left:     NumericNode("", 0),
-			right:    NumericNode("", 0),
+			left:     NewNumeric(0),
+			right:    NewNumeric(0),
 			expected: true,
 		},
 		{
 			name:     "float 4",
-			left:     NumericNode("", math.MaxFloat64),
-			right:    NumericNode("", math.SmallestNonzeroFloat64),
+			left:     NewNumeric(math.MaxFloat64),
+			right:    NewNumeric(math.SmallestNonzeroFloat64),
 			expected: false,
 		},
 		{
 			name:     "float 5",
-			left:     NumericNode("", math.SmallestNonzeroFloat64),
-			right:    NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.SmallestNonzeroFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: true,
 		},
 		{
@@ -1552,19 +1552,19 @@ func TestNode_Leq(t *testing.T) {
 		{
 			name:     "wrong type 1",
 			left:     StringNode("", "z"),
-			right:    NumericNode("", math.MaxFloat64),
+			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
-			left:     NumericNode("", math.MaxFloat64),
+			left:     NewNumeric(math.MaxFloat64),
 			right:    StringNode("", "z"),
 			expected: false,
 		},
 		{
 			name:  "error 1",
 			left:  valueNode(nil, "e1", Numeric, string("e1")),
-			right: NumericNode("", 1),
+			right: NewNumeric(1),
 			error: true,
 		},
 		{
@@ -1609,7 +1609,7 @@ func TestNullNode(t *testing.T) {
 }
 
 func TestNumericNode(t *testing.T) {
-	node := NumericNode("test", 1.5)
+	node := NewNumeric(1.5)
 	if node.MustNumeric() != 1.5 {
 		t.Errorf("Failed")
 	}
@@ -1632,7 +1632,7 @@ func TestBoolNode(t *testing.T) {
 func TestArrayNode(t *testing.T) {
 	array := []*Node{
 		withKey(NewNull(), "0"),
-		NumericNode("1", 1),
+		NewNumeric(1),
 		StringNode("str", "foo"),
 	}
 	node := ArrayNode("test", array)
@@ -1653,7 +1653,7 @@ func TestArrayNode(t *testing.T) {
 func TestObjectNode(t *testing.T) {
 	objects := map[string]*Node{
 		"zero": NewNull(),
-		"foo":  NumericNode("1", 1),
+		"foo":  NewNumeric(1),
 		"bar":  StringNode("str", "foo"),
 	}
 	node := ObjectNode("test", objects)
@@ -1681,12 +1681,12 @@ func TestNode_Inheritors(t *testing.T) {
 			name: "object",
 			node: ObjectNode("", map[string]*Node{
 				"zero": NewNull(),
-				"foo":  NumericNode("1", 1),
+				"foo":  NewNumeric(1),
 				"bar":  StringNode("str", "foo"),
 			}),
 			expected: []*Node{
 				StringNode("str", "foo"),
-				NumericNode("1", 1),
+				NewNumeric(1),
 				withKey(NewNull(), "0"),
 			},
 		},
@@ -1694,12 +1694,12 @@ func TestNode_Inheritors(t *testing.T) {
 			name: "array",
 			node: ArrayNode("", []*Node{
 				NewNull(),
-				NumericNode("1", 1),
+				NewNumeric(1),
 				StringNode("str", "foo"),
 			}),
 			expected: []*Node{
 				withKey(NewNull(), "0"),
-				NumericNode("1", 1),
+				NewNumeric(1),
 				StringNode("str", "foo"),
 			},
 		},
@@ -1787,8 +1787,8 @@ func TestNode_IsDirty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "NumericNode",
-			node:     NumericNode("", 1.1),
+			name:     "NewNumeric",
+			node:     NewNumeric(1.1),
 			expected: true,
 		},
 		{
@@ -1884,11 +1884,11 @@ func Test_newNode(t *testing.T) {
 
 func TestNode_Value(t *testing.T) {
 	array := ArrayNode("", []*Node{
-		NumericNode("0", 0),
+		NewNumeric(0),
 		StringNode("1", "bar"),
 	})
 	object := ObjectNode("", map[string]*Node{
-		"foo": NumericNode("foo", 0),
+		"foo": NewNumeric(0),
 		"bar": StringNode("bar", "bar"),
 	})
 	tests := []struct {
@@ -1917,7 +1917,7 @@ func TestNode_Value(t *testing.T) {
 		},
 		{
 			name:      "numeric",
-			node:      NumericNode("", 1e3),
+			node:      NewNumeric(1e3),
 			wantValue: float64(1000),
 			wantErr:   false,
 		},

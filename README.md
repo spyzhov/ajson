@@ -146,7 +146,7 @@ Package has several predefined constants.
 You are free to add new one with function `AddConstant`:
 
 ```go
-    AddConstant("c", NumericNode("speed of light in vacuum", 299_792_458))
+    AddConstant("c", NewNumeric(299_792_458))
 ```
 
 #### Examples
@@ -422,6 +422,28 @@ Each type has its own constructor and list of applicable methods.
    * Casting `Null` typed `Node` object to `Bool` type always gives `false` as result;
 2. Any `null` value in `JSON` will be parsed as the `Null` typed `Node` object;
 3. `JSONPath` has the constant named `null` which is the representation of `Null` typed `Node` object;
+
+## `Node`:`Numeric`
+
+`Numeric` is the `Node` object that has the underlying value of `float64` type.
+
+### Related methods
+
+| Name | Method | Description |
+| --- | --- | --- |
+| Constructor | `NewNumeric(float64) *Node` | Creates new `Node` object with the underlying value of `float64` |
+| Getter#1 | `Node.GetNumeric() (float64, error)` | Returns `float64` value if type is `Numeric`, otherwise returns an error  |
+| Getter#2 | `Node.MustNumeric() (float64)` | Returns `float64` value if type is `Numeric`, otherwise `panic` |
+| Getter#3 | `Node.Value() (interface{}, error)` | Alias for `Node.GetNumeric() (float64, error)` method |
+
+### Comments
+
+1. Comparison:
+   * Any `Numeric` typed `Node` object can be compared with only any other `Numeric` type of `Node`. 
+     Comparison will use the underlying value of `float64` type;
+   * Casting `Numeric` typed `Node` object to `Bool` type gives `false` as result for `float64(0)` value and `true` otherwise;
+2. Any `numeric` value in `JSON` and `JSONPath` will be parsed as the `Numeric` typed `Node` object;
+3. Any `Numeric` typed `Node` object can contain `integer` or `float` value;
 
 # Examples
 

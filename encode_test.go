@@ -67,18 +67,18 @@ func TestMarshal_Primitive(t *testing.T) {
 		},
 		{
 			name: "100500",
-			node: NumericNode("", 100500),
+			node: NewNumeric(100500),
 		},
 		{
 			name: "100.5",
-			node: NumericNode("", 100.5),
+			node: NewNumeric(100.5),
 		},
 		{
 			name: "[1,2,3]",
 			node: ArrayNode("", []*Node{
-				NumericNode("0", 1),
-				NumericNode("2", 2),
-				NumericNode("3", 3),
+				NewNumeric(1),
+				NewNumeric(2),
+				NewNumeric(3),
 			}),
 		},
 		{
