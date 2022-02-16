@@ -38,7 +38,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -124,7 +124,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -210,7 +210,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -296,7 +296,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -362,7 +362,7 @@ func TestNode_SetArray(t *testing.T) {
 	expected := []*Node{
 		withKey(NewNull(), "0"),
 		BoolNode("1", false),
-		StringNode("2", "Foo"),
+		withKey(NewString("Foo"), "2"),
 		withKey(NewNumeric(1), "3"),
 	}
 	tests := []struct {
@@ -387,7 +387,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -473,7 +473,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "String",
-			node: StringNode("", "String value"),
+			node: NewString("String value"),
 		},
 		{
 			name: "parsed String",
@@ -601,7 +601,7 @@ func TestNode_AppendArray(t *testing.T) {
 
 	if err := root.AppendArray(
 		NewNumeric(1),
-		StringNode("", "foo"),
+		NewString("foo"),
 		Must(Unmarshal([]byte(`[0,1,null,true,"example"]`))),
 		Must(Unmarshal([]byte(`{"foo": true, "bar": null, "baz": 123}`))),
 	); err != nil {
@@ -1012,7 +1012,7 @@ func TestNode_DeleteNode(t *testing.T) {
 	if err := root.DeleteNode(NewNull()); err == nil {
 		t.Errorf("Expected error")
 	}
-	if err := root.DeleteNode(StringNode("biz", "zip")); err == nil {
+	if err := root.DeleteNode(withKey(NewString("zip"), "biz")); err == nil {
 		t.Errorf("Expected error")
 	}
 	if err := root.MustKey("biz").DeleteNode(root.MustKey("biz")); err == nil {
@@ -1161,7 +1161,7 @@ func TestNode_SetObject1(t *testing.T) {
 			name:     `null -> {"foo": "bar"}`,
 			json:     `null`,
 			path:     `$`,
-			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			value:    map[string]*Node{"foo": NewString("bar")},
 			wantErr:  false,
 			expected: `{"foo":"bar"}`,
 		},
@@ -1169,7 +1169,7 @@ func TestNode_SetObject1(t *testing.T) {
 			name:     `{"key": null} -> {"key": {"foo": "bar"}}`,
 			json:     `{"key": null}`,
 			path:     `$.key`,
-			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			value:    map[string]*Node{"foo": NewString("bar")},
 			wantErr:  false,
 			expected: `{"key":{"foo":"bar"}}`,
 		},
@@ -1177,7 +1177,7 @@ func TestNode_SetObject1(t *testing.T) {
 			name:     `{"key": [1,2,3]} -> {"key": {"foo":"bar"}}`,
 			json:     `{"key": [1,2,3]}`,
 			path:     `$.key`,
-			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			value:    map[string]*Node{"foo": NewString("bar")},
 			wantErr:  false,
 			expected: `{"key":{"foo":"bar"}}`,
 		},
@@ -1185,7 +1185,7 @@ func TestNode_SetObject1(t *testing.T) {
 			name:     `{"key": [[1,2,3],2,3]} -> {"key": [{"foo":"bar"},2,3]}`,
 			json:     `{"key": [[1,2,3],2,3]}`,
 			path:     `$.key[0]`,
-			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			value:    map[string]*Node{"foo": NewString("bar")},
 			wantErr:  false,
 			expected: `{"key":[{"foo":"bar"},2,3]}`,
 		},
@@ -1193,7 +1193,7 @@ func TestNode_SetObject1(t *testing.T) {
 			name:     `{"key": {"baz": [null]}} -> {"key": {"baz": [{"foo":"bar"}]}}`,
 			json:     `{"key": {"baz": [null]}}`,
 			path:     `$.key.baz[0]`,
-			value:    map[string]*Node{"foo": StringNode("foo", "bar")},
+			value:    map[string]*Node{"foo": NewString("bar")},
 			wantErr:  false,
 			expected: `{"key":{"baz":[{"foo":"bar"}]}}`,
 		},
@@ -1483,7 +1483,7 @@ func ExampleNode_Clone() {
 func TestNode_SetNode(t *testing.T) {
 	iValue := `{"foo": [{"bar":"baz"}]}`
 	idempotent := Must(Unmarshal([]byte(iValue)))
-	child := StringNode("", "example")
+	child := NewString("example")
 	parent := ArrayNode("", []*Node{child})
 	array := ArrayNode("", []*Node{})
 	proxy := func(root *Node) *Node {

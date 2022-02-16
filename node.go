@@ -78,11 +78,10 @@ func NewNumeric(value float64) (current *Node) {
 	return
 }
 
-// StringNode is constructor for Node with a String value
-func StringNode(key string, value string) (current *Node) {
+// NewString is constructor for Node with a String value
+func NewString(value string) (current *Node) {
 	current = &Node{
 		_type: String,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)

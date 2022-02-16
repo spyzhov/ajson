@@ -355,10 +355,10 @@ func TestNode_GetNumeric(t *testing.T) {
 		t.Errorf("root.GetNumeric() is corrupted")
 	}
 
-	root = StringNode("", "")
+	root = NewString("")
 	_, err = root.GetNumeric()
 	if err == nil {
-		t.Errorf("Error on root.GetNumeric() using StringNode")
+		t.Errorf("Error on root.GetNumeric() using NewString")
 	}
 
 	root = valueNode(nil, "", Numeric, "foo")
@@ -759,10 +759,10 @@ func TestNode_String(t *testing.T) {
 		t.Errorf("Wrong (Unmarshal) root.String()")
 	}
 
-	root = StringNode("", "foo")
+	root = NewString("foo")
 	value = root.String()
 	if value != `"foo"` {
-		t.Errorf("Wrong (StringNode) root.String()")
+		t.Errorf("Wrong (NewString) root.String()")
 	}
 
 	root = NewNull()
@@ -913,8 +913,8 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:     "filled maps",
-			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
-			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("bar")}),
 			expected: true,
 		},
 		{
@@ -925,14 +925,14 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:     "filled maps: different",
-			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
-			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "baz")}),
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("baz")}),
 			expected: false,
 		},
 		{
 			name:     "filled maps: different keys",
-			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
-			right:    valueNode(nil, "{}", Object, map[string]*Node{"baz": StringNode("baz", "bar")}),
+			left:     valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("bar")}),
+			right:    valueNode(nil, "{}", Object, map[string]*Node{"baz": NewString("bar")}),
 			expected: false,
 		},
 		{
@@ -943,7 +943,7 @@ func TestNode_Eq(t *testing.T) {
 		},
 		{
 			name:  "filled maps: errors",
-			left:  valueNode(nil, "{}", Object, map[string]*Node{"foo": StringNode("foo", "bar")}),
+			left:  valueNode(nil, "{}", Object, map[string]*Node{"foo": NewString("bar")}),
 			right: valueNode(nil, "{}", Object, map[string]*Node{"foo": valueNode(nil, "", String, 123)}),
 			error: true,
 		},
@@ -1010,12 +1010,12 @@ func TestNode_Eq(t *testing.T) {
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1100,12 +1100,12 @@ func TestNode_Neq(t *testing.T) {
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1183,26 +1183,26 @@ func TestNode_Ge(t *testing.T) {
 		},
 		{
 			name:     "string 1",
-			left:     StringNode("", "z"),
-			right:    StringNode("", "a"),
+			left:     NewString("z"),
+			right:    NewString("a"),
 			expected: true,
 		},
 		{
 			name:     "string 2",
-			left:     StringNode("", "a"),
-			right:    StringNode("", "a"),
+			left:     NewString("a"),
+			right:    NewString("a"),
 			expected: false,
 		},
 		{
 			name:     "wrong type 1",
-			left:     StringNode("", "z"),
+			left:     NewString("z"),
 			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
 			left:     NewNumeric(math.MaxFloat64),
-			right:    StringNode("", "z"),
+			right:    NewString("z"),
 			expected: false,
 		},
 		{
@@ -1214,18 +1214,18 @@ func TestNode_Ge(t *testing.T) {
 		{
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1301,26 +1301,26 @@ func TestNode_Geq(t *testing.T) {
 		},
 		{
 			name:     "string 1",
-			left:     StringNode("", "z"),
-			right:    StringNode("", "a"),
+			left:     NewString("z"),
+			right:    NewString("a"),
 			expected: true,
 		},
 		{
 			name:     "string 2",
-			left:     StringNode("", "a"),
-			right:    StringNode("", "a"),
+			left:     NewString("a"),
+			right:    NewString("a"),
 			expected: true,
 		},
 		{
 			name:     "wrong type 1",
-			left:     StringNode("", "z"),
+			left:     NewString("z"),
 			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
 			left:     NewNumeric(math.MaxFloat64),
-			right:    StringNode("", "z"),
+			right:    NewString("z"),
 			expected: false,
 		},
 		{
@@ -1332,18 +1332,18 @@ func TestNode_Geq(t *testing.T) {
 		{
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1420,26 +1420,26 @@ func TestNode_Le(t *testing.T) {
 		},
 		{
 			name:     "string 1",
-			left:     StringNode("", "z"),
-			right:    StringNode("", "a"),
+			left:     NewString("z"),
+			right:    NewString("a"),
 			expected: false,
 		},
 		{
 			name:     "string 2",
-			left:     StringNode("", "a"),
-			right:    StringNode("", "a"),
+			left:     NewString("a"),
+			right:    NewString("a"),
 			expected: false,
 		},
 		{
 			name:     "wrong type 1",
-			left:     StringNode("", "z"),
+			left:     NewString("z"),
 			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
 			left:     NewNumeric(math.MaxFloat64),
-			right:    StringNode("", "z"),
+			right:    NewString("z"),
 			expected: false,
 		},
 		{
@@ -1451,18 +1451,18 @@ func TestNode_Le(t *testing.T) {
 		{
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1539,26 +1539,26 @@ func TestNode_Leq(t *testing.T) {
 		},
 		{
 			name:     "string 1",
-			left:     StringNode("", "z"),
-			right:    StringNode("", "a"),
+			left:     NewString("z"),
+			right:    NewString("a"),
 			expected: false,
 		},
 		{
 			name:     "string 2",
-			left:     StringNode("", "a"),
-			right:    StringNode("", "a"),
+			left:     NewString("a"),
+			right:    NewString("a"),
 			expected: true,
 		},
 		{
 			name:     "wrong type 1",
-			left:     StringNode("", "z"),
+			left:     NewString("z"),
 			right:    NewNumeric(math.MaxFloat64),
 			expected: false,
 		},
 		{
 			name:     "wrong type 2",
 			left:     NewNumeric(math.MaxFloat64),
-			right:    StringNode("", "z"),
+			right:    NewString("z"),
 			expected: false,
 		},
 		{
@@ -1570,18 +1570,18 @@ func TestNode_Leq(t *testing.T) {
 		{
 			name:  "error 2",
 			left:  valueNode(nil, "e1", String, float64(1)),
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "nil/value",
 			left:  nil,
-			right: StringNode("", "foo"),
+			right: NewString("foo"),
 			error: true,
 		},
 		{
 			name:  "value/nil",
-			left:  StringNode("", "foo"),
+			left:  NewString("foo"),
 			right: nil,
 			error: true,
 		},
@@ -1616,7 +1616,7 @@ func TestNumericNode(t *testing.T) {
 }
 
 func TestStringNode(t *testing.T) {
-	node := StringNode("test", "check")
+	node := NewString("check")
 	if node.MustString() != "check" {
 		t.Errorf("Failed")
 	}
@@ -1633,7 +1633,7 @@ func TestArrayNode(t *testing.T) {
 	array := []*Node{
 		withKey(NewNull(), "0"),
 		NewNumeric(1),
-		StringNode("str", "foo"),
+		NewString("foo"),
 	}
 	node := ArrayNode("test", array)
 	result := node.MustArray()
@@ -1654,7 +1654,7 @@ func TestObjectNode(t *testing.T) {
 	objects := map[string]*Node{
 		"zero": NewNull(),
 		"foo":  NewNumeric(1),
-		"bar":  StringNode("str", "foo"),
+		"bar":  NewString("foo"),
 	}
 	node := ObjectNode("test", objects)
 	result := node.MustObject()
@@ -1682,10 +1682,10 @@ func TestNode_Inheritors(t *testing.T) {
 			node: ObjectNode("", map[string]*Node{
 				"zero": NewNull(),
 				"foo":  NewNumeric(1),
-				"bar":  StringNode("str", "foo"),
+				"bar":  NewString("foo"),
 			}),
 			expected: []*Node{
-				StringNode("str", "foo"),
+				NewString("foo"),
 				NewNumeric(1),
 				withKey(NewNull(), "0"),
 			},
@@ -1695,12 +1695,12 @@ func TestNode_Inheritors(t *testing.T) {
 			node: ArrayNode("", []*Node{
 				NewNull(),
 				NewNumeric(1),
-				StringNode("str", "foo"),
+				NewString("foo"),
 			}),
 			expected: []*Node{
 				withKey(NewNull(), "0"),
 				NewNumeric(1),
-				StringNode("str", "foo"),
+				NewString("foo"),
 			},
 		},
 	}
@@ -1802,8 +1802,8 @@ func TestNode_IsDirty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "StringNode",
-			node:     StringNode("", ""),
+			name:     "NewString",
+			node:     NewString(""),
 			expected: true,
 		},
 		{
@@ -1885,11 +1885,11 @@ func Test_newNode(t *testing.T) {
 func TestNode_Value(t *testing.T) {
 	array := ArrayNode("", []*Node{
 		NewNumeric(0),
-		StringNode("1", "bar"),
+		NewString("bar"),
 	})
 	object := ObjectNode("", map[string]*Node{
 		"foo": NewNumeric(0),
-		"bar": StringNode("bar", "bar"),
+		"bar": NewString("bar"),
 	})
 	tests := []struct {
 		name      string
@@ -1905,7 +1905,7 @@ func TestNode_Value(t *testing.T) {
 		},
 		{
 			name:      "string",
-			node:      StringNode("", "foo"),
+			node:      NewString("foo"),
 			wantValue: "foo",
 			wantErr:   false,
 		},

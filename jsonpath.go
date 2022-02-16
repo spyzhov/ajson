@@ -600,7 +600,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		ok       bool
 		size     int
 		commands []string
-		bstr     []byte
+		bytestr  []byte
 	)
 	for _, exp := range expression {
 		size = len(stack)
@@ -641,16 +641,16 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
 				stack = append(stack, constant)
 			} else {
-				bstr = []byte(exp)
-				size = len(bstr)
-				if size >= 2 && bstr[0] == quote && bstr[size-1] == quote {
-					if sstr, ok := unquote(bstr, quote); ok {
-						temp = StringNode("", sstr)
+				bytestr = []byte(exp)
+				size = len(bytestr)
+				if size >= 2 && bytestr[0] == quote && bytestr[size-1] == quote {
+					if strval, ok := unquote(bytestr, quote); ok {
+						temp = NewString(strval)
 					} else {
 						err = errorRequest("wrong request: %s", cmd)
 					}
 				} else {
-					temp, err = Unmarshal(bstr)
+					temp, err = Unmarshal(bytestr)
 				}
 				if err != nil {
 					return

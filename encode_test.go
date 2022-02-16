@@ -11,7 +11,7 @@ func ExampleMarshal() {
 	locations, _ := root.JSONPath("$..[?(@.latitude && @.longitude)]")
 	for _, location := range locations {
 		name := fmt.Sprintf("At [%v, %v]", location.MustKey("latitude").MustNumeric(), location.MustKey("longitude").MustNumeric())
-		_ = location.AppendObject("name", StringNode("", name))
+		_ = location.AppendObject("name", NewString(name))
 	}
 	result, _ := Marshal(root)
 	fmt.Printf("%s", result)
@@ -55,15 +55,15 @@ func TestMarshal_Primitive(t *testing.T) {
 		},
 		{
 			name: `"string"`,
-			node: StringNode("", "string"),
+			node: NewString("string"),
 		},
 		{
 			name: `"one \"encoded\" string"`,
-			node: StringNode("", `one "encoded" string`),
+			node: NewString(`one "encoded" string`),
 		},
 		{
 			name: `"spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \u0000"`,
-			node: StringNode("", "spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \000"),
+			node: NewString("spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \000"),
 		},
 		{
 			name: "100500",
@@ -84,7 +84,7 @@ func TestMarshal_Primitive(t *testing.T) {
 		{
 			name: `{"foo":"bar"}`,
 			node: ObjectNode("", map[string]*Node{
-				"foo": StringNode("foo", "bar"),
+				"foo": NewString("bar"),
 			}),
 		},
 	}

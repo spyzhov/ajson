@@ -114,8 +114,8 @@ func testNumOperation(operator string, results [3]float64) []*operationTest {
 		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewNumeric(results[0])},
 		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewNumeric(results[1])},
 		{name: "10" + operator + "3", operation: operator, left: NewNumeric(10), right: NewNumeric(3), result: NewNumeric(results[2])},
-		{name: "X" + operator + "2", operation: operator, left: StringNode("", "X"), right: NewNumeric(2), fail: true},
-		{name: "2" + operator + "Y", operation: operator, left: NewNumeric(2), right: StringNode("", "Y"), fail: true},
+		{name: "X" + operator + "2", operation: operator, left: NewString("X"), right: NewNumeric(2), fail: true},
+		{name: "2" + operator + "Y", operation: operator, left: NewNumeric(2), right: NewString("Y"), fail: true},
 	}
 }
 
@@ -142,7 +142,7 @@ func TestOperations(t *testing.T) {
 	tests := []*operationTest{
 		{name: "0/0", operation: "/", left: NewNumeric(0), right: NewNumeric(0), fail: true},
 		{name: "1/0", operation: "/", left: NewNumeric(1), right: NewNumeric(0), fail: true},
-		{name: "X+Y", operation: "+", left: StringNode("", "X"), right: StringNode("", "Y"), result: StringNode("", "XY")},
+		{name: "X+Y", operation: "+", left: NewString("X"), right: NewString("Y"), result: NewString("XY")},
 	}
 	tests = append(tests, testNumOperation("**", [3]float64{4, 27, 1000})...)
 
@@ -201,7 +201,7 @@ func TestOperations(t *testing.T) {
 		&operationTest{
 			name:      `{"foo":"bar"} || [1] == true`,
 			operation: "&&",
-			left:      ObjectNode("", map[string]*Node{"foo": StringNode("foo", "bar")}),
+			left:      ObjectNode("", map[string]*Node{"foo": NewString("bar")}),
 			right:     ArrayNode("", []*Node{NewNumeric(1)}),
 			result:    _true,
 		},
@@ -212,11 +212,11 @@ func TestOperations(t *testing.T) {
 		&operationTest{name: "false || error", operation: "||", left: _f, right: _e, fail: true},
 		&operationTest{name: "true || error", operation: "||", left: _t, right: _e, result: _true},
 
-		&operationTest{name: "regexp true", operation: "=~", left: StringNode("", `123`), right: StringNode("", `\d+`), result: _true},
-		&operationTest{name: "regexp false", operation: "=~", left: StringNode("", `1 2 3`), right: StringNode("", `^\d+$`), result: _false},
-		&operationTest{name: "regexp pattern error", operation: "=~", left: StringNode("", `2`), right: StringNode("", `\2`), fail: true},
-		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: StringNode("", `123`), fail: true},
-		&operationTest{name: "regexp error 2", operation: "=~", left: StringNode("", `\d+`), right: _f, fail: true},
+		&operationTest{name: "regexp true", operation: "=~", left: NewString(`123`), right: NewString(`\d+`), result: _true},
+		&operationTest{name: "regexp false", operation: "=~", left: NewString(`1 2 3`), right: NewString(`^\d+$`), result: _false},
+		&operationTest{name: "regexp pattern error", operation: "=~", left: NewString(`2`), right: NewString(`\2`), fail: true},
+		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: NewString(`123`), fail: true},
+		&operationTest{name: "regexp error 2", operation: "=~", left: NewString(`\d+`), right: _f, fail: true},
 	)
 
 	for _, test := range tests {
@@ -406,7 +406,7 @@ func TestFunctions2(t *testing.T) {
 		{name: "pow10 error", fname: "pow10", value: _e, fail: true},
 		{name: "factorial error", fname: "factorial", value: _e, fail: true},
 		{name: "abs error 1", fname: "abs", value: _e, fail: true},
-		{name: "abs error 2", fname: "abs", value: StringNode("", ""), fail: true},
+		{name: "abs error 2", fname: "abs", value: NewString(""), fail: true},
 
 		{name: "length array", fname: "length", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
@@ -418,7 +418,7 @@ func TestFunctions2(t *testing.T) {
 			"foo": NewNumeric(1),
 			"bar": NewNumeric(1),
 		}), result: NewNumeric(2)},
-		{name: "length string", fname: "length", value: StringNode("", "foo_bar"), result: NewNumeric(7)},
+		{name: "length string", fname: "length", value: NewString("foo_bar"), result: NewNumeric(7)},
 		{name: "length string error", fname: "length", value: _s, fail: true},
 		{name: "length numeric", fname: "length", value: NewNumeric(123), result: NewNumeric(1)},
 		{name: "length bool", fname: "length", value: BoolNode("", false), result: NewNumeric(1)},
@@ -472,8 +472,8 @@ func TestFunctions2(t *testing.T) {
 		}), result: NewNumeric(6)},
 		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NewNumeric(0)},
 
-		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
-		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
+		{name: "rand", fname: "rand", value: NewString("test"), fail: true},
+		{name: "randint", fname: "randint", value: NewString("test"), fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
