@@ -66,7 +66,7 @@ func main() {
 
 	var nodes []*ajson.Node
 	nodes, err = root.JSONPath(path)
-	result = ajson.ArrayNode("", nodes)
+	result = ajson.NewArray(nodes)
 	if err != nil {
 		result, err = ajson.Eval(root, path)
 	}

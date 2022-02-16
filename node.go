@@ -98,12 +98,11 @@ func NewBool(value bool) (current *Node) {
 	return
 }
 
-// ArrayNode is constructor for Node with an Array value
-func ArrayNode(key string, value []*Node) (current *Node) {
+// NewArray is constructor for Node with an Array value
+func NewArray(value []*Node) (current *Node) {
 	current = &Node{
 		data:  nil,
 		_type: Array,
-		key:   &key,
 		dirty: true,
 	}
 	current.children = make(map[string]*Node, len(value))

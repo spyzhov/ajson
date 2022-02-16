@@ -1141,8 +1141,8 @@ func TestNode_Ge(t *testing.T) {
 		},
 		{
 			name:  "array",
-			left:  ArrayNode("", nil),
-			right: ArrayNode("", nil),
+			left:  NewArray(nil),
+			right: NewArray(nil),
 			error: true,
 		},
 		{
@@ -1259,8 +1259,8 @@ func TestNode_Geq(t *testing.T) {
 		},
 		{
 			name:  "array",
-			left:  ArrayNode("", nil),
-			right: ArrayNode("", nil),
+			left:  NewArray(nil),
+			right: NewArray(nil),
 			error: true,
 		},
 		{
@@ -1378,8 +1378,8 @@ func TestNode_Le(t *testing.T) {
 		},
 		{
 			name:  "array",
-			left:  ArrayNode("", nil),
-			right: ArrayNode("", nil),
+			left:  NewArray(nil),
+			right: NewArray(nil),
 			error: true,
 		},
 		{
@@ -1497,8 +1497,8 @@ func TestNode_Leq(t *testing.T) {
 		},
 		{
 			name:  "array",
-			left:  ArrayNode("", nil),
-			right: ArrayNode("", nil),
+			left:  NewArray(nil),
+			right: NewArray(nil),
 			error: true,
 		},
 		{
@@ -1631,11 +1631,11 @@ func TestBoolNode(t *testing.T) {
 
 func TestArrayNode(t *testing.T) {
 	array := []*Node{
-		withKey(NewNull(), "0"),
+		NewNull(),
 		NewNumeric(1),
 		NewString("foo"),
 	}
-	node := ArrayNode("test", array)
+	node := NewArray(array)
 	result := node.MustArray()
 	if len(result) != len(array) {
 		t.Errorf("Failed: length")
@@ -1692,7 +1692,7 @@ func TestNode_Inheritors(t *testing.T) {
 		},
 		{
 			name: "array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNull(),
 				NewNumeric(1),
 				NewString("foo"),
@@ -1797,8 +1797,8 @@ func TestNode_IsDirty(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "ArrayNode",
-			node:     ArrayNode("", nil),
+			name:     "NewArray",
+			node:     NewArray(nil),
 			expected: true,
 		},
 		{
@@ -1883,7 +1883,7 @@ func Test_newNode(t *testing.T) {
 }
 
 func TestNode_Value(t *testing.T) {
-	array := ArrayNode("", []*Node{
+	array := NewArray([]*Node{
 		NewNumeric(0),
 		NewString("bar"),
 	})

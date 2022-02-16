@@ -54,7 +54,7 @@ func TestNode_SetNull(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -140,7 +140,7 @@ func TestNode_SetNumeric(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -226,7 +226,7 @@ func TestNode_SetString(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -312,7 +312,7 @@ func TestNode_SetBool(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -403,7 +403,7 @@ func TestNode_SetArray(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -489,7 +489,7 @@ func TestNode_SetObject(t *testing.T) {
 		},
 		{
 			name: "Array",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(123.456),
 				NewBool(false),
 				NewNull(),
@@ -655,7 +655,7 @@ func TestNode_AppendArray_self(t *testing.T) {
 		t.Errorf("Marshal returns wrong value: %s", string(value))
 	}
 
-	err = root.AppendArray(ArrayNode("", nil))
+	err = root.AppendArray(NewArray(nil))
 	if err != nil {
 		t.Errorf("AppendArray returns error: %s", err)
 	}
@@ -1378,7 +1378,7 @@ func TestNode_update_fail(t *testing.T) {
 func TestNode_Clone(t *testing.T) {
 	node := NewNumeric(1.1)
 	null := NewNull()
-	array := ArrayNode("", []*Node{node, null})
+	array := NewArray([]*Node{node, null})
 	object := ObjectNode("", map[string]*Node{"array": array})
 
 	tests := []struct {
@@ -1438,7 +1438,7 @@ func ExampleNode_Clone() {
 		nodes[i] = node.Clone()
 	}
 
-	result, _ := Marshal(ArrayNode("", nodes))
+	result, _ := Marshal(NewArray(nodes))
 	fmt.Printf("Array: %s\n", result)
 
 	result, _ = Marshal(root)
@@ -1484,8 +1484,8 @@ func TestNode_SetNode(t *testing.T) {
 	iValue := `{"foo": [{"bar":"baz"}]}`
 	idempotent := Must(Unmarshal([]byte(iValue)))
 	child := NewString("example")
-	parent := ArrayNode("", []*Node{child})
-	array := ArrayNode("", []*Node{})
+	parent := NewArray([]*Node{child})
+	array := NewArray([]*Node{})
 	proxy := func(root *Node) *Node {
 		return root
 	}

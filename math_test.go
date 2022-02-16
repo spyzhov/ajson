@@ -187,7 +187,7 @@ func TestOperations(t *testing.T) {
 		&operationTest{
 			name:      "[] && {} == false",
 			operation: "&&",
-			left:      ArrayNode("", []*Node{}),
+			left:      NewArray([]*Node{}),
 			right:     ObjectNode("", map[string]*Node{}),
 			result:    _false,
 		},
@@ -195,14 +195,14 @@ func TestOperations(t *testing.T) {
 			name:      "{} || [] == false",
 			operation: "||",
 			left:      ObjectNode("", map[string]*Node{}),
-			right:     ArrayNode("", []*Node{}),
+			right:     NewArray([]*Node{}),
 			result:    _false,
 		},
 		&operationTest{
 			name:      `{"foo":"bar"} || [1] == true`,
 			operation: "&&",
 			left:      ObjectNode("", map[string]*Node{"foo": NewString("bar")}),
-			right:     ArrayNode("", []*Node{NewNumeric(1)}),
+			right:     NewArray([]*Node{NewNumeric(1)}),
 			result:    _true,
 		},
 
@@ -408,12 +408,12 @@ func TestFunctions2(t *testing.T) {
 		{name: "abs error 1", fname: "abs", value: _e, fail: true},
 		{name: "abs error 2", fname: "abs", value: NewString(""), fail: true},
 
-		{name: "length array", fname: "length", value: ArrayNode("test", []*Node{
+		{name: "length array", fname: "length", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), result: NewNumeric(3)},
-		{name: "length blank array", fname: "length", value: ArrayNode("test", []*Node{}), result: NewNumeric(0)},
+		{name: "length blank array", fname: "length", value: NewArray([]*Node{}), result: NewNumeric(0)},
 		{name: "length object", fname: "length", value: ObjectNode("test", map[string]*Node{
 			"foo": NewNumeric(1),
 			"bar": NewNumeric(1),
@@ -424,19 +424,19 @@ func TestFunctions2(t *testing.T) {
 		{name: "length bool", fname: "length", value: NewBool(false), result: NewNumeric(1)},
 		{name: "length null", fname: "length", value: NewNull(), result: NewNumeric(1)},
 
-		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
+		{name: "avg error 1", fname: "avg", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
 		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NewNull()},
-		{name: "avg array 1", fname: "avg", value: ArrayNode("test", []*Node{
+		{name: "avg array 1", fname: "avg", value: NewArray([]*Node{
 			NewNumeric(1),
 			NewNumeric(1),
 			NewNumeric(1),
 			NewNumeric(1),
 		}), result: NewNumeric(1)},
-		{name: "avg array 2", fname: "avg", value: ArrayNode("test", []*Node{
+		{name: "avg array 2", fname: "avg", value: NewArray([]*Node{
 			NewNumeric(1),
 			NewNumeric(2),
 			NewNumeric(3),
@@ -446,21 +446,21 @@ func TestFunctions2(t *testing.T) {
 			"w": NewNumeric(2),
 			"e": NewNumeric(3),
 		}), result: NewNumeric(2)},
-		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NewNumeric(0)},
+		{name: "avg array blank", fname: "avg", value: NewArray([]*Node{}), result: NewNumeric(0)},
 
-		{name: "sum error 1", fname: "sum", value: ArrayNode("test", []*Node{
+		{name: "sum error 1", fname: "sum", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
 		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NewNull()},
-		{name: "sum array 1", fname: "sum", value: ArrayNode("test", []*Node{
+		{name: "sum array 1", fname: "sum", value: NewArray([]*Node{
 			NewNumeric(1),
 			NewNumeric(1),
 			NewNumeric(1),
 			NewNumeric(1),
 		}), result: NewNumeric(4)},
-		{name: "sum array 2", fname: "sum", value: ArrayNode("test", []*Node{
+		{name: "sum array 2", fname: "sum", value: NewArray([]*Node{
 			NewNumeric(1),
 			NewNumeric(2),
 			NewNumeric(3),
@@ -470,7 +470,7 @@ func TestFunctions2(t *testing.T) {
 			"w": NewNumeric(2),
 			"e": NewNumeric(3),
 		}), result: NewNumeric(6)},
-		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NewNumeric(0)},
+		{name: "sum array blank", fname: "sum", value: NewArray([]*Node{}), result: NewNumeric(0)},
 
 		{name: "rand", fname: "rand", value: NewString("test"), fail: true},
 		{name: "randint", fname: "randint", value: NewString("test"), fail: true},

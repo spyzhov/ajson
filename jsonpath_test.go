@@ -562,7 +562,7 @@ func ExampleJSONPath_array() {
 	if err != nil {
 		panic(err)
 	}
-	result, err := Marshal(ArrayNode("", authors))
+	result, err := Marshal(NewArray(authors))
 	if err != nil {
 		panic(err)
 	}
@@ -1420,10 +1420,11 @@ func TestJSONPath_special_requests(t *testing.T) {
 func TestApplyJSONPath(t *testing.T) {
 	node1 := NewNumeric(1.)
 	node2 := NewNumeric(2.)
-	cpy := func(n Node) *Node {
-		return &n
+	_copy := func(node *Node) *Node {
+		another := *node
+		return &another
 	}
-	array := ArrayNode("", []*Node{cpy(*node1), cpy(*node2)})
+	array := NewArray([]*Node{_copy(node1), _copy(node2)})
 
 	type args struct {
 		node     *Node

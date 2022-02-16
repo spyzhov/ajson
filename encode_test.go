@@ -75,7 +75,7 @@ func TestMarshal_Primitive(t *testing.T) {
 		},
 		{
 			name: "[1,2,3]",
-			node: ArrayNode("", []*Node{
+			node: NewArray([]*Node{
 				NewNumeric(1),
 				NewNumeric(2),
 				NewNumeric(3),
@@ -165,7 +165,7 @@ func TestMarshal_Errors(t *testing.T) {
 		{
 			name: "Array_1",
 			node: func() (node *Node) {
-				node = ArrayNode("", nil)
+				node = NewArray(nil)
 				node.children["1"] = withKey(NewNull(), "1")
 				return
 			},
@@ -173,7 +173,7 @@ func TestMarshal_Errors(t *testing.T) {
 		{
 			name: "Array_2",
 			node: func() (node *Node) {
-				return ArrayNode("", []*Node{valueNode(nil, "", Bool, 1)})
+				return NewArray([]*Node{valueNode(nil, "", Bool, 1)})
 			},
 		},
 		{

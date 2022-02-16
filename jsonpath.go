@@ -632,7 +632,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 					return
 				}
 				if len(slice) > 1 { // array given
-					stack = append(stack, ArrayNode("", slice))
+					stack = append(stack, NewArray(slice))
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
