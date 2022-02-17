@@ -7,28 +7,27 @@ import (
 	. "github.com/spyzhov/ajson/v1/internal"
 )
 
-type buffer struct {
-	data   []byte
-	length int
-	index  int
-
-	last  States
-	state States
-	class Classes
-}
-
 const __ = -1
 
 const (
+	// uSpace is a code for symbol `Space` (taken from www.json.org)
+	uSpace byte = '\u0020'
+	// uNewLine is a code for symbol `New Line` or `\n` (taken from www.json.org)
+	uNewLine byte = '\u000A'
+	// uCarriageReturn is a code for symbol `Carriage Return` or `\r` (taken from www.json.org)
+	uCarriageReturn byte = '\u000D'
+	// uTab is a code for symbol `Tab` or `\t` (taken from www.json.org)
+	uTab byte = '\u0009'
+
 	quotes       byte = '"'
 	quote        byte = '\''
 	coma         byte = ','
 	colon        byte = ':'
 	backslash    byte = '\\'
-	skipS        byte = ' '
-	skipN        byte = '\n'
-	skipR        byte = '\r'
-	skipT        byte = '\t'
+	skipS             = uSpace
+	skipN             = uNewLine
+	skipR             = uCarriageReturn
+	skipT             = uTab
 	bracketL     byte = '['
 	bracketR     byte = ']'
 	bracesL      byte = '{'
@@ -52,6 +51,23 @@ const (
 	question byte = '?'
 )
 
+type buffer struct {
+	data   []byte
+	length int
+	index  int
+
+	last  State
+	state State
+	class Class
+
+	table sst
+}
+
+type sst interface {
+	GetState(state State, class Class) State
+	GetClass(index byte) Class
+}
+
 type (
 	rpn    []string
 	tokens []string
@@ -69,6 +85,7 @@ func newBuffer(body []byte) (b *buffer) {
 		data:   body,
 		last:   GO,
 		state:  GO,
+		table:  StateTransitionTable,
 	}
 	return
 }
@@ -158,7 +175,7 @@ func (b *buffer) numeric(token bool) error {
 		if b.class == __ {
 			return b.errorSymbol()
 		}
-		b.state = StateTransitionTable[b.last][b.class]
+		b.state = b.table.GetState(b.last, b.class)
 		if b.state == __ {
 			if token {
 				break
@@ -179,7 +196,7 @@ func (b *buffer) numeric(token bool) error {
 	return nil
 }
 
-func (b *buffer) getClasses(search byte) Classes {
+func (b *buffer) getClasses(search byte) Class {
 	if b.data[b.index] >= 128 {
 		return C_ETC
 	}
@@ -189,13 +206,13 @@ func (b *buffer) getClasses(search byte) Classes {
 	return AsciiClasses[b.data[b.index]]
 }
 
-func (b *buffer) getState() States {
+func (b *buffer) getState() State {
 	b.last = b.state
 	b.class = b.getClasses(quotes)
 	if b.class == __ {
 		return __
 	}
-	b.state = StateTransitionTable[b.last][b.class]
+	b.state = b.table.GetState(b.last, b.class)
 	return b.state
 }
 
@@ -209,7 +226,7 @@ func (b *buffer) string(search byte, token bool) error {
 		if b.class == __ {
 			return b.errorSymbol()
 		}
-		b.state = StateTransitionTable[b.last][b.class]
+		b.state = b.table.GetState(b.last, b.class)
 		if b.state == __ {
 			return b.errorSymbol()
 		}
