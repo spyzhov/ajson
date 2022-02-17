@@ -86,7 +86,7 @@ func TestBuffer_RPN_long_operations_name(t *testing.T) {
 
 	expected := []string{"@.key", "1", "!@#$%^&*"}
 	AddOperation(`!@#$%^&*`, 3, false, func(left *Node, right *Node) (result *Node, err error) {
-		return NullNode(""), nil
+		return NewNull(), nil
 	})
 	result, err := newBuffer([]byte(jsonpath)).rpn()
 	if err != nil {

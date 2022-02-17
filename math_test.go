@@ -28,7 +28,7 @@ func ExampleAddFunction() {
 				}
 				sum += num
 			}
-			return NumericNode("array_sum", sum), nil
+			return NewNumeric(sum), nil
 		}
 		return
 	})
@@ -50,7 +50,7 @@ func ExampleAddFunction_usage() {
 }
 
 func ExampleAddConstant() {
-	AddConstant("SqrtPi", NumericNode("SqrtPi", math.SqrtPi))
+	AddConstant("SqrtPi", NewNumeric(math.SqrtPi))
 }
 
 func ExampleAddConstant_using() {
@@ -85,7 +85,7 @@ func ExampleAddOperation() {
 		if err != nil {
 			return nil, err
 		}
-		return BoolNode("neq", !res), nil
+		return NewBool(!res), nil
 	})
 }
 
@@ -111,38 +111,38 @@ type operationTest struct {
 
 func testNumOperation(operator string, results [3]float64) []*operationTest {
 	return []*operationTest{
-		{name: "2" + operator + "2", operation: operator, left: NumericNode("", 2), right: NumericNode("", 2), result: NumericNode("", results[0])},
-		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: NumericNode("", results[1])},
-		{name: "10" + operator + "3", operation: operator, left: NumericNode("", 10), right: NumericNode("", 3), result: NumericNode("", results[2])},
-		{name: "X" + operator + "2", operation: operator, left: StringNode("", "X"), right: NumericNode("", 2), fail: true},
-		{name: "2" + operator + "Y", operation: operator, left: NumericNode("", 2), right: StringNode("", "Y"), fail: true},
+		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewNumeric(results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewNumeric(results[1])},
+		{name: "10" + operator + "3", operation: operator, left: NewNumeric(10), right: NewNumeric(3), result: NewNumeric(results[2])},
+		{name: "X" + operator + "2", operation: operator, left: NewString("X"), right: NewNumeric(2), fail: true},
+		{name: "2" + operator + "Y", operation: operator, left: NewNumeric(2), right: NewString("Y"), fail: true},
 	}
 }
 
 func testBoolOperation(operator string, results [4]bool) []*operationTest {
 	return []*operationTest{
-		{name: "2" + operator + "2", operation: operator, left: NumericNode("", 2), right: NumericNode("", 2), result: BoolNode("", results[0])},
-		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: BoolNode("", results[1])},
-		{name: "10" + operator + "0", operation: operator, left: NumericNode("", 10), right: NumericNode("", 0), result: BoolNode("", results[2])},
-		{name: "0" + operator + "10", operation: operator, left: NumericNode("", 0), right: NumericNode("", 10), result: BoolNode("", results[3])},
-		{name: "left error: " + operator, operation: operator, left: valueNode(nil, "", Numeric, "foo"), right: NumericNode("", 10), fail: true},
-		{name: "right error: " + operator, operation: operator, left: NumericNode("", 10), right: valueNode(nil, "", Numeric, "foo"), fail: true},
+		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewBool(results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewBool(results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: NewBool(results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: NewBool(results[3])},
+		{name: "left error: " + operator, operation: operator, left: valueNode(nil, "", Numeric, "foo"), right: NewNumeric(10), fail: true},
+		{name: "right error: " + operator, operation: operator, left: NewNumeric(10), right: valueNode(nil, "", Numeric, "foo"), fail: true},
 	}
 }
 func testBooleanOperation(operator string, results [4]bool) []*operationTest {
 	return []*operationTest{
-		{name: "2" + operator + "2", operation: operator, left: NumericNode("", 2), right: NumericNode("", 2), result: BoolNode("", results[0])},
-		{name: "3" + operator + "3", operation: operator, left: NumericNode("", 3), right: NumericNode("", 3), result: BoolNode("", results[1])},
-		{name: "10" + operator + "0", operation: operator, left: NumericNode("", 10), right: NumericNode("", 0), result: BoolNode("", results[2])},
-		{name: "0" + operator + "10", operation: operator, left: NumericNode("", 0), right: NumericNode("", 10), result: BoolNode("", results[3])},
+		{name: "2" + operator + "2", operation: operator, left: NewNumeric(2), right: NewNumeric(2), result: NewBool(results[0])},
+		{name: "3" + operator + "3", operation: operator, left: NewNumeric(3), right: NewNumeric(3), result: NewBool(results[1])},
+		{name: "10" + operator + "0", operation: operator, left: NewNumeric(10), right: NewNumeric(0), result: NewBool(results[2])},
+		{name: "0" + operator + "10", operation: operator, left: NewNumeric(0), right: NewNumeric(10), result: NewBool(results[3])},
 	}
 }
 
 func TestOperations(t *testing.T) {
 	tests := []*operationTest{
-		{name: "0/0", operation: "/", left: NumericNode("", 0), right: NumericNode("", 0), fail: true},
-		{name: "1/0", operation: "/", left: NumericNode("", 1), right: NumericNode("", 0), fail: true},
-		{name: "X+Y", operation: "+", left: StringNode("", "X"), right: StringNode("", "Y"), result: StringNode("", "XY")},
+		{name: "0/0", operation: "/", left: NewNumeric(0), right: NewNumeric(0), fail: true},
+		{name: "1/0", operation: "/", left: NewNumeric(1), right: NewNumeric(0), fail: true},
+		{name: "X+Y", operation: "+", left: NewString("X"), right: NewString("Y"), result: NewString("XY")},
 	}
 	tests = append(tests, testNumOperation("**", [3]float64{4, 27, 1000})...)
 
@@ -170,10 +170,11 @@ func TestOperations(t *testing.T) {
 	tests = append(tests, testBooleanOperation("||", [4]bool{true, true, true, true})...)
 
 	_e := valueNode(nil, "", Numeric, "foo")
-	_t := NumericNode("", 1)
-	_f := NumericNode("", 0)
-	_false := BoolNode("", false)
-	_true := BoolNode("", true)
+	_t := NewNumeric(1)
+	_f := NewNumeric(0)
+	_false := NewBool(false)
+	_true := NewBool(true)
+	_null := NewNull()
 	tests = append(
 		tests,
 		&operationTest{name: "error && true", operation: "&&", left: _e, right: _t, fail: true},
@@ -181,25 +182,27 @@ func TestOperations(t *testing.T) {
 		&operationTest{name: "error && false", operation: "&&", left: _e, right: _f, fail: true},
 		&operationTest{name: "false && error", operation: "&&", left: _f, right: _e, result: _false},
 		&operationTest{name: "true && error", operation: "&&", left: _t, right: _e, fail: true},
+		&operationTest{name: "true && null", operation: "&&", left: _t, right: _null, result: _false},
+		&operationTest{name: "null && true", operation: "&&", left: _null, right: _t, result: _false},
 		&operationTest{
 			name:      "[] && {} == false",
 			operation: "&&",
-			left:      ArrayNode("", []*Node{}),
-			right:     ObjectNode("", map[string]*Node{}),
+			left:      NewArray([]*Node{}),
+			right:     NewObject(map[string]*Node{}),
 			result:    _false,
 		},
 		&operationTest{
 			name:      "{} || [] == false",
 			operation: "||",
-			left:      ObjectNode("", map[string]*Node{}),
-			right:     ArrayNode("", []*Node{}),
+			left:      NewObject(map[string]*Node{}),
+			right:     NewArray([]*Node{}),
 			result:    _false,
 		},
 		&operationTest{
 			name:      `{"foo":"bar"} || [1] == true`,
 			operation: "&&",
-			left:      ObjectNode("", map[string]*Node{"foo": StringNode("foo", "bar")}),
-			right:     ArrayNode("", []*Node{NumericNode("0", 1)}),
+			left:      NewObject(map[string]*Node{"foo": NewString("bar")}),
+			right:     NewArray([]*Node{NewNumeric(1)}),
 			result:    _true,
 		},
 
@@ -209,11 +212,11 @@ func TestOperations(t *testing.T) {
 		&operationTest{name: "false || error", operation: "||", left: _f, right: _e, fail: true},
 		&operationTest{name: "true || error", operation: "||", left: _t, right: _e, result: _true},
 
-		&operationTest{name: "regexp true", operation: "=~", left: StringNode("", `123`), right: StringNode("", `\d+`), result: _true},
-		&operationTest{name: "regexp false", operation: "=~", left: StringNode("", `1 2 3`), right: StringNode("", `^\d+$`), result: _false},
-		&operationTest{name: "regexp pattern error", operation: "=~", left: StringNode("", `2`), right: StringNode("", `\2`), fail: true},
-		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: StringNode("", `123`), fail: true},
-		&operationTest{name: "regexp error 2", operation: "=~", left: StringNode("", `\d+`), right: _f, fail: true},
+		&operationTest{name: "regexp true", operation: "=~", left: NewString(`123`), right: NewString(`\d+`), result: _true},
+		&operationTest{name: "regexp false", operation: "=~", left: NewString(`1 2 3`), right: NewString(`^\d+$`), result: _false},
+		&operationTest{name: "regexp pattern error", operation: "=~", left: NewString(`2`), right: NewString(`\2`), fail: true},
+		&operationTest{name: "regexp error 1", operation: "=~", left: _f, right: NewString(`123`), fail: true},
+		&operationTest{name: "regexp error 2", operation: "=~", left: NewString(`\d+`), right: _f, fail: true},
 	)
 
 	for _, test := range tests {
@@ -240,7 +243,7 @@ func TestAddConstant(t *testing.T) {
 	if _, ok := constants[name]; ok {
 		t.Error("test constant already exists")
 	}
-	AddConstant(name, NumericNode(name, 3.14))
+	AddConstant(name, NewNumeric(3.14))
 	if _, ok := constants[name]; !ok {
 		t.Error("test constant was not added")
 	}
@@ -253,18 +256,18 @@ func TestAddOperation(t *testing.T) {
 		return
 	}
 	AddOperation(name, 1, true, func(left *Node, right *Node) (result *Node, err error) {
-		return NumericNode("example", 1), nil
+		return NewNumeric(1), nil
 	})
 	if _, ok := operations[name]; !ok {
 		t.Error("test operation was not added")
 		return
 	}
-	result, err := Eval(NullNode(""), `@ _one_to_rule_them_all_ 100500`)
+	result, err := Eval(NewNull(), `@ _one_to_rule_them_all_ 100500`)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
 	}
-	if ok, err := result.Eq(NumericNode("", 1)); err != nil {
+	if ok, err := result.Eq(NewNumeric(1)); err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 	} else if !ok {
 		t.Errorf("Should be one")
@@ -277,7 +280,7 @@ func TestAddFunction(t *testing.T) {
 		t.Error("test constant already exists")
 	}
 	AddFunction(name, func(node *Node) (result *Node, err error) {
-		return NumericNode("example", 2), nil
+		return NewNumeric(2), nil
 	})
 	if _, ok := functions[name]; !ok {
 		t.Error("test function was not added")
@@ -365,15 +368,15 @@ func TestFunctions(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			node := NumericNode(test.name, test.value)
+			node := NewNumeric(test.value)
 			var expected *Node
 			switch test.result.(type) {
 			case int:
-				expected = NumericNode(test.fname, float64(test.result.(int)))
+				expected = NewNumeric(float64(test.result.(int)))
 			case float64:
-				expected = NumericNode(test.fname, test.result.(float64))
+				expected = NewNumeric(test.result.(float64))
 			case bool:
-				expected = BoolNode(test.fname, test.result.(bool))
+				expected = NewBool(test.result.(bool))
 			default:
 				panic("wrong type")
 			}
@@ -403,74 +406,74 @@ func TestFunctions2(t *testing.T) {
 		{name: "pow10 error", fname: "pow10", value: _e, fail: true},
 		{name: "factorial error", fname: "factorial", value: _e, fail: true},
 		{name: "abs error 1", fname: "abs", value: _e, fail: true},
-		{name: "abs error 2", fname: "abs", value: StringNode("", ""), fail: true},
+		{name: "abs error 2", fname: "abs", value: NewString(""), fail: true},
 
-		{name: "length array", fname: "length", value: ArrayNode("test", []*Node{
+		{name: "length array", fname: "length", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
-		}), result: NumericNode("", 3)},
-		{name: "length blank array", fname: "length", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
-		{name: "length object", fname: "length", value: ObjectNode("test", map[string]*Node{
-			"foo": NumericNode("foo", 1),
-			"bar": NumericNode("bar", 1),
-		}), result: NumericNode("", 2)},
-		{name: "length string", fname: "length", value: StringNode("", "foo_bar"), result: NumericNode("", 7)},
+		}), result: NewNumeric(3)},
+		{name: "length blank array", fname: "length", value: NewArray([]*Node{}), result: NewNumeric(0)},
+		{name: "length object", fname: "length", value: NewObject(map[string]*Node{
+			"foo": NewNumeric(1),
+			"bar": NewNumeric(1),
+		}), result: NewNumeric(2)},
+		{name: "length string", fname: "length", value: NewString("foo_bar"), result: NewNumeric(7)},
 		{name: "length string error", fname: "length", value: _s, fail: true},
-		{name: "length numeric", fname: "length", value: NumericNode("", 123), result: NumericNode("", 1)},
-		{name: "length bool", fname: "length", value: BoolNode("", false), result: NumericNode("", 1)},
-		{name: "length null", fname: "length", value: NullNode(""), result: NumericNode("", 1)},
+		{name: "length numeric", fname: "length", value: NewNumeric(123), result: NewNumeric(1)},
+		{name: "length bool", fname: "length", value: NewBool(false), result: NewNumeric(1)},
+		{name: "length null", fname: "length", value: NewNull(), result: NewNumeric(1)},
 
-		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
+		{name: "avg error 1", fname: "avg", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NullNode("")},
-		{name: "avg array 1", fname: "avg", value: ArrayNode("test", []*Node{
-			NumericNode("", 1),
-			NumericNode("", 1),
-			NumericNode("", 1),
-			NumericNode("", 1),
-		}), result: NumericNode("", 1)},
-		{name: "avg array 2", fname: "avg", value: ArrayNode("test", []*Node{
-			NumericNode("", 1),
-			NumericNode("", 2),
-			NumericNode("", 3),
-		}), result: NumericNode("", 2)},
-		{name: "avg object", fname: "avg", value: ObjectNode("test", map[string]*Node{
-			"q": NumericNode("", 1),
-			"w": NumericNode("", 2),
-			"e": NumericNode("", 3),
-		}), result: NumericNode("", 2)},
-		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NewNull()},
+		{name: "avg array 1", fname: "avg", value: NewArray([]*Node{
+			NewNumeric(1),
+			NewNumeric(1),
+			NewNumeric(1),
+			NewNumeric(1),
+		}), result: NewNumeric(1)},
+		{name: "avg array 2", fname: "avg", value: NewArray([]*Node{
+			NewNumeric(1),
+			NewNumeric(2),
+			NewNumeric(3),
+		}), result: NewNumeric(2)},
+		{name: "avg object", fname: "avg", value: NewObject(map[string]*Node{
+			"q": NewNumeric(1),
+			"w": NewNumeric(2),
+			"e": NewNumeric(3),
+		}), result: NewNumeric(2)},
+		{name: "avg array blank", fname: "avg", value: NewArray([]*Node{}), result: NewNumeric(0)},
 
-		{name: "sum error 1", fname: "sum", value: ArrayNode("test", []*Node{
+		{name: "sum error 1", fname: "sum", value: NewArray([]*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NullNode("")},
-		{name: "sum array 1", fname: "sum", value: ArrayNode("test", []*Node{
-			NumericNode("", 1),
-			NumericNode("", 1),
-			NumericNode("", 1),
-			NumericNode("", 1),
-		}), result: NumericNode("", 4)},
-		{name: "sum array 2", fname: "sum", value: ArrayNode("test", []*Node{
-			NumericNode("", 1),
-			NumericNode("", 2),
-			NumericNode("", 3),
-		}), result: NumericNode("", 6)},
-		{name: "sum object", fname: "sum", value: ObjectNode("test", map[string]*Node{
-			"q": NumericNode("", 1),
-			"w": NumericNode("", 2),
-			"e": NumericNode("", 3),
-		}), result: NumericNode("", 6)},
-		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NewNull()},
+		{name: "sum array 1", fname: "sum", value: NewArray([]*Node{
+			NewNumeric(1),
+			NewNumeric(1),
+			NewNumeric(1),
+			NewNumeric(1),
+		}), result: NewNumeric(4)},
+		{name: "sum array 2", fname: "sum", value: NewArray([]*Node{
+			NewNumeric(1),
+			NewNumeric(2),
+			NewNumeric(3),
+		}), result: NewNumeric(6)},
+		{name: "sum object", fname: "sum", value: NewObject(map[string]*Node{
+			"q": NewNumeric(1),
+			"w": NewNumeric(2),
+			"e": NewNumeric(3),
+		}), result: NewNumeric(6)},
+		{name: "sum array blank", fname: "sum", value: NewArray([]*Node{}), result: NewNumeric(0)},
 
-		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
-		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
+		{name: "rand", fname: "rand", value: NewString("test"), fail: true},
+		{name: "randint", fname: "randint", value: NewString("test"), fail: true},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -496,23 +499,23 @@ func TestConstants(t *testing.T) {
 		name     string
 		expected *Node
 	}{
-		{name: "e", expected: NumericNode("e", float64(math.E))},
-		{name: "pi", expected: NumericNode("pi", float64(math.Pi))},
-		{name: "phi", expected: NumericNode("phi", float64(math.Phi))},
+		{name: "e", expected: NewNumeric(float64(math.E))},
+		{name: "pi", expected: NewNumeric(float64(math.Pi))},
+		{name: "phi", expected: NewNumeric(float64(math.Phi))},
 
-		{name: "sqrt2", expected: NumericNode("sqrt2", float64(math.Sqrt2))},
-		{name: "sqrte", expected: NumericNode("sqrte", float64(math.SqrtE))},
-		{name: "sqrtpi", expected: NumericNode("sqrtpi", float64(math.SqrtPi))},
-		{name: "sqrtphi", expected: NumericNode("sqrtphi", float64(math.SqrtPhi))},
+		{name: "sqrt2", expected: NewNumeric(float64(math.Sqrt2))},
+		{name: "sqrte", expected: NewNumeric(float64(math.SqrtE))},
+		{name: "sqrtpi", expected: NewNumeric(float64(math.SqrtPi))},
+		{name: "sqrtphi", expected: NewNumeric(float64(math.SqrtPhi))},
 
-		{name: "ln2", expected: NumericNode("ln2", float64(math.Ln2))},
-		{name: "log2e", expected: NumericNode("log2e", float64(math.Log2E))},
-		{name: "ln10", expected: NumericNode("ln10", float64(math.Ln10))},
-		{name: "log10e", expected: NumericNode("log10e", float64(math.Log10E))},
+		{name: "ln2", expected: NewNumeric(float64(math.Ln2))},
+		{name: "log2e", expected: NewNumeric(float64(math.Log2E))},
+		{name: "ln10", expected: NewNumeric(float64(math.Ln10))},
+		{name: "log10e", expected: NewNumeric(float64(math.Log10E))},
 
-		{name: "true", expected: BoolNode("true", true)},
-		{name: "false", expected: BoolNode("false", false)},
-		{name: "null", expected: NullNode("null")},
+		{name: "true", expected: NewBool(true)},
+		{name: "false", expected: NewBool(false)},
+		{name: "null", expected: NewNull()},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

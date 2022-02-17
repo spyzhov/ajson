@@ -1,4 +1,4 @@
-# Abstract JSON 
+# Abstract JSON (v1) 
 
 [![Build Status](https://travis-ci.com/spyzhov/ajson.svg?branch=master)](https://travis-ci.com/spyzhov/ajson)
 [![Go Report Card](https://goreportcard.com/badge/github.com/spyzhov/ajson)](https://goreportcard.com/report/github.com/spyzhov/ajson)
@@ -15,7 +15,7 @@ Method `Marshal` will serialize current `Node` object to JSON structure.
 Each `Node` has its own type and calculated value, which will be calculated on demand. 
 Calculated value saves in `atomic.Value`, so it's thread safe.
 
-Method `JSONPath` will returns slice of found elements in current JSON data, by [JSONPath](http://goessner.net/articles/JsonPath/) request.
+Method `JSONPath` will return a slice of found elements in current JSON data, by [JSONPath](http://goessner.net/articles/JsonPath/) request.
 
 ## Compare with other solutions
 
@@ -23,14 +23,14 @@ Check the [cburgmer/json-path-comparison](https://cburgmer.github.io/json-path-c
 
 # Usage
 
-[Playground](https://play.golang.com/p/iIxkktxN0SK)
+[Playground](https://play.golang.com/)
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	nodes, _ := root.JSONPath("$..price")
 	for _, node := range nodes {
 		node.SetNumeric(node.MustNumeric() * 1.25)
-		node.Parent().AppendObject("currency", ajson.StringNode("", "EUR"))
+		node.Parent().AppendObject("currency", ajson.NewString("EUR"))
 	}
 	result, _ := ajson.Marshal(root)
 
@@ -146,7 +146,7 @@ Package has several predefined constants.
 You are free to add new one with function `AddConstant`:
 
 ```go
-    AddConstant("c", NumericNode("speed of light in vacuum", 299_792_458))
+    AddConstant("c", NewNumeric(299_792_458))
 ```
 
 #### Examples
@@ -154,7 +154,7 @@ You are free to add new one with function `AddConstant`:
 <details>
 <summary>Using `true` in path</summary>
 
-[Playground](https://play.golang.org/p/h0oFLaE11Tn)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -162,7 +162,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -179,7 +179,7 @@ Count of `true` values: 3
 <details>
 <summary>Using `null` in eval</summary>
 
-[Playground](https://play.golang.org/p/wpqh1Fw5vWE)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -187,7 +187,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -249,7 +249,7 @@ You are free to add new one with function `AddOperation`:
 		if err != nil {
 			return nil, err
 		}
-		return BoolNode("neq", !result), nil
+		return NewBool(!result), nil
 	})
 ```
 
@@ -258,7 +258,7 @@ You are free to add new one with function `AddOperation`:
 <details>
 <summary>Using `regex` operator</summary>
 
-[Playground](https://play.golang.org/p/Lm_F4OGTMWl)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -266,7 +266,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -342,7 +342,7 @@ You are free to add new one with function `AddFunction`:
 ```go
 	AddFunction("trim", func(node *ajson.Node) (result *Node, err error) {
 		if node.IsString() {
-			return StringNode("trim", strings.TrimSpace(node.MustString())), nil
+			return NewString(strings.TrimSpace(node.MustString())), nil
 		}
 		return
 	})
@@ -353,7 +353,7 @@ You are free to add new one with function `AddFunction`:
 <details>
 <summary>Using `avg` for array</summary>
 
-[Playground](https://play.golang.org/p/cM66hTE-CX1)
+[Playground](https://play.golang.org/)
 
 ```go
 package main
@@ -361,7 +361,7 @@ package main
 import (
 	"fmt"
 	
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -384,6 +384,23 @@ Output:
 Avg price: 5.5
 ```
 </details>
+
+# `Node` structure
+
+`ajson` works with the structures of `Node` type only. 
+`Node` is the container to be able to store any suitable value.
+The value is stored as the `atomic.Value` object, so it has thread-safe value mutations.
+
+`Node` structure can contain different type of value, such as:
+
+* `Null` type with the internal representation as `nil.(interface{})`;
+* `Numeric` type with the internal representation as `float64`;
+* `String` type with the internal representation as `string`;
+* `Bool` type with the internal representation as `bool`;
+* `Array` type with the internal representation as `[]*Node`;
+* `Object` type with the internal representation as `map[string]*Node`.
+
+Each type has its own constructor (e.g. `NewNull`, `NewArray`, etc.) and list of applicable methods.
 
 # Examples
 
@@ -431,13 +448,14 @@ Calculating `AVG(price)` when object is heterogeneous.
 
 ## Unmarshal
 
-[Playground](https://play.golang.org/p/xny93dzjZCK)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -479,13 +497,14 @@ func main() {
 
 ## JSONPath:
 
-[Playground](https://play.golang.org/p/7twZHOd6dbT)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -517,13 +536,14 @@ func main() {
 
 ## Eval
 
-[Playground](https://play.golang.org/p/lTXnlRU3sgR)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {
@@ -547,13 +567,14 @@ func main() {
 
 ## Marshal
 
-[Playground](https://play.golang.org/p/i4gXXcA2VLU)
+[Playground](https://play.golang.org/)
+
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 func main() {

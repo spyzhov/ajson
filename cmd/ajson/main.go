@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spyzhov/ajson"
+	"github.com/spyzhov/ajson/v1"
 )
 
 var version = "v0.7.1"
@@ -66,7 +66,7 @@ func main() {
 
 	var nodes []*ajson.Node
 	nodes, err = root.JSONPath(path)
-	result = ajson.ArrayNode("", nodes)
+	result = ajson.NewArray(nodes)
 	if err != nil {
 		result, err = ajson.Eval(root, path)
 	}
