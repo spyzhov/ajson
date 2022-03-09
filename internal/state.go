@@ -74,34 +74,6 @@ var AsciiClasses = [128]Class{
 	C_ETC, C_ETC, C_ETC, C_LCURB, C_ETC, C_RCURB, C_ETC, C_ETC,
 }
 
-// QuoteAsciiClasses is a HACK for single quote from AsciiClasses
-var QuoteAsciiClasses = [128]Class{
-	/*
-	   This array maps the 128 ASCII characters into character classes.
-	   The remaining Unicode characters should be mapped to C_ETC.
-	   Non-whitespace control characters are errors.
-	*/
-	__, __, __, __, __, __, __, __,
-	__, C_WHITE, C_WHITE, __, __, C_WHITE, __, __,
-	__, __, __, __, __, __, __, __,
-	__, __, __, __, __, __, __, __,
-
-	C_SPACE, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_QUOTE,
-	C_ETC, C_ETC, C_ETC, C_PLUS, C_COMMA, C_MINUS, C_POINT, C_SLASH,
-	C_ZERO, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT, C_DIGIT,
-	C_DIGIT, C_DIGIT, C_COLON, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC,
-
-	C_ETC, C_ABCDF, C_ABCDF, C_ABCDF, C_ABCDF, C_E, C_ABCDF, C_ETC,
-	C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC,
-	C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC, C_ETC,
-	C_ETC, C_ETC, C_ETC, C_LSQRB, C_BACKS, C_RSQRB, C_ETC, C_ETC,
-
-	C_ETC, C_LOW_A, C_LOW_B, C_LOW_C, C_LOW_D, C_LOW_E, C_LOW_F, C_ETC,
-	C_ETC, C_ETC, C_ETC, C_ETC, C_LOW_L, C_ETC, C_LOW_N, C_ETC,
-	C_ETC, C_ETC, C_LOW_R, C_LOW_S, C_LOW_T, C_LOW_U, C_ETC, C_ETC,
-	C_ETC, C_ETC, C_ETC, C_LCURB, C_ETC, C_RCURB, C_ETC, C_ETC,
-}
-
 /*
    The state codes.
 */

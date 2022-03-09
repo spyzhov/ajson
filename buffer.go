@@ -79,6 +79,13 @@ var (
 	_false = []byte("false")
 )
 
+var (
+	_quoteState = map[byte]Class{
+		quote:  C_QUOTE,
+		quotes: C_ETC,
+	}
+)
+
 func newBuffer(body []byte) (b *buffer) {
 	b = &buffer{
 		length: len(body),
@@ -200,10 +207,12 @@ func (b *buffer) getClasses(search byte) Class {
 	if b.data[b.index] >= 128 {
 		return C_ETC
 	}
-	if search == quote {
-		return QuoteAsciiClasses[b.data[b.index]]
+	if search == quote { // HACK for single quote
+		if result, ok := _quoteState[b.data[b.index]]; ok {
+			return result
+		}
 	}
-	return AsciiClasses[b.data[b.index]]
+	return b.table.GetClass(b.data[b.index])
 }
 
 func (b *buffer) getState() State {
