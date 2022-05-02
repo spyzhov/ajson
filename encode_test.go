@@ -11,7 +11,7 @@ func ExampleMarshal() {
 	locations, _ := root.JSONPath("$..[?(@.latitude && @.longitude)]")
 	for _, location := range locations {
 		name := fmt.Sprintf("At [%v, %v]", location.MustKey("latitude").MustNumeric(), location.MustKey("longitude").MustNumeric())
-		_ = location.AppendObject("name", StringNode("", name))
+		_ = location.AppendObject("name", NewString(name))
 	}
 	result, _ := Marshal(root)
 	fmt.Printf("%s", result)
@@ -43,48 +43,48 @@ func TestMarshal_Primitive(t *testing.T) {
 	}{
 		{
 			name: "null",
-			node: NullNode(""),
+			node: NewNull(),
 		},
 		{
 			name: "true",
-			node: BoolNode("", true),
+			node: NewBool(true),
 		},
 		{
 			name: "false",
-			node: BoolNode("", false),
+			node: NewBool(false),
 		},
 		{
 			name: `"string"`,
-			node: StringNode("", "string"),
+			node: NewString("string"),
 		},
 		{
 			name: `"one \"encoded\" string"`,
-			node: StringNode("", `one "encoded" string`),
+			node: NewString(`one "encoded" string`),
 		},
 		{
 			name: `"spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \u0000"`,
-			node: StringNode("", "spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \000"),
+			node: NewString("spec.symbols: \r\n\t; UTF-8: 😹; \u2028 \000"),
 		},
 		{
 			name: "100500",
-			node: NumericNode("", 100500),
+			node: NewNumeric(100500),
 		},
 		{
 			name: "100.5",
-			node: NumericNode("", 100.5),
+			node: NewNumeric(100.5),
 		},
 		{
 			name: "[1,2,3]",
-			node: ArrayNode("", []*Node{
-				NumericNode("0", 1),
-				NumericNode("2", 2),
-				NumericNode("3", 3),
+			node: NewArray([]*Node{
+				NewNumeric(1),
+				NewNumeric(2),
+				NewNumeric(3),
 			}),
 		},
 		{
 			name: `{"foo":"bar"}`,
-			node: ObjectNode("", map[string]*Node{
-				"foo": StringNode("foo", "bar"),
+			node: NewObject(map[string]*Node{
+				"foo": NewString("bar"),
 			}),
 		},
 	}
@@ -165,21 +165,21 @@ func TestMarshal_Errors(t *testing.T) {
 		{
 			name: "Array_1",
 			node: func() (node *Node) {
-				node = ArrayNode("", nil)
-				node.children["1"] = NullNode("1")
+				node = NewArray(nil)
+				node.children["1"] = withKey(NewNull(), "1")
 				return
 			},
 		},
 		{
 			name: "Array_2",
 			node: func() (node *Node) {
-				return ArrayNode("", []*Node{valueNode(nil, "", Bool, 1)})
+				return NewArray([]*Node{valueNode(nil, "", Bool, 1)})
 			},
 		},
 		{
 			name: "Object",
 			node: func() (node *Node) {
-				return ObjectNode("", map[string]*Node{"key": valueNode(nil, "key", Bool, 1)})
+				return NewObject(map[string]*Node{"key": valueNode(nil, "key", Bool, 1)})
 			},
 		},
 	}

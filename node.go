@@ -60,85 +60,100 @@ const (
 	Object
 )
 
-// NullNode is constructor for Node with Null value
-func NullNode(key string) *Node {
+// NewNull is constructor for Node with Null value
+func NewNull() *Node {
 	return &Node{
 		_type: Null,
-		key:   &key,
 		dirty: true,
 	}
 }
 
-// NumericNode is constructor for Node with a Numeric value
-func NumericNode(key string, value float64) (current *Node) {
+// NewNumeric is constructor for Node with a Numeric value
+func NewNumeric(value float64) (current *Node) {
 	current = &Node{
 		_type: Numeric,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// StringNode is constructor for Node with a String value
-func StringNode(key string, value string) (current *Node) {
+// NewString is constructor for Node with a String value
+func NewString(value string) (current *Node) {
 	current = &Node{
 		_type: String,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// BoolNode is constructor for Node with a Bool value
-func BoolNode(key string, value bool) (current *Node) {
+// NewBool is constructor for Node with a Bool value
+func NewBool(value bool) (current *Node) {
 	current = &Node{
 		_type: Bool,
-		key:   &key,
 		dirty: true,
 	}
 	current.value.Store(value)
 	return
 }
 
-// ArrayNode is constructor for Node with an Array value
-func ArrayNode(key string, value []*Node) (current *Node) {
+// NewArray is constructor for Node with an Array value
+func NewArray(values []*Node) (current *Node) {
 	current = &Node{
 		data:  nil,
 		_type: Array,
-		key:   &key,
 		dirty: true,
 	}
-	current.children = make(map[string]*Node, len(value))
-	if value != nil {
-		current.value.Store(value)
-		for i, val := range value {
+	current.children = make(map[string]*Node, len(values))
+	if values != nil {
+		current.value.Store(values)
+		for i, value := range values {
 			var index = i
-			current.children[strconv.Itoa(i)] = val
-			val.parent = current
-			val.index = &index
+			current.children[strconv.Itoa(i)] = value
+			value.parent = current
+			value.index = &index
 		}
 	}
 	return
 }
 
-// ObjectNode is constructor for Node with an Object value
-func ObjectNode(key string, value map[string]*Node) (current *Node) {
+// NewObject is constructor for Node with an Object value
+func NewObject(values map[string]*Node) (current *Node) {
 	current = &Node{
 		_type:    Object,
-		key:      &key,
-		children: value,
+		children: values,
 		dirty:    true,
 	}
-	if value != nil {
-		current.value.Store(value)
-		for key, val := range value {
-			val.parent = current
-			val.key = &key
+	if values != nil {
+		current.value.Store(values)
+		for key, value := range values {
+			value.parent = current
+			value.key = &key
 		}
 	} else {
 		current.children = make(map[string]*Node)
+	}
+	return
+}
+
+// NewNode is constructor for any suitable type/value.
+// List of applicable types:
+//
+//    	Result NodeType   Underlying value type(s)
+//      Null              nil.(interface{})
+//      Numeric           float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64
+//      String            string
+//		Bool              bool
+//		Array             []*Node
+//		Object            map[string]*Node
+//
+// Returns an error for any other value.
+func NewNode(value interface{}) (node *Node, err error) {
+	node = NewNull()
+	err = node.Set(value)
+	if err != nil {
+		return nil, err
 	}
 	return
 }
@@ -946,4 +961,12 @@ func (n *Node) root() (node *Node) {
 		node = node.parent
 	}
 	return node
+}
+
+func strptr(value string) *string {
+	return &value
+}
+
+func intptr(value int) *int {
+	return &value
 }
