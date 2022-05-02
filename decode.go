@@ -9,14 +9,14 @@ import (
 	Copy from `internal/state.go:144`
 */
 const (
-	cl States = -2 /* colon           */
-	cm States = -3 /* comma           */
-	//qt States = -4 /* quote           */
-	bo States = -5 /* bracket open    */
-	co States = -6 /* curly br. open  */
-	bc States = -7 /* bracket close   */
-	cc States = -8 /* curly br. close */
-	ec States = -9 /* curly br. empty */
+	cl State = -2 /* colon           */
+	cm State = -3 /* comma           */
+	//qt State = -4 /* quote           */
+	bo State = -5 /* bracket open    */
+	co State = -6 /* curly br. open  */
+	bc State = -7 /* bracket close   */
+	cc State = -8 /* curly br. close */
+	ec State = -9 /* curly br. empty */
 )
 
 // Unmarshal parses the JSON-encoded data and return the root node of struct.
@@ -25,7 +25,7 @@ const (
 func Unmarshal(data []byte) (root *Node, err error) {
 	buf := newBuffer(data)
 	var (
-		state   States
+		state   State
 		key     *string
 		current *Node
 	)
