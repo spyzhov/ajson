@@ -445,6 +445,25 @@ func TestFunctions2(t *testing.T) {
 		}), result: NumericNode("", 2)},
 		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
 
+		{name: "b64encode_std_padding multiple of 3", fname: "b64encode_std_padding", value: StringNode("", "Short string"), result: StringNode("", "U2hvcnQgc3RyaW5n")},
+		{name: "b64encode_std_padding remainder 2", fname: "b64encode_std_padding", value: StringNode("", "A test string"), result: StringNode("", "QSB0ZXN0IHN0cmluZw==")},
+		{name: "b64encode_std_padding remainder 1", fname: "b64encode_std_padding", value: StringNode("", "A test string."), result: StringNode("", "QSB0ZXN0IHN0cmluZy4=")},
+
+		{name: "b64encode_no_padding multiple of 3", fname: "b64encode_no_padding", value: StringNode("", "Short string"), result: StringNode("", "U2hvcnQgc3RyaW5n")},
+		{name: "b64encode_no_padding remainder 2", fname: "b64encode_no_padding", value: StringNode("", "A test string"), result: StringNode("", "QSB0ZXN0IHN0cmluZw")},
+		{name: "b64encode_no_padding remainder 1", fname: "b64encode_no_padding", value: StringNode("", "A test string."), result: StringNode("", "QSB0ZXN0IHN0cmluZy4")},
+
+		{name: "b64decode_std_padding multiple of 3", fname: "b64decode_std_padding", value: StringNode("", "U2hvcnQgc3RyaW5n"), result: StringNode("", "Short string")},
+		{name: "b64decode_std_padding remainder 2", fname: "b64decode_std_padding", value: StringNode("", "QSB0ZXN0IHN0cmluZw=="), result: StringNode("", "A test string")},
+		{name: "b64decode_std_padding remainder 1", fname: "b64decode_std_padding", value: StringNode("", "QSB0ZXN0IHN0cmluZy4="), result: StringNode("", "A test string.")},
+
+		{name: "b64decode_no_padding multiple of 3", fname: "b64decode_no_padding", value: StringNode("", "U2hvcnQgc3RyaW5n"), result: StringNode("", "Short string")},
+		{name: "b64decode_no_padding remainder 2", fname: "b64decode_no_padding", value: StringNode("", "QSB0ZXN0IHN0cmluZw"), result: StringNode("", "A test string")},
+		{name: "b64decode_no_padding remainder 1", fname: "b64decode_no_padding", value: StringNode("", "QSB0ZXN0IHN0cmluZy4"), result: StringNode("", "A test string.")},
+
+		{name: "b64decode_std_padding wrong characters", fname: "b64decode_std_padding", value: StringNode("", "!!!!Non-ASCII-Chars!!!!"), fail: true},
+		{name: "b64decode_no_padding wrong length", fname: "b64decode_std_padding", value: StringNode("", "QSB0ZXN0IHN0cmluZwU"), fail: true},
+
 		{name: "sum error 1", fname: "sum", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),

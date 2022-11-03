@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"encoding/base64"
 	"math"
 	"math/rand"
 	"regexp"
@@ -377,6 +378,78 @@ var (
 				return valueNode(nil, "avg", Numeric, sum/float64(node.Size())), nil
 			}
 			return valueNode(nil, "avg", Null, nil), nil
+		},
+		"b64decode_no_padding": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if _, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					sourceString, _ := node.GetString()
+					var result []byte
+					result, err = base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(sourceString)
+					if err != nil {
+						return nil, err
+					}
+					return valueNode(nil, "b64decode_no_padding", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64decode_no_padding", Null, nil), nil
+		},
+		"b64encode_no_padding": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if _, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					sourceString, _ := node.GetString()
+					remainder := len(sourceString) % 3
+					var size int
+					if remainder == 0 {
+						size = len(sourceString) / 3 * 4
+					} else {
+						size = len(sourceString)/3*4 + 1 + remainder
+					}
+					var result []byte = make([]byte, size)
+					base64.StdEncoding.WithPadding(base64.NoPadding).Encode(result, []byte(sourceString))
+					return valueNode(nil, "b64encode_no_padding", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64encode_std_padding", Null, nil), nil
+		},
+		"b64decode_std_padding": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if _, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					sourceString, _ := node.GetString()
+					var result []byte
+					result, err = base64.StdEncoding.WithPadding(base64.StdPadding).DecodeString(sourceString)
+					if err != nil {
+						return nil, err
+					}
+					return valueNode(nil, "b64decode_std_padding", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64decode_std_padding", Null, nil), nil
+		},
+		"b64encode_std_padding": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if _, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					sourceString, _ := node.GetString()
+					remainder := len(sourceString) % 3
+					var size int
+					if remainder == 0 {
+						size = len(sourceString) / 3 * 4
+					} else {
+						size = len(sourceString)/3*4 + 4
+					}
+					var result []byte = make([]byte, size)
+					base64.StdEncoding.WithPadding(base64.StdPadding).Encode(result, []byte(sourceString))
+					return valueNode(nil, "b64encode_std_padding", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64encode_std_padding", Null, nil), nil
 		},
 		"sum": func(node *Node) (result *Node, err error) {
 			if node.isContainer() {
