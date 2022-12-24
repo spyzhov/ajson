@@ -1,4 +1,5 @@
-name: golangci-lint
+name: Build
+
 on:
   push:
     tags:
@@ -8,7 +9,9 @@ on:
   pull_request:
     branches:
       - master
+
 jobs:
+
   golangci:
     name: lint
     runs-on: ubuntu-latest
@@ -17,15 +20,46 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
-          # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-          version: 1.50.1
-
-          # Optional: working directory, useful for monorepos
-          # working-directory: somedir
-
-          # Optional: golangci-lint command line arguments.
-          # args: --issues-exit-code=0
+          version: v1.50.1
           args: -v
 
-          # Optional: show only new issues if it's a pull request. The default value is `false`.
-          # only-new-issues: true
+  test:
+    strategy:
+      matrix:
+        go-version: [ '1.11.x', '1.12.x', '1.13.x', '1.14.x', '1.15.x', '1.16.x', '1.17.x', '1.18.x', '1.19.x' ]
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go ${{ matrix.go-version }} on ${{ matrix.os }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Run tests
+        run: go test -json -race ./... > TestResults-${{ matrix.os }}-${{ matrix.go-version }}.json
+      - name: Upload Go test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Go-results-${{ matrix.os }}-${{ matrix.go-version }}
+          path: TestResults-${{ matrix.os }}-${{ matrix.go-version }}.json
+
+  codecov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go 1.19.x on ubuntu-latest
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19.x'
+      - name: Setup Dependencies
+        run: |
+          go get golang.org/x/tools/cmd/cover
+          go get -t -v ./...
+      - name: Run Tests
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.txt
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
