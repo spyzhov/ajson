@@ -1,6 +1,7 @@
 package ajson
 
 import (
+	"encoding/base64"
 	"math"
 	"math/rand"
 	"regexp"
@@ -377,6 +378,59 @@ var (
 				return valueNode(nil, "avg", Numeric, sum/float64(node.Size())), nil
 			}
 			return valueNode(nil, "avg", Null, nil), nil
+		},
+		"b64decode": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if sourceString, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					var result []byte
+					result, err = base64.StdEncoding.WithPadding(base64.StdPadding).DecodeString(sourceString)
+					if err != nil {
+						// then for NO_PAD encoded strings, if the first result with error
+						result, err = base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(sourceString)
+					}
+					if err != nil {
+						return nil, err
+					}
+					return valueNode(nil, "b64decode", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64decode", Null, nil), nil
+		},
+		"b64encoden": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if sourceString, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					remainder := len(sourceString) % 3
+					size := len(sourceString) / 3 * 4
+					if remainder != 0 {
+						size += 1 + remainder
+					}
+					var result []byte = make([]byte, size)
+					base64.StdEncoding.WithPadding(base64.NoPadding).Encode(result, []byte(sourceString))
+					return valueNode(nil, "b64encoden", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64encoden", Null, nil), nil
+		},
+		"b64encode": func(node *Node) (result *Node, err error) {
+			if node.IsString() {
+				if sourceString, err := node.GetString(); err != nil {
+					return nil, err
+				} else {
+					remainder := len(sourceString) % 3
+					size := len(sourceString) / 3 * 4
+					if remainder != 0 {
+						size += 4
+					}
+					var result []byte = make([]byte, size)
+					base64.StdEncoding.WithPadding(base64.StdPadding).Encode(result, []byte(sourceString))
+					return valueNode(nil, "b64encode", String, string(result)), nil
+				}
+			}
+			return valueNode(nil, "b64encode", Null, nil), nil
 		},
 		"sum": func(node *Node) (result *Node, err error) {
 			if node.isContainer() {

@@ -122,6 +122,9 @@
 //     atan         math.Atan         integers, floats
 //     atanh        math.Atanh        integers, floats
 //     avg          Average           array of integers or floats
+//     b64decode    b64 Decoding      string
+//     b64encode    b64 Encoding      string
+//     b64encoden   b64 Encoding (no padding)   string
 //     cbrt         math.Cbrt         integers, floats
 //     ceil         math.Ceil         integers, floats
 //     cos          math.Cos          integers, floats
