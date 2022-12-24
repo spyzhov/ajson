@@ -103,7 +103,7 @@ var QuoteAsciiClasses = [128]Classes{
 }
 
 /*
-   The state codes.
+The state codes.
 */
 const (
 	GO States = iota /* start    */
@@ -139,9 +139,7 @@ const (
 	N3               /* null     */
 )
 
-/*
-	The action codes
-*/
+// List of action codes
 const (
 	cl States = -2 /* colon           */
 	cm States = -3 /* comma           */
