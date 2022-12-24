@@ -1,6 +1,7 @@
 linters:
+  disable-all: true
   enable:
-    - gofmt
+#    - gofmt # removed due to https://github.com/golangci/golangci-lint/issues/3229
     - govet
     - errcheck
     - staticcheck
