@@ -4,10 +4,8 @@ import (
 	. "github.com/spyzhov/ajson/internal"
 )
 
-/*
-	The action codes.
-	Copy from `internal/state.go:144`
-*/
+// List of action codes.
+// Copy from `internal/state.go:144`
 const (
 	cl States = -2 /* colon           */
 	cm States = -3 /* comma           */
