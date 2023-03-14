@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +11,7 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-var version = "v0.7.1"
+var version = "v0.8.0"
 
 func usage() {
 	text := ``
@@ -52,7 +51,7 @@ func main() {
 	defer func() {
 		_ = input.Close()
 	}()
-	data, err := ioutil.ReadAll(input)
+	data, err := io.ReadAll(input)
 
 	if err != nil {
 		log.Fatalf("error reading source: %s", err)
