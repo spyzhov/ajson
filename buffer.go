@@ -438,6 +438,7 @@ func (b *buffer) rpn() (result rpn, err error) {
 			current = string(b.data[start:b.index])
 			result = append(result, current)
 			if err != nil {
+				//nolint:ineffassign
 				err = nil
 			} else {
 				b.index--
@@ -549,6 +550,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			err = b.numeric(true)
 			if err != nil && err != io.EOF {
 				if c == dot {
+					//nolint:ineffassign
 					err = nil
 					result = append(result, ".")
 					b.index = start
@@ -582,6 +584,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			current = string(b.data[start:b.index])
 			result = append(result, current)
 			if err != nil {
+				//nolint:ineffassign
 				err = nil
 			} else {
 				b.index--
@@ -612,6 +615,7 @@ func (b *buffer) tokenize() (result tokens, err error) {
 			if start == b.index {
 				err = b.step()
 				if err != nil {
+					//nolint:ineffassign
 					err = nil
 					current = strings.ToLower(string(b.data[start : b.index+1]))
 				} else {

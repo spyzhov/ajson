@@ -1307,6 +1307,12 @@ func TestJSONPath_comparison_consensus(t *testing.T) {
 			document:  `["first", "second", "third"]`,
 			consensus: `["first", "second"]`,
 		},
+		{
+			name:      `unexpected_key`,
+			selector:  `$[?(@.a||@.b)]`,
+			document:  `[{"a":0,"b":0},{"a":1},{"b":2},{"a":0,"b":1},{"a":2,"b":0}]`,
+			consensus: `[{"a":1},{"b":2},{"a":0,"b":1},{"a":2,"b":0}]`,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1509,4 +1515,23 @@ func ExampleApplyJSONPath() {
 
 	// Output:
 	// [4][3][2][1][0][9][8][7][6][5]
+}
+
+// TestJSONPath_issue_61 is a test for https://github.com/spyzhov/ajson/issues/61
+func TestJSONPath_issue_61(t *testing.T) {
+	data := `{"test":[{"a":1},{"b":2}]}`
+	root, err := Unmarshal([]byte(data))
+	if err != nil {
+		t.Errorf("Unmarshal() unexpected error = %v", err)
+		return
+	}
+	nodes, err := root.JSONPath(`$..[?( @.a==1 || @.b==2 )]`)
+	if err != nil {
+		t.Errorf("JSONPath() error = %v. got = %v", err, nodes)
+		return
+	}
+	if len(nodes) != 2 {
+		t.Errorf("JSONPath() unexpected result got = %v", nodes)
+		return
+	}
 }

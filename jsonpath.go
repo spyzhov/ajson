@@ -15,11 +15,11 @@ import (
 //
 // JSONPath expressions can use the dot–notation
 //
-//    $.store.book[0].title
+//	$.store.book[0].title
 //
 // or the bracket–notation
 //
-//    $['store']['book'][0]['title']
+//	$['store']['book'][0]['title']
 //
 // for input pathes. Internal or output pathes will always be converted to the more general bracket–notation.
 //
@@ -27,136 +27,134 @@ import (
 //
 // Expressions of the underlying scripting language (<expr>) can be used as an alternative to explicit names or indices as in
 //
-//    $.store.book[(@.length-1)].title
+//	$.store.book[(@.length-1)].title
 //
 // using the symbol '@' for the current object. Filter expressions are supported via the syntax ?(<boolean expr>) as in
 //
-//    $.store.book[?(@.price < 10)].title
+//	$.store.book[?(@.price < 10)].title
 //
 // Here is a complete overview and a side by side comparison of the JSONPath syntax elements with its XPath counterparts.
 //
-//    $          the root object/element
-//    @          the current object/element
-//    . or []  child operator
-//    ..      recursive descent. JSONPath borrows this syntax from E4X.
-//    *       wildcard. All objects/elements regardless their names.
-//    []      subscript operator. XPath uses it to iterate over element collections and for predicates. In Javascript and JSON it is the native array operator.
-//    [,]     Union operator in XPath results in a combination of node sets. JSONPath allows alternate names or array indices as a set.
-//    [start:end:step]  array slice operator borrowed from ES4.
-//    ?()     applies a filter (script) expression.
-//    ()      script expression, using the underlying script engine.
+//	$          the root object/element
+//	@          the current object/element
+//	. or []  child operator
+//	..      recursive descent. JSONPath borrows this syntax from E4X.
+//	*       wildcard. All objects/elements regardless their names.
+//	[]      subscript operator. XPath uses it to iterate over element collections and for predicates. In Javascript and JSON it is the native array operator.
+//	[,]     Union operator in XPath results in a combination of node sets. JSONPath allows alternate names or array indices as a set.
+//	[start:end:step]  array slice operator borrowed from ES4.
+//	?()     applies a filter (script) expression.
+//	()      script expression, using the underlying script engine.
 //
+// # JSONPath Script engine
 //
-// JSONPath Script engine
-//
-// Predefined constant
+// # Predefined constant
 //
 // Package has several predefined constants. You are free to add new one with AddConstant
 //
-//     e       math.E     float64
-//     pi      math.Pi    float64
-//     phi     math.Phi   float64
+//	e       math.E     float64
+//	pi      math.Pi    float64
+//	phi     math.Phi   float64
 //
-//     sqrt2     math.Sqrt2   float64
-//     sqrte     math.SqrtE   float64
-//     sqrtpi    math.SqrtPi  float64
-//     sqrtphi   math.SqrtPhi float64
+//	sqrt2     math.Sqrt2   float64
+//	sqrte     math.SqrtE   float64
+//	sqrtpi    math.SqrtPi  float64
+//	sqrtphi   math.SqrtPhi float64
 //
-//     ln2     math.Ln2    float64
-//     log2e   math.Log2E  float64
-//     ln10    math.Ln10   float64
-//     log10e  math.Log10E float64
+//	ln2     math.Ln2    float64
+//	log2e   math.Log2E  float64
+//	ln10    math.Ln10   float64
+//	log10e  math.Log10E float64
 //
-//     true    true       bool
-//     false   false      bool
-//     null    nil        interface{}
+//	true    true       bool
+//	false   false      bool
+//	null    nil        interface{}
 //
-// Supported operations
+// # Supported operations
 //
 // Package has several predefined operators. You are free to add new one with AddOperator
 //
 // Operator precedence: https://golang.org/ref/spec#Operator_precedence
 //
-//     Precedence    Operator
-//     6             **
-//     5             *   /   %  <<  >>  &  &^
-//     4             +   -   |  ^
-//     3             ==  !=  <  <=  >  >=  =~
-//     2             &&
-//     1             ||
+//	Precedence    Operator
+//	6             **
+//	5             *   /   %  <<  >>  &  &^
+//	4             +   -   |  ^
+//	3             ==  !=  <  <=  >  >=  =~
+//	2             &&
+//	1             ||
 //
 // Arithmetic operators: https://golang.org/ref/spec#Arithmetic_operators
 //
-//     **   power                  integers, floats
-//     +    sum                    integers, floats, strings
-//     -    difference             integers, floats
-//     *    product                integers, floats
-//     /    quotient               integers, floats
-//     %    remainder              integers
+//	**   power                  integers, floats
+//	+    sum                    integers, floats, strings
+//	-    difference             integers, floats
+//	*    product                integers, floats
+//	/    quotient               integers, floats
+//	%    remainder              integers
 //
-//     &    bitwise AND            integers
-//     |    bitwise OR             integers
-//     ^    bitwise XOR            integers
-//     &^   bit clear (AND NOT)    integers
+//	&    bitwise AND            integers
+//	|    bitwise OR             integers
+//	^    bitwise XOR            integers
+//	&^   bit clear (AND NOT)    integers
 //
-//     <<   left shift             integer << unsigned integer
-//     >>   right shift            integer >> unsigned integer
+//	<<   left shift             integer << unsigned integer
+//	>>   right shift            integer >> unsigned integer
 //
-//     ==  equals                  any
-//     !=  not equals              any
-//     <   less                    any
-//     <=  less or equals          any
-//     >   larger                  any
-//     >=  larger or equals        any
-//     =~  equals regex string     strings
+//	==  equals                  any
+//	!=  not equals              any
+//	<   less                    any
+//	<=  less or equals          any
+//	>   larger                  any
+//	>=  larger or equals        any
+//	=~  equals regex string     strings
 //
-// Supported functions
+// # Supported functions
 //
 // Package has several predefined functions. You are free to add new one with AddFunction
 //
-//     abs          math.Abs          integers, floats
-//     acos         math.Acos         integers, floats
-//     acosh        math.Acosh        integers, floats
-//     asin         math.Asin         integers, floats
-//     asinh        math.Asinh        integers, floats
-//     atan         math.Atan         integers, floats
-//     atanh        math.Atanh        integers, floats
-//     avg          Average           array of integers or floats
-//     cbrt         math.Cbrt         integers, floats
-//     ceil         math.Ceil         integers, floats
-//     cos          math.Cos          integers, floats
-//     cosh         math.Cosh         integers, floats
-//     erf          math.Erf          integers, floats
-//     erfc         math.Erfc         integers, floats
-//     erfcinv      math.Erfcinv      integers, floats
-//     erfinv       math.Erfinv       integers, floats
-//     exp          math.Exp          integers, floats
-//     exp2         math.Exp2         integers, floats
-//     expm1        math.Expm1        integers, floats
-//     factorial    N!                unsigned integer
-//     floor        math.Floor        integers, floats
-//     gamma        math.Gamma        integers, floats
-//     j0           math.J0           integers, floats
-//     j1           math.J1           integers, floats
-//     length       len               array
-//     log          math.Log          integers, floats
-//     log10        math.Log10        integers, floats
-//     log1p        math.Log1p        integers, floats
-//     log2         math.Log2         integers, floats
-//     logb         math.Logb         integers, floats
-//     not          not               any
-//     pow10        math.Pow10        integer
-//     round        math.Round        integers, floats
-//     roundtoeven  math.RoundToEven  integers, floats
-//     sin          math.Sin          integers, floats
-//     sinh         math.Sinh         integers, floats
-//     sqrt         math.Sqrt         integers, floats
-//     tan          math.Tan          integers, floats
-//     tanh         math.Tanh         integers, floats
-//     trunc        math.Trunc        integers, floats
-//     y0           math.Y0           integers, floats
-//     y1           math.Y1           integers, floats
-//
+//	abs          math.Abs          integers, floats
+//	acos         math.Acos         integers, floats
+//	acosh        math.Acosh        integers, floats
+//	asin         math.Asin         integers, floats
+//	asinh        math.Asinh        integers, floats
+//	atan         math.Atan         integers, floats
+//	atanh        math.Atanh        integers, floats
+//	avg          Average           array of integers or floats
+//	cbrt         math.Cbrt         integers, floats
+//	ceil         math.Ceil         integers, floats
+//	cos          math.Cos          integers, floats
+//	cosh         math.Cosh         integers, floats
+//	erf          math.Erf          integers, floats
+//	erfc         math.Erfc         integers, floats
+//	erfcinv      math.Erfcinv      integers, floats
+//	erfinv       math.Erfinv       integers, floats
+//	exp          math.Exp          integers, floats
+//	exp2         math.Exp2         integers, floats
+//	expm1        math.Expm1        integers, floats
+//	factorial    N!                unsigned integer
+//	floor        math.Floor        integers, floats
+//	gamma        math.Gamma        integers, floats
+//	j0           math.J0           integers, floats
+//	j1           math.J1           integers, floats
+//	length       len               array
+//	log          math.Log          integers, floats
+//	log10        math.Log10        integers, floats
+//	log1p        math.Log1p        integers, floats
+//	log2         math.Log2         integers, floats
+//	logb         math.Logb         integers, floats
+//	not          not               any
+//	pow10        math.Pow10        integer
+//	round        math.Round        integers, floats
+//	roundtoeven  math.RoundToEven  integers, floats
+//	sin          math.Sin          integers, floats
+//	sinh         math.Sinh         integers, floats
+//	sqrt         math.Sqrt         integers, floats
+//	tan          math.Tan          integers, floats
+//	tanh         math.Tanh         integers, floats
+//	trunc        math.Trunc        integers, floats
+//	y0           math.Y0           integers, floats
+//	y1           math.Y1           integers, floats
 func JSONPath(data []byte, path string) (result []*Node, err error) {
 	commands, err := ParseJSONPath(path)
 	if err != nil {
@@ -197,9 +195,8 @@ func recursiveChildren(node *Node) (result []*Node) {
 // ParseJSONPath will parse current path and return all commands tobe run.
 // Example:
 //
-// 	result, _ := ParseJSONPath("$.store.book[?(@.price < 10)].title")
-// 	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
-//
+//	result, _ := ParseJSONPath("$.store.book[?(@.price < 10)].title")
+//	result == []string{"$", "store", "book", "?(@.price < 10)", "title"}
 func ParseJSONPath(path string) (result []string, err error) {
 	buf := newBuffer([]byte(path))
 	result = make([]string, 0)
@@ -227,6 +224,7 @@ func ParseJSONPath(path string) (result []string, err error) {
 			start = buf.index
 			c, err = buf.next()
 			if err == io.EOF {
+				//nolint:ineffassign
 				err = nil
 				break
 			}
@@ -312,7 +310,6 @@ func ParseJSONPath(path string) (result []string, err error) {
 //
 //	commands := []string{"$", "store", "book", "?(@.price < 10)", "title"}
 //	result, _ := ApplyJSONPath(node, commands)
-//
 func ApplyJSONPath(node *Node, commands []string) (result []*Node, err error) {
 	if node == nil {
 		return nil, nil
@@ -636,8 +633,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
-					// stack = append(stack, NullNode(""))
-					return NullNode(""), nil
+					stack = append(stack, NullNode(""))
 				}
 			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
 				stack = append(stack, constant)
