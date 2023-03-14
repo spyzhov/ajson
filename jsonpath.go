@@ -224,6 +224,7 @@ func ParseJSONPath(path string) (result []string, err error) {
 			start = buf.index
 			c, err = buf.next()
 			if err == io.EOF {
+				//nolint:ineffassign
 				err = nil
 				break
 			}
