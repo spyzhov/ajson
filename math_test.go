@@ -392,6 +392,18 @@ func TestFunctions(t *testing.T) {
 }
 
 func TestFunctions2(t *testing.T) {
+	key := StringNode("", "value")
+	parent := ObjectNode("test", map[string]*Node{
+		"t": key,
+		"y": NumericNode("", 2),
+	})
+	object := ObjectNode("test", map[string]*Node{
+		"q": NumericNode("", 1),
+		"w": NumericNode("", 2),
+		"e": NumericNode("", 3),
+		"r": parent,
+	})
+
 	_e := valueNode(nil, "", Numeric, "foo")
 	_s := valueNode(nil, "", String, true)
 	tests := []struct {
@@ -491,6 +503,41 @@ func TestFunctions2(t *testing.T) {
 
 		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
 		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
+
+		{name: "last: string", fname: "last", value: StringNode("", ""), result: NullNode(""), fail: false},
+		{name: "last: empty", fname: "last", value: ArrayNode("", []*Node{}), result: NullNode(""), fail: false},
+		{name: "last: one", fname: "last", value: ArrayNode("", []*Node{StringNode("", "value")}), result: StringNode("", "value"), fail: false},
+		{name: "last: several", fname: "last", value: ArrayNode("", []*Node{
+			StringNode("", "1"),
+			StringNode("", "2"),
+			StringNode("", "3"),
+		}), result: StringNode("", "3"), fail: false},
+		{name: "last: object", fname: "last", value: ObjectNode("test", map[string]*Node{
+			"q": NumericNode("", 1),
+			"w": NumericNode("", 2),
+			"e": NumericNode("", 3),
+		}), result: NullNode(""), fail: false},
+
+		{name: "first: string", fname: "first", value: StringNode("", ""), result: NullNode(""), fail: false},
+		{name: "first: empty", fname: "first", value: ArrayNode("", []*Node{}), result: NullNode(""), fail: false},
+		{name: "first: one", fname: "first", value: ArrayNode("", []*Node{StringNode("", "value")}), result: StringNode("", "value"), fail: false},
+		{name: "first: several", fname: "first", value: ArrayNode("", []*Node{
+			StringNode("", "1"),
+			StringNode("", "2"),
+			StringNode("", "3"),
+		}), result: StringNode("", "1"), fail: false},
+		{name: "first: object", fname: "first", value: ObjectNode("test", map[string]*Node{
+			"q": NumericNode("", 1),
+			"w": NumericNode("", 2),
+			"e": NumericNode("", 3),
+		}), result: NullNode(""), fail: false},
+
+		{name: "parent", fname: "parent", value: key, result: parent, fail: false},
+		{name: "parent: none", fname: "parent", value: object, result: NullNode(""), fail: false},
+		{name: "root", fname: "root", value: key, result: object, fail: false},
+		{name: "root: self", fname: "root", value: object, result: object, fail: false},
+		{name: "key", fname: "key", value: key, result: StringNode("", "t"), fail: false},
+		{name: "key: none", fname: "key", value: StringNode("", "value"), result: NullNode(""), fail: false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

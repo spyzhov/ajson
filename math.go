@@ -471,6 +471,45 @@ var (
 			}
 			return valueNode(nil, "RandInt", Numeric, float64(randIntFunc(num))), nil
 		},
+		"last": func(node *Node) (result *Node, err error) {
+			if node.IsArray() {
+				array := node.Inheritors()
+				if len(array) > 0 {
+					return array[len(array)-1], nil
+				}
+			}
+			return valueNode(nil, "last", Null, nil), nil
+		},
+		"first": func(node *Node) (result *Node, err error) {
+			if node.IsArray() {
+				array := node.Inheritors()
+				if len(array) > 0 {
+					return array[0], nil
+				}
+			}
+			return valueNode(nil, "first", Null, nil), nil
+		},
+		"parent": func(node *Node) (result *Node, err error) {
+			if node.parent != nil {
+				return node.parent, nil
+			}
+			return valueNode(nil, "parent", Null, nil), nil
+		},
+		"root": func(node *Node) (result *Node, err error) {
+			root := node.root()
+			if root != nil {
+				return root, nil
+			}
+			return valueNode(nil, "root", Null, nil), nil
+		},
+		"key": func(node *Node) (result *Node, err error) {
+			if node.parent != nil {
+				if node.parent.IsObject() {
+					return valueNode(nil, "key", String, node.Key()), nil
+				}
+			}
+			return valueNode(nil, "key", Null, nil), nil
+		},
 	}
 
 	constants = map[string]*Node{
