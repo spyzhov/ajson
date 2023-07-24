@@ -175,8 +175,8 @@ func (n *Node) clone() *Node {
 	node := &Node{
 		parent:   n.parent,
 		children: make(map[string]*Node, len(n.children)),
-		key:      n.key,
-		index:    n.index,
+		key:      cptrs(n.key),
+		index:    cptri(n.index),
 		_type:    n._type,
 		data:     n.data,
 		borders:  n.borders,
@@ -208,7 +208,8 @@ func (n *Node) update(_type NodeType, value interface{}) error {
 			nodes := value.([]*Node)
 			n.children = make(map[string]*Node, len(nodes))
 			for _, node := range nodes {
-				if err = n.appendNode(nil, node); err != nil {
+				tnode := node
+				if err = n.appendNode(nil, tnode); err != nil {
 					return err
 				}
 			}
@@ -216,7 +217,9 @@ func (n *Node) update(_type NodeType, value interface{}) error {
 			nodes := value.(map[string]*Node)
 			n.children = make(map[string]*Node, len(nodes))
 			for key, node := range nodes {
-				if err = n.appendNode(&key, node); err != nil {
+				tkey := key
+				tnode := node
+				if err = n.appendNode(&tkey, tnode); err != nil {
 					return err
 				}
 			}

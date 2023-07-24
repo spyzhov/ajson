@@ -134,8 +134,9 @@ func ObjectNode(key string, value map[string]*Node) (current *Node) {
 	if value != nil {
 		current.value.Store(value)
 		for key, val := range value {
+			vkey := key
 			val.parent = current
-			val.key = &key
+			val.key = &vkey
 		}
 	} else {
 		current.children = make(map[string]*Node)
@@ -165,7 +166,6 @@ func newNode(parent *Node, buf *buffer, _type NodeType, key **string) (current *
 				err = errorSymbol(buf)
 			} else {
 				parent.children[**key] = current
-				*key = nil
 			}
 		} else {
 			err = errorSymbol(buf)
