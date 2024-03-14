@@ -1703,6 +1703,17 @@ func TestNode_Inheritors(t *testing.T) {
 				StringNode("str", "foo"),
 			},
 		},
+		{
+			name: "parsed array",
+			node: Must(Unmarshal([]byte(`[{"clientId":"qwerty","advice":{},"success":true}]`))),
+			expected: []*Node{
+				ObjectNode("", map[string]*Node{
+					"clientId": StringNode("clientId", "qwerty"),
+					"advice":   ObjectNode("advice", map[string]*Node{}),
+					"success":  BoolNode("success", true),
+				}),
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

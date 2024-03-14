@@ -13,7 +13,7 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-var version = "v0.9.0"
+var version = "v0.9.1"
 
 func usage() {
 	text := ``
@@ -61,42 +61,49 @@ func main() {
 
 	if cfg.multiline {
 		reader := bufio.NewReader(input)
+		line := 1
 		for {
 			data, err := reader.ReadBytes('\n')
 			if err != nil {
 				if !errors.Is(err, io.EOF) {
-					mlError(cfg, "unable to read input: %s", err)
+					mlError(cfg, "unable to read input at line %d: %s", line, err)
 				}
 				return
 			}
-			apply(cfg, data)
+			apply(cfg, data, line)
+			line++
 		}
 	} else {
 		data, err := io.ReadAll(input)
 		if err != nil {
 			pFatal("error reading source: %s", err)
 		}
-		apply(cfg, data)
+		apply(cfg, data, 0)
 	}
 }
 
-func apply(cfg config, data []byte) {
+func apply(cfg config, data []byte, line int) {
 	var result *ajson.Node
+	msg := "error"
+	if cfg.multiline {
+		msg = fmt.Sprintf("error at line %d", line)
+	}
 
 	root, err := ajson.Unmarshal(data)
 	if err != nil {
-		mlFatal(cfg, "error parsing JSON: %s", err)
+		mlFatal(cfg, "%s parsing JSON: %s", msg, err)
 		return
 	}
 
 	var nodes []*ajson.Node
 	nodes, err = root.JSONPath(cfg.jsonpath)
-	result = ajson.ArrayNode("", nodes)
-	if err != nil {
+	if err != nil { // try to eval
 		result, err = ajson.Eval(root, cfg.jsonpath)
+	} else {
+		result = ajson.ArrayNode("", nodes)
 	}
 	if err != nil {
-		mlFatal(cfg, "jsonpath error: %s", err)
+		mlFatal(cfg, "jsonpath %s: %s", msg, err)
 		return
 	}
 
@@ -114,7 +121,7 @@ func apply(cfg config, data []byte) {
 
 	data, err = ajson.Marshal(result)
 	if err != nil {
-		mlFatal(cfg, "error preparing JSON: %s", err)
+		mlFatal(cfg, "%s preparing JSON: %s", msg, err)
 	}
 	pPrint("%s\n", data)
 }

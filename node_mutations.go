@@ -372,5 +372,5 @@ func (n *Node) setReference(parent *Node, key *string, index *int) {
 		temp := *key
 		n.key = &temp
 	}
-	n.index = index
+	n.index = cptri(index)
 }
