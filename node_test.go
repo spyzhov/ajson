@@ -29,10 +29,11 @@ func TestNode_Value_Simple(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			data := test.bytes
 			current := &Node{
 				_type:   test._type,
 				borders: [2]int{0, len(test.bytes)},
-				data:    &test.bytes,
+				data:    &data,
 			}
 			value, err := current.getValue()
 			if err != nil {
@@ -1701,6 +1702,17 @@ func TestNode_Inheritors(t *testing.T) {
 				NullNode("0"),
 				NumericNode("1", 1),
 				StringNode("str", "foo"),
+			},
+		},
+		{
+			name: "parsed array",
+			node: Must(Unmarshal([]byte(`[{"clientId":"qwerty","advice":{},"success":true}]`))),
+			expected: []*Node{
+				ObjectNode("", map[string]*Node{
+					"clientId": StringNode("clientId", "qwerty"),
+					"advice":   ObjectNode("advice", map[string]*Node{}),
+					"success":  BoolNode("success", true),
+				}),
 			},
 		},
 	}

@@ -112,13 +112,13 @@ func ArrayNode(key string, value []*Node) (current *Node) {
 	}
 	current.children = make(map[string]*Node, len(value))
 	if value != nil {
-		current.value.Store(value)
-		for i, val := range value {
+		for i := range value {
 			var index = i
-			current.children[strconv.Itoa(i)] = val
-			val.parent = current
-			val.index = &index
+			current.children[strconv.Itoa(index)] = value[index]
+			value[index].parent = current
+			value[index].index = &index
 		}
+		current.value.Store(value)
 	}
 	return
 }
@@ -132,12 +132,12 @@ func ObjectNode(key string, value map[string]*Node) (current *Node) {
 		dirty:    true,
 	}
 	if value != nil {
-		current.value.Store(value)
 		for key, val := range value {
 			vkey := key
 			val.parent = current
 			val.key = &vkey
 		}
+		current.value.Store(value)
 	} else {
 		current.children = make(map[string]*Node)
 	}

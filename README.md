@@ -53,7 +53,7 @@ func main() {
 You can download `ajson` cli from the [release page](https://github.com/spyzhov/ajson/releases), or install from the source:
 
 ```shell script
-go get github.com/spyzhov/ajson/cmd/ajson@v0.9.0
+go get github.com/spyzhov/ajson/cmd/ajson@v0.9.1
 ```
 
 Usage:
