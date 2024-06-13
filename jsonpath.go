@@ -633,7 +633,7 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				} else if len(slice) == 1 {
 					stack = append(stack, slice[0])
 				} else { // no data found
-					stack = append(stack, NullNode(""))
+					stack = append(stack, nil)
 				}
 			} else if constant, ok := constants[strings.ToLower(exp)]; ok {
 				stack = append(stack, constant)
@@ -659,6 +659,9 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 		}
 	}
 	if len(stack) == 1 {
+		if stack[0] == nil {
+			return NullNode(""), nil
+		}
 		return stack[0], nil
 	}
 	if len(stack) == 0 {

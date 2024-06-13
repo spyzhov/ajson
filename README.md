@@ -53,7 +53,7 @@ func main() {
 You can download `ajson` cli from the [release page](https://github.com/spyzhov/ajson/releases), or install from the source:
 
 ```shell script
-go get github.com/spyzhov/ajson/cmd/ajson@v0.9.1
+go get github.com/spyzhov/ajson/cmd/ajson@v0.9.2
 ```
 
 Usage:
@@ -325,7 +325,7 @@ Package has several predefined functions.
     j1           math.J1            integers, floats
     key          Key of element     string
     last         Get last element   any
-    length       len                array
+    length       Length of array    array, string
     log          math.Log           integers, floats
     log10        math.Log10         integers, floats
     log1p        math.Log1p         integers, floats
@@ -341,6 +341,7 @@ Package has several predefined functions.
     roundtoeven  math.RoundToEven   integers, floats
     sin          math.Sin           integers, floats
     sinh         math.Sinh          integers, floats
+    size         Count of elements  array, object
     sum          Sum                array of integers or floats
     sqrt         math.Sqrt          integers, floats
     tan          math.Tan           integers, floats

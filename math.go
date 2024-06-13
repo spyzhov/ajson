@@ -201,6 +201,9 @@ var (
 			return valueNode(nil, "bitwise XOR", Numeric, float64(lnum^rnum)), nil
 		},
 		"==": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "eq", Bool, false), nil
+			}
 			res, err := left.Eq(right)
 			if err != nil {
 				return nil, err
@@ -208,6 +211,9 @@ var (
 			return valueNode(nil, "eq", Bool, res), nil
 		},
 		"!=": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "neq", Bool, false), nil
+			}
 			res, err := left.Eq(right)
 			if err != nil {
 				return nil, err
@@ -230,6 +236,9 @@ var (
 			return valueNode(nil, "eq", Bool, res), nil
 		},
 		"<": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "le", Bool, false), nil
+			}
 			res, err := left.Le(right)
 			if err != nil {
 				return nil, err
@@ -237,6 +246,9 @@ var (
 			return valueNode(nil, "le", Bool, bool(res)), nil
 		},
 		"<=": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "leq", Bool, false), nil
+			}
 			res, err := left.Leq(right)
 			if err != nil {
 				return nil, err
@@ -244,6 +256,9 @@ var (
 			return valueNode(nil, "leq", Bool, bool(res)), nil
 		},
 		">": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "ge", Bool, false), nil
+			}
 			res, err := left.Ge(right)
 			if err != nil {
 				return nil, err
@@ -251,6 +266,9 @@ var (
 			return valueNode(nil, "ge", Bool, bool(res)), nil
 		},
 		">=": func(left *Node, right *Node) (result *Node, err error) {
+			if left == nil || right == nil {
+				return valueNode(nil, "geq", Bool, false), nil
+			}
 			res, err := left.Geq(right)
 			if err != nil {
 				return nil, err
@@ -332,6 +350,9 @@ var (
 		"y1":          numericFunction("Y1", math.Y1),
 
 		"pow10": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "Pow10", Numeric, 0), nil
+			}
 			num, err := node.getInteger()
 			if err != nil {
 				return
@@ -339,10 +360,10 @@ var (
 			return valueNode(nil, "Pow10", Numeric, float64(math.Pow10(num))), nil
 		},
 		"length": func(node *Node) (result *Node, err error) {
-			if node.IsArray() {
-				return valueNode(nil, "length", Numeric, float64(node.Size())), nil
+			if node == nil {
+				return valueNode(nil, "length", Numeric, float64(0)), nil
 			}
-			if node.IsObject() {
+			if node.IsArray() {
 				return valueNode(nil, "length", Numeric, float64(node.Size())), nil
 			}
 			if node.IsString() {
@@ -354,7 +375,13 @@ var (
 			}
 			return valueNode(nil, "length", Numeric, float64(1)), nil
 		},
+		"size": func(node *Node) (result *Node, err error) {
+			return valueNode(nil, "size", Numeric, float64(node.Size())), nil
+		},
 		"factorial": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "factorial", Numeric, 0), nil
+			}
 			num, err := node.getUInteger()
 			if err != nil {
 				return
@@ -362,6 +389,9 @@ var (
 			return valueNode(nil, "factorial", Numeric, float64(mathFactorial(num))), nil
 		},
 		"avg": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "avg", Null, nil), nil
+			}
 			if node.isContainer() {
 				sum := float64(0)
 				if node.Size() == 0 {
@@ -433,6 +463,9 @@ var (
 			return valueNode(nil, "b64encode", Null, nil), nil
 		},
 		"sum": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "sum", Null, nil), nil
+			}
 			if node.isContainer() {
 				sum := float64(0)
 				if node.Size() == 0 {
@@ -458,6 +491,9 @@ var (
 			}
 		},
 		"rand": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return nil, errorType()
+			}
 			num, err := node.GetNumeric()
 			if err != nil {
 				return
@@ -465,6 +501,9 @@ var (
 			return valueNode(nil, "Rand", Numeric, randFunc()*num), nil
 		},
 		"randint": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return nil, errorType()
+			}
 			num, err := node.getInteger()
 			if err != nil {
 				return
@@ -490,12 +529,18 @@ var (
 			return valueNode(nil, "first", Null, nil), nil
 		},
 		"parent": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "parent", Null, nil), nil
+			}
 			if node.parent != nil {
 				return node.parent, nil
 			}
 			return valueNode(nil, "parent", Null, nil), nil
 		},
 		"root": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "root", Null, nil), nil
+			}
 			root := node.root()
 			if root != nil {
 				return root, nil
@@ -503,6 +548,9 @@ var (
 			return valueNode(nil, "root", Null, nil), nil
 		},
 		"key": func(node *Node) (result *Node, err error) {
+			if node == nil {
+				return valueNode(nil, "key", Null, nil), nil
+			}
 			if node.parent != nil {
 				if node.parent.IsObject() {
 					return valueNode(nil, "key", String, node.Key()), nil
