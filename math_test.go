@@ -427,12 +427,29 @@ func TestFunctions2(t *testing.T) {
 		{name: "length object", fname: "length", value: ObjectNode("test", map[string]*Node{
 			"foo": NumericNode("foo", 1),
 			"bar": NumericNode("bar", 1),
-		}), result: NumericNode("", 2)},
+		}), result: NumericNode("", 1)},
 		{name: "length string", fname: "length", value: StringNode("", "foo_bar"), result: NumericNode("", 7)},
 		{name: "length string error", fname: "length", value: _s, fail: true},
 		{name: "length numeric", fname: "length", value: NumericNode("", 123), result: NumericNode("", 1)},
 		{name: "length bool", fname: "length", value: BoolNode("", false), result: NumericNode("", 1)},
 		{name: "length null", fname: "length", value: NullNode(""), result: NumericNode("", 1)},
+		{name: "length nil", fname: "length", value: nil, result: NumericNode("", 0)},
+
+		{name: "size array", fname: "size", value: ArrayNode("test", []*Node{
+			valueNode(nil, "", Numeric, "foo"),
+			valueNode(nil, "", Numeric, "foo"),
+			valueNode(nil, "", Numeric, "foo"),
+		}), result: NumericNode("", 3)},
+		{name: "size blank array", fname: "size", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "size object", fname: "size", value: ObjectNode("test", map[string]*Node{
+			"foo": NumericNode("foo", 1),
+			"bar": NumericNode("bar", 1),
+		}), result: NumericNode("", 2)},
+		{name: "size string", fname: "size", value: StringNode("", "foo_bar"), result: NumericNode("", 0)},
+		{name: "size numeric", fname: "size", value: NumericNode("", 123), result: NumericNode("", 0)},
+		{name: "size bool", fname: "size", value: BoolNode("", false), result: NumericNode("", 0)},
+		{name: "size null", fname: "size", value: NullNode(""), result: NumericNode("", 0)},
+		{name: "size nil", fname: "size", value: nil, result: NumericNode("", 0)},
 
 		{name: "avg error 1", fname: "avg", value: ArrayNode("test", []*Node{
 			valueNode(nil, "", Numeric, "foo"),
@@ -457,18 +474,22 @@ func TestFunctions2(t *testing.T) {
 			"e": NumericNode("", 3),
 		}), result: NumericNode("", 2)},
 		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "avg nil", fname: "avg", value: nil, result: NullNode("")},
 
 		{name: "b64encode_std_padding multiple of 3", fname: "b64encode", value: StringNode("", "Short string"), result: StringNode("", "U2hvcnQgc3RyaW5n")},
 		{name: "b64encode_std_padding remainder 2", fname: "b64encode", value: StringNode("", "A test string"), result: StringNode("", "QSB0ZXN0IHN0cmluZw==")},
 		{name: "b64encode_std_padding remainder 1", fname: "b64encode", value: StringNode("", "A test string."), result: StringNode("", "QSB0ZXN0IHN0cmluZy4=")},
+		{name: "b64encode_std_padding nil", fname: "b64encode", value: nil, result: NullNode("")},
 
 		{name: "b64encode_no_padding multiple of 3", fname: "b64encoden", value: StringNode("", "Short string"), result: StringNode("", "U2hvcnQgc3RyaW5n")},
 		{name: "b64encode_no_padding remainder 2", fname: "b64encoden", value: StringNode("", "A test string"), result: StringNode("", "QSB0ZXN0IHN0cmluZw")},
 		{name: "b64encode_no_padding remainder 1", fname: "b64encoden", value: StringNode("", "A test string."), result: StringNode("", "QSB0ZXN0IHN0cmluZy4")},
+		{name: "b64encode_no_padding nil", fname: "b64encoden", value: nil, result: NullNode("")},
 
 		{name: "b64decode with padding multiple of 3", fname: "b64decode", value: StringNode("", "U2hvcnQgc3RyaW5n"), result: StringNode("", "Short string")},
 		{name: "b64decode with padding remainder 2", fname: "b64decode", value: StringNode("", "QSB0ZXN0IHN0cmluZw=="), result: StringNode("", "A test string")},
 		{name: "b64decode with padding remainder 1", fname: "b64decode", value: StringNode("", "QSB0ZXN0IHN0cmluZy4="), result: StringNode("", "A test string.")},
+		{name: "b64decode nil", fname: "b64decode", value: nil, result: NullNode("")},
 
 		{name: "b64decode without padding multiple of 3", fname: "b64decode", value: StringNode("", "U2hvcnQgc3RyaW5n"), result: StringNode("", "Short string")},
 		{name: "b64decode without padding remainder 2", fname: "b64decode", value: StringNode("", "QSB0ZXN0IHN0cmluZw"), result: StringNode("", "A test string")},
@@ -500,6 +521,7 @@ func TestFunctions2(t *testing.T) {
 			"e": NumericNode("", 3),
 		}), result: NumericNode("", 6)},
 		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
+		{name: "sum nil", fname: "sum", value: nil, result: NullNode("")},
 
 		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
 		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
@@ -517,6 +539,7 @@ func TestFunctions2(t *testing.T) {
 			"w": NumericNode("", 2),
 			"e": NumericNode("", 3),
 		}), result: NullNode(""), fail: false},
+		{name: "last nil", fname: "last", value: nil, result: NullNode("")},
 
 		{name: "first: string", fname: "first", value: StringNode("", ""), result: NullNode(""), fail: false},
 		{name: "first: empty", fname: "first", value: ArrayNode("", []*Node{}), result: NullNode(""), fail: false},
@@ -531,6 +554,7 @@ func TestFunctions2(t *testing.T) {
 			"w": NumericNode("", 2),
 			"e": NumericNode("", 3),
 		}), result: NullNode(""), fail: false},
+		{name: "first nil", fname: "first", value: nil, result: NullNode("")},
 
 		{name: "parent", fname: "parent", value: key, result: parent, fail: false},
 		{name: "parent: none", fname: "parent", value: object, result: NullNode(""), fail: false},
@@ -538,6 +562,7 @@ func TestFunctions2(t *testing.T) {
 		{name: "root: self", fname: "root", value: object, result: object, fail: false},
 		{name: "key", fname: "key", value: key, result: StringNode("", "t"), fail: false},
 		{name: "key: none", fname: "key", value: StringNode("", "value"), result: NullNode(""), fail: false},
+		{name: "key nil", fname: "key", value: nil, result: NullNode("")},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

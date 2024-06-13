@@ -1535,3 +1535,63 @@ func TestJSONPath_issue_61(t *testing.T) {
 		return
 	}
 }
+
+// TestEval_issue_67 is a test for https://github.com/spyzhov/ajson/issues/67
+func TestEval_issue_67(t *testing.T) {
+	root := Must(Unmarshal([]byte(`
+{
+  "items": [
+    {
+      "price":1, 
+      "type": "A"
+    }, 
+    {
+      "price":2, 
+      "type": "B"
+    }, 
+    {
+      "price":3, 
+      "type": "C"
+    },
+	null
+  ]
+}`)))
+
+	tests := []struct {
+		name       string
+		wantResult float64
+	}{
+		{
+			name:       `length($.items[?(@.type == "D")])`,
+			wantResult: 0,
+		},
+		{
+			name:       `length($.items[?(@.type == "A")])`,
+			wantResult: 1,
+		},
+		{
+			name:       `length($.items[?(@.type == "A" || @.type == "B")])`,
+			wantResult: 2,
+		},
+		{
+			name:       `length($.items[?(@.type == "A" || @.type == "B" || @.type == "D")])`,
+			wantResult: 2,
+		},
+		{
+			name:       `length($.items[?(@ == null)])`,
+			wantResult: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := Eval(root, tt.name)
+			if err != nil {
+				t.Errorf("Eval(length) error = %v", err)
+				return
+			}
+			if !reflect.DeepEqual(gotResult.MustNumeric(), tt.wantResult) {
+				t.Errorf("Eval(length) gotResult = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
+}
