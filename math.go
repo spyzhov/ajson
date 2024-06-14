@@ -407,6 +407,13 @@ var (
 				}
 				return valueNode(nil, "avg", Numeric, sum/float64(node.Size())), nil
 			}
+			if node.IsNumeric() {
+				value, err := node.GetNumeric()
+				if err != nil {
+					return nil, err
+				}
+				return valueNode(nil, "avg", Numeric, value), nil
+			}
 			return valueNode(nil, "avg", Null, nil), nil
 		},
 		"b64decode": func(node *Node) (result *Node, err error) {
@@ -480,6 +487,13 @@ var (
 					sum += value
 				}
 				return valueNode(nil, "sum", Numeric, sum), nil
+			}
+			if node.IsNumeric() {
+				value, err := node.GetNumeric()
+				if err != nil {
+					return nil, err
+				}
+				return valueNode(nil, "sum", Numeric, value), nil
 			}
 			return valueNode(nil, "sum", Null, nil), nil
 		},

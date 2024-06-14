@@ -13,7 +13,7 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-var version = "v0.9.2"
+var version = "v0.9.3"
 
 func usage() {
 	text := ``
