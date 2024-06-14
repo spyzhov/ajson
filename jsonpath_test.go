@@ -1595,3 +1595,72 @@ func TestEval_issue_67(t *testing.T) {
 		})
 	}
 }
+
+// TestEval_issue_69 is a test for https://github.com/spyzhov/ajson/issues/69
+func TestEval_issue_69(t *testing.T) {
+	root := Must(Unmarshal([]byte(`
+{
+  "items": [
+    {
+      "price":1, 
+      "type": "A"
+    }, 
+    {
+      "price":2, 
+      "type": "B"
+    }, 
+    {
+      "price":3, 
+      "type": "C"
+    },
+	null
+  ]
+}`)))
+
+	tests := []struct {
+		name       string
+		wantResult interface{}
+	}{
+		{
+			name:       `sum($.items[?(@.type == "A")].price)`,
+			wantResult: float64(1),
+		},
+		{
+			name:       `avg($.items[?(@.type == "A")].price)`,
+			wantResult: float64(1),
+		},
+		{
+			name:       `sum($.items[?(@.type == "D")].price)`,
+			wantResult: nil,
+		},
+		{
+			name:       `avg($.items[?(@.type == "D")].price)`,
+			wantResult: nil,
+		},
+		{
+			name:       `sum($.items[?(@ == null)].price)`,
+			wantResult: nil,
+		},
+		{
+			name:       `avg($.items[?(@ == null)].price)`,
+			wantResult: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotResult, err := Eval(root, tt.name)
+			if err != nil {
+				t.Errorf("Eval(avg|sum) error = %v", err)
+				return
+			}
+			value, err := gotResult.Value()
+			if err != nil {
+				t.Errorf("Node.Value() error = %v", err)
+				return
+			}
+			if !reflect.DeepEqual(value, tt.wantResult) {
+				t.Errorf("Eval(avg|sum) gotResult = %v, want %v", gotResult, tt.wantResult)
+			}
+		})
+	}
+}

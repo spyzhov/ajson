@@ -456,7 +456,7 @@ func TestFunctions2(t *testing.T) {
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "avg error 2", fname: "avg", value: _e, fail: false, result: NullNode("")},
+		{name: "avg error 2", fname: "avg", value: _e, fail: true},
 		{name: "avg array 1", fname: "avg", value: ArrayNode("test", []*Node{
 			NumericNode("", 1),
 			NumericNode("", 1),
@@ -475,6 +475,7 @@ func TestFunctions2(t *testing.T) {
 		}), result: NumericNode("", 2)},
 		{name: "avg array blank", fname: "avg", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
 		{name: "avg nil", fname: "avg", value: nil, result: NullNode("")},
+		{name: "avg one", fname: "avg", value: NumericNode("", 123), result: NumericNode("", 123)},
 
 		{name: "b64encode_std_padding multiple of 3", fname: "b64encode", value: StringNode("", "Short string"), result: StringNode("", "U2hvcnQgc3RyaW5n")},
 		{name: "b64encode_std_padding remainder 2", fname: "b64encode", value: StringNode("", "A test string"), result: StringNode("", "QSB0ZXN0IHN0cmluZw==")},
@@ -503,7 +504,7 @@ func TestFunctions2(t *testing.T) {
 			valueNode(nil, "", Numeric, "foo"),
 			valueNode(nil, "", Numeric, "foo"),
 		}), fail: true},
-		{name: "sum error 2", fname: "sum", value: _e, fail: false, result: NullNode("")},
+		{name: "sum error 2", fname: "sum", value: _e, fail: true},
 		{name: "sum array 1", fname: "sum", value: ArrayNode("test", []*Node{
 			NumericNode("", 1),
 			NumericNode("", 1),
@@ -522,6 +523,7 @@ func TestFunctions2(t *testing.T) {
 		}), result: NumericNode("", 6)},
 		{name: "sum array blank", fname: "sum", value: ArrayNode("test", []*Node{}), result: NumericNode("", 0)},
 		{name: "sum nil", fname: "sum", value: nil, result: NullNode("")},
+		{name: "sum one", fname: "sum", value: NumericNode("", 123), result: NumericNode("", 123)},
 
 		{name: "rand", fname: "rand", value: StringNode("test", "test"), fail: true},
 		{name: "randint", fname: "randint", value: StringNode("test", "test"), fail: true},
