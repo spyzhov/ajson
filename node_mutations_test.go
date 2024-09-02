@@ -1380,6 +1380,7 @@ func TestNode_Clone(t *testing.T) {
 	null := NullNode("")
 	array := ArrayNode("", []*Node{node, null})
 	object := ObjectNode("", map[string]*Node{"array": array})
+	objectWithObject := ObjectNode("", map[string]*Node{"object": object})
 
 	tests := []struct {
 		name string
@@ -1406,6 +1407,11 @@ func TestNode_Clone(t *testing.T) {
 			node: object,
 			json: `{"array":[1.1,null]}`,
 		},
+		{
+			name: "objectWithObject",
+			node: objectWithObject,
+			json: `{"object":{"array":[1.1,null]}}`,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -1427,7 +1433,20 @@ func TestNode_Clone(t *testing.T) {
 			} else if string(base) != test.json {
 				t.Errorf("Marshal() base not match: \nExpected: %s\nActual: %s", test.json, base)
 			}
+
+			validateParent(t, clone)
 		})
+	}
+}
+
+// validateParent checks if all children have the correct parent, recursively.
+func validateParent(t *testing.T, node *Node) {
+	for _, child := range node.Inheritors() {
+		if child.Parent() != node {
+			t.Errorf("Inheritor.Parent() != node")
+		}
+
+		validateParent(t, child)
 	}
 }
 
