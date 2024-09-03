@@ -184,7 +184,9 @@ func (n *Node) clone() *Node {
 		dirty:    n.dirty,
 	}
 	for key, value := range n.children {
-		node.children[key] = value.clone()
+		clone := value.clone()
+		clone.parent = node
+		node.children[key] = clone
 	}
 	return node
 }
