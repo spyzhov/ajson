@@ -53,7 +53,7 @@ func main() {
 You can download `ajson` cli from the [release page](https://github.com/spyzhov/ajson/releases), or install from the source:
 
 ```shell script
-go get github.com/spyzhov/ajson/cmd/ajson@v0.9.4
+go get github.com/spyzhov/ajson/cmd/ajson@v0.9.5
 ```
 
 Usage:
@@ -321,6 +321,15 @@ Package has several predefined functions.
     first        Get first element  any
     floor        math.Floor         integers, floats
     gamma        math.Gamma         integers, floats
+    is_array     Is type Array      any
+    is_bool      Is type Bool       any
+    is_float     Is type Float      any
+    is_int       Is type Int        any
+    is_null      Is type Null       any
+    is_numeric   Is type Numeric    any
+    is_object    Is type Object     any
+    is_string    Is type String     any
+    is_uint      Is type Uint       any
     j0           math.J0            integers, floats
     j1           math.J1            integers, floats
     key          Key of element     string
