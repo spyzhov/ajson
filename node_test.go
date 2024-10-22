@@ -117,7 +117,7 @@ func TestNode_getValue(t *testing.T) {
 	keys := []string{"category", "author", "title", "price", "ordered", "tags", "sub"}
 	for _, key := range keys {
 		if _, ok := value[key]; !ok {
-			t.Errorf("Object map has no field: " + key)
+			t.Errorf("Object map has no field: %s", key)
 		}
 	}
 }
