@@ -628,10 +628,11 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				if err != nil {
 					return
 				}
-				if len(slice) > 1 { // array given
-					stack = append(stack, ArrayNode("", slice))
-				} else if len(slice) == 1 {
-					stack = append(stack, slice[0])
+				cloned := clone(slice)
+				if len(cloned) > 1 { // array given
+					stack = append(stack, ArrayNode("", cloned))
+				} else if len(cloned) == 1 {
+					stack = append(stack, cloned[0])
 				} else { // no data found
 					stack = append(stack, nil)
 				}
@@ -707,4 +708,15 @@ func getPositiveIndex(index int, count int) int {
 		index += count
 	}
 	return index
+}
+
+func clone(list []*Node) []*Node {
+	if list == nil {
+		return nil
+	}
+	result := make([]*Node, len(list))
+	for i, node := range list {
+		result[i] = node.Clone()
+	}
+	return result
 }

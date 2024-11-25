@@ -53,7 +53,7 @@ func main() {
 You can download `ajson` cli from the [release page](https://github.com/spyzhov/ajson/releases), or install from the source:
 
 ```shell script
-go get github.com/spyzhov/ajson/cmd/ajson@v0.9.5
+go get github.com/spyzhov/ajson/cmd/ajson@v0.9.6
 ```
 
 Usage:
@@ -644,9 +644,9 @@ $ go test -bench=. -cpu=1 -benchmem
 goos: linux
 goarch: amd64
 pkg: github.com/spyzhov/ajson
-BenchmarkUnmarshal_AJSON          138032              8762 ns/op            5344 B/op         95 allocs/op
-BenchmarkUnmarshal_JSON           117423             10502 ns/op             968 B/op         31 allocs/op
-BenchmarkJSONPath_all_prices       80908             14394 ns/op            7128 B/op        153 allocs/op
+BenchmarkUnmarshal_AJSON          121656             10060 ns/op            5712 B/op        118 allocs/op
+BenchmarkUnmarshal_JSON           102674             11381 ns/op             960 B/op         32 allocs/op
+BenchmarkJSONPath_all_prices       63314             16385 ns/op            7496 B/op        178 allocs/op
 ```
 
 # License
