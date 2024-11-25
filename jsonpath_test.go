@@ -1664,3 +1664,56 @@ func TestEval_issue_69(t *testing.T) {
 		})
 	}
 }
+
+func TestEval_issue_81(t *testing.T) {
+	jb := []byte(`[{"a": 1, "b": 2, "c": 3}]`)
+	root, err := Unmarshal(jb)
+	if err != nil {
+		t.Log("Got error1:", err)
+		return
+	}
+	result, err := Eval(root, "$...")
+	if err != nil {
+		t.Errorf("Eval() error = %v", err)
+		return
+	}
+
+	arrs, err := result.GetArray()
+	if err != nil {
+		t.Errorf("result.GetArray() error = %v", err)
+		return
+	} else {
+		t.Log("Try:", arrs)
+		for i, arr := range arrs {
+			t.Logf("Try inner %d: %v", i, arr)
+			if arr.Type() == Array {
+				arr, err := arr.GetArray()
+				if err != nil {
+					t.Errorf("arr.GetArray() error = %v", err)
+					return
+				} else {
+					t.Log("Got inner:", arr)
+				}
+			}
+		}
+	}
+}
+
+func TestEval_issue_81_index_corruption_in_eval(t *testing.T) {
+	root, err := Unmarshal([]byte(`{"foo": [0, 1, 2, 3, 4]}`))
+	if err != nil {
+		t.Fatalf("Unmarshal() error = %v", err)
+	}
+	result, err := root.JSONPath(`$.foo[(last($.foo[1,2]))]`)
+	if err != nil {
+		t.Fatalf("JSONPath() error = %v", err)
+	}
+	if len(result) == 0 {
+		t.Fatalf("Result is nil")
+	}
+	for _, node := range result {
+		if node.Index() != int(node.MustNumeric()) {
+			t.Fatalf("Index is wrong for %v, index is %d", node, node.Index())
+		}
+	}
+}
