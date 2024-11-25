@@ -628,11 +628,10 @@ func eval(node *Node, expression rpn, cmd string) (result *Node, err error) {
 				if err != nil {
 					return
 				}
-				cloned := clone(slice)
-				if len(cloned) > 1 { // array given
-					stack = append(stack, ArrayNode("", cloned))
-				} else if len(cloned) == 1 {
-					stack = append(stack, cloned[0])
+				if len(slice) > 1 { // array given
+					stack = append(stack, ArrayNode("", clone(slice)))
+				} else if len(slice) == 1 {
+					stack = append(stack, slice[0])
 				} else { // no data found
 					stack = append(stack, nil)
 				}
