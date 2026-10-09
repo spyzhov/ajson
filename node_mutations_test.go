@@ -1499,6 +1499,110 @@ func ExampleNode_Clone() {
 	//
 }
 
+func TestNode_SetNodeChildMutations(t *testing.T) {
+	values := []struct {
+		name    string
+		source  string
+		leaf    func(*Node) *Node
+		updated string
+		deleted string
+	}{
+		{
+			name:    "object",
+			source:  `{"value":1}`,
+			leaf:    func(n *Node) *Node { return n.MustKey("value") },
+			updated: `{"value":2}`,
+			deleted: `{}`,
+		},
+		{
+			name:    "array",
+			source:  `[1]`,
+			leaf:    func(n *Node) *Node { return n.MustIndex(0) },
+			updated: `[2]`,
+			deleted: `[]`,
+		},
+		{
+			name:    "nested object",
+			source:  `{"nested":[1]}`,
+			leaf:    func(n *Node) *Node { return n.MustKey("nested").MustIndex(0) },
+			updated: `{"nested":[2]}`,
+			deleted: `{"nested":[]}`,
+		},
+		{
+			name:    "nested array",
+			source:  `[{"value":1}]`,
+			leaf:    func(n *Node) *Node { return n.MustIndex(0).MustKey("value") },
+			updated: `[{"value":2}]`,
+			deleted: `[{}]`,
+		},
+	}
+	destinations := []struct {
+		name   string
+		source string
+		target func(*Node) *Node
+		wrap   func(string) string
+	}{
+		{
+			name:   "root",
+			source: `null`,
+			target: func(n *Node) *Node { return n },
+			wrap:   func(s string) string { return s },
+		},
+		{
+			name:   "object member",
+			source: `{"slot":null}`,
+			target: func(n *Node) *Node { return n.MustKey("slot") },
+			wrap:   func(s string) string { return `{"slot":` + s + `}` },
+		},
+		{
+			name:   "array element",
+			source: `[null]`,
+			target: func(n *Node) *Node { return n.MustIndex(0) },
+			wrap:   func(s string) string { return `[` + s + `]` },
+		},
+	}
+	for _, value := range values {
+		for _, destination := range destinations {
+			t.Run(value.name+"/"+destination.name, func(t *testing.T) {
+				source := Must(Unmarshal([]byte(value.source)))
+				root := Must(Unmarshal([]byte(destination.source)))
+				target := destination.target(root)
+				parent, key, index := target.Parent(), target.Key(), target.Index()
+				if err := target.SetNode(source); err != nil {
+					t.Fatal(err)
+				}
+				if target.Parent() != parent || target.Key() != key || target.Index() != index {
+					t.Error("SetNode changed the receiver's reference")
+				}
+				for _, child := range target.children {
+					if child.Parent() != target {
+						t.Error("replacement child has the wrong parent")
+					}
+				}
+				leaf := value.leaf(target)
+				if err := leaf.SetNumeric(2); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := root.String(), destination.wrap(value.updated); got != want {
+					t.Errorf("after mutation: got %s, want %s", got, want)
+				}
+				if err := leaf.Delete(); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := root.String(), destination.wrap(value.deleted); got != want {
+					t.Errorf("after deletion: got %s, want %s", got, want)
+				}
+				if got := source.String(); got != value.source {
+					t.Errorf("source changed: got %s, want %s", got, value.source)
+				}
+				if got := value.leaf(source).MustNumeric(); got != 1 {
+					t.Errorf("source child changed: got %v, want 1", got)
+				}
+			})
+		}
+	}
+}
+
 func TestNode_SetNode(t *testing.T) {
 	iValue := `{"foo": [{"bar":"baz"}]}`
 	idempotent := Must(Unmarshal([]byte(iValue)))
