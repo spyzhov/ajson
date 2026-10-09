@@ -82,6 +82,9 @@ func (n *Node) SetNode(value *Node) error {
 	node.setReference(n.parent, n.key, n.index)
 	n.setReference(nil, nil, nil)
 	*n = *node
+	for _, child := range n.children {
+		child.parent = n
+	}
 	if n.parent != nil {
 		n.parent.mark()
 	}
